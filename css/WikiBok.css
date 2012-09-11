@@ -1,0 +1,294 @@
+#wikibok-loading {
+	background-repeat: no-repeat;
+	background-image : url("images/loadinfo.net.gif");
+	width  : 48px;
+	height : 48px;
+	z-index: 1000;
+}
+#wikibok-twitter {
+	width  : 50px;
+	height : 20px;
+}
+#rev {
+	/*固定化する場合em表記では無限スクロールになることがある*/
+	font-size : 10px;
+	white-space : nowrap;
+	width : 100px;
+	height : 30px
+}
+#wikibok-edit {
+	position : absolute;
+	height : 32px;
+	white-space: nowrap;
+	z-index: 999;
+}
+dl.context {
+	margin: 0;
+	padding: 0;
+}
+dl.context dt {
+	float : left;
+	width : 7em;
+	padding : 5px 0 5px .5em;
+	border-top : 1px solid #ccc;
+	font-weight : bold;
+}
+dl.context dd {
+	margin-left : 7em;
+	padding : 5px 0 5px 1em;
+	border-top : 1px solid #ccc;
+	cursor : pointer;
+}
+
+#wikibok-search {
+	position : absolute;
+	height : 32px;
+	white-space: nowrap;
+	z-index: 999;
+}
+#wikibok-search > div{
+	display : inline;
+}
+#wikibok-search .text {
+	border : 1px solid #F00;
+	background-color : #FCC;
+}
+#wikibok-past {
+	position : absolute;
+	height : 32px;
+	white-space: nowrap;
+	z-index: 999;
+}
+.wikibok-searchresult td.data {
+	padding-left : 16px; 
+}
+.wikibok-searchresult td.act {
+	background-repeat: no-repeat;
+	background-image : url("images/act.png");
+	width  : 16px;
+	height : 16px;
+}
+/*アイコン定義 */
+.wikibok_icon {
+	display : inline;
+	position : absolute;
+	text-indent : -99999px;
+	overflow : hidden;
+	background-repeat : no-repeat;
+}
+#wikibok-search .up {
+	background-image : url("images/up.png");
+}
+#wikibok-search .down {
+	background-image : url("images/down.png");
+}
+#wikibok-search .list {
+	background-image : url("images/list.png");
+}
+#wikibok-search .commit {
+	background-image : url("images/search.png");
+}
+#wikibok-search .in_window {
+	background-image : url("images/in_window.png");
+}
+
+#wikibok-edit .checked {
+	background-image : url("images/checked.png");
+}
+#wikibok-edit .new {
+	background-image : url("images/new.png");
+}
+#wikibok-edit .print {
+	background-image : url("images/print.png");
+}
+#wikibok-edit .save_as {
+	background-image : url("images/save_as.png");
+}
+#wikibok-edit .undo {
+	background-image : url("images/undo.png");
+}
+#wikibok-edit .redo {
+	background-image : url("images/redo.png");
+}
+#wikibok-edit .commit {
+	background-image : url("images/save.png");
+}
+/* ページャー設定 */
+.pager .first {
+	background-image : url("images/pager_first.png");
+}
+.pager .prev {
+	background-image : url("images/pager_prev.png");
+}
+.pager .next {
+	background-image : url("images/pager_next.png");
+}
+.pager .last {
+	background-image : url("images/pager_last.png");
+}
+.pager .pagedisplay {
+	/* ページ番号表示 */
+	font-size: 8px;
+	width: 80px;
+	border: 1px solid #330000;
+	text-align: center;
+	margin : 0 5px;
+}
+.pager .pagesize {
+	/* 1ページの最大表示行数 */
+	font-size: 8px;
+	width: auto;
+}
+/* 競合強調表示用 */
+.wikibok-description-diff dl {
+	width : 48%;
+}
+.wikibok-description-diff .head {
+	float:left;
+	border-left:3px solid #CCCC00;
+}
+.wikibok-description-diff .work {
+	float:right;
+	border-left:3px solid #CCCC00;
+}
+.wikibok-description-diff .clear {
+	clear:both;
+}
+.wikibok-description-diff span.del {
+	background-color : #FF0000;
+}
+.wikibok-description-diff span.ins {
+	background-color : #00FF00;
+}
+/* 色選択 */
+.wikibok-color .colorSelect {
+	background-image : url("images/colorpicker/select.png");
+	background-repeat: no-repeat; 
+	height: 36px;
+	width : 36px;
+	z-index: 0;
+}
+.wikibok-color .colorSelect div{
+	position:relative;
+	top   : 4px;
+	left  : 4px;
+	height: 28px;
+	width : 28px;
+	z-index:-1;
+}
+.wikibok-color .colorPicker {
+	width: 356px;
+	height: 0;
+	overflow: hidden;
+}
+/* 記事編集のtoolbox */
+.wikibok-descriptioneditor-tooltip {
+	height: 16px;
+	padding-botton:2px;
+}
+.wikibok-descriptioneditor-tooltip .inIcon{
+	text-indent: -99999px;
+	width : 16px;
+	height: 16px;
+	background-repeat: no-repeat; 
+	cursor: pointer;
+	border-right:1px solid #CCCCCC;
+	border-bottom:1px solid #CCCCCC;
+}
+.wikibok-descriptioneditor-tooltip .bold {
+	background-image: url("images/editor/bold.png");
+}
+.wikibok-descriptioneditor-tooltip .italic {
+	background-image: url("images/editor/italic.png");
+}
+.wikibok-descriptioneditor-tooltip .normal_link{
+	background-image: url("images/editor/normal_link.png");
+}
+.wikibok-descriptioneditor-tooltip .smw_link {
+	background-image: url("images/editor/smw_link.png");
+}
+.wikibok-descriptioneditor-tooltip .world_link {
+	background-image: url("images/editor/world_link.png");
+}
+.wikibok-descriptioneditor-tooltip .math {
+	background-image: url("images/editor/math.png");
+}
+.wikibok-descriptioneditor-tooltip .nowiki {
+	background-image: url("images/editor/nowiki.png");
+}
+.wikibok-descriptioneditor-tooltip .signed {
+	background-image: url("images/editor/signed.png");
+}
+.wikibok-descriptioneditor-tooltip .hr {
+	background-image: url("images/editor/hr.png");
+}
+.wikibok-descriptioneditor-tooltip .file {
+	background-image: url("images/editor/image.png");
+}
+.wikibok-descriptioneditor-tooltip .media {
+	background-image: url("images/editor/media.png");
+}
+
+#wikibok-set tr.setting * {
+	background-color : #FFCC00;
+}
+#wikibok-set h3 {
+	padding: .2em .5em;
+}
+#wikibok-set h3 span.date {
+	font-size : .5em;
+	color : blue;
+}
+#wikibok-set h3.ui-state-active {
+	text-decoration: underline;
+}
+#wikibok-past .print {
+	background-image : url("images/print.png");
+}
+#wikibok-past .first {
+	background-image : url("images/rev_first.png");
+}
+#wikibok-past .prev {
+	background-image : url("images/rev_prev.png");
+}
+#wikibok-past .next {
+	background-image : url("images/rev_next.png");
+}
+#wikibok-past .last {
+	background-image : url("images/rev_last.png");
+}
+.setPosition {
+	position : absolute;
+	white-space : nowrap;
+}
+.setPositionBtn {
+	text-indent: -99999px;
+	width : 32px;
+	height: 32px;
+	background-repeat: no-repeat; 
+	cursor: pointer;
+	background-image : url("images/full.png");
+	position : absolute;
+	z-index : 999999;
+}
+.setPositionBtn.active {
+	background-image : url("images/close.png");
+	
+}
+.imagefileslist,
+.imagefileslist th,
+.imagefileslist td {
+	border: 1px solid #330000;
+}
+g.active > text{
+	fill : #FF0000;
+}
+g.active > polygon,
+g.active > circke {
+	fill : #FF0000;
+	stroke : #FF0000;
+}
+.wikibok.autocomplete.description {
+	width : 100px;
+	border : 1px solid #F00;
+}
