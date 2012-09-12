@@ -10,3 +10,4 @@ WikiBOK-Systemの説明は、<a href="#">こちら</a>を参照してください。<br/>
 <li>[LocalSettings.php]へ、設定を追加します。</li>
 <li>WikiBOK-Systemの設定ファイルを編集します。</li>
 </ol>
+ 
