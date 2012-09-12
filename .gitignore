@@ -1,2 +1,2 @@
-config/setting.php
-class/backup/*
+./config/setting.php
+./class/backup/*
