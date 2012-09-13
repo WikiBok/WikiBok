@@ -288,7 +288,7 @@ g.active > circke {
 	fill : #FF0000;
 	stroke : #FF0000;
 }
-.wikibok.autocomplete.description {
-	width : 100px;
+.wikibok.ui-autocomplete.description {
+	width : 150px;
 	border : 1px solid #F00;
 }

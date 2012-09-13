@@ -736,7 +736,7 @@
         start : start,
         stop : stop,
         setIntervalTime : setIntervalTime
-      }
+      };
     }())
   });
 
@@ -1036,6 +1036,142 @@
             }
           });
         }
+        return this;
+      });
+    },
+    /**
+     * @param obj 検索対象のBokSVG-Object
+     *              - .allNodeメソッドで検索対象のデータをすべて取得できる(折り畳み済みノードも対象)
+     * @param set 検索イベントを呼び出すための要素を定義
+     *    find : 検索実行用要素
+     *    next : 検索結果(次)を選択
+     *    prev : 検索結果(前)を選択
+     *    list : 検索結果一覧を表示
+     *    text : 検索用文字列入力欄
+     */
+    setSearch : function(obj,set) {
+      var
+        elem = this,
+        opt = $.extend({},{
+          find : '.commit',
+          next : '.down',
+          prev : '.up',
+          list : '.list',
+          text : '.text'
+        },set),
+        result = {
+          act : -1,
+          dat : null,
+          txt : null,
+        };
+      /**
+       * 検索結果データの取得
+       * @param text 検索用文字列(部分一致)
+       */
+      function getData(text) {
+        var
+          reg = new RegExp(text,'igm'),
+          nodes = obj.allNode(),
+          node = (text == '') ? nodes : nodes.filter(function(d) {
+            return d.name.match(reg);
+          });
+        return {
+          act : 0,
+          dat : node,
+          txt : text
+        }
+      }
+      /**
+       * 検索結果番号から対象のノードを取得
+       */
+      function active(act) {
+        result.act = act;
+        obj.actNode(result.dat[act]);
+        return ;
+      }
+      /**
+       * 次の要素番号を取得(ループあり)
+       * @param act 現在の要素番号
+       */
+      function _next(act) {
+        act = act + 1;
+        return (act < result.dat.length) ? act : 0;
+      }
+      /**
+       * 前の要素番号を取得(ループあり)
+       * @param act 現在の要素番号
+       */
+      function _prev(act) {
+        act = act - 1;
+        return (act < 0) ? (result.dat.length - 1) : act;
+      }
+      //配下の各要素にイベントを設定
+      $(elem)
+        .on('click',opt.find,function() {
+          result = getData($(elem).find(opt.text).val());
+          //必ず検索結果先頭
+          active(0);
+        })
+        .on('click',opt.next,function() {
+          var txt = $(elem).find(opt.text).val();
+          //検索文字列が同じ場合、次の要素
+          if(result.txt == txt) {
+            result.act = _next(result.act);
+            active(result.act);
+          }
+          else {
+            result = getData(txt);
+            active(0);
+          }
+        })
+        .on('click',opt.prev,function() {
+          var txt = $(elem).find(opt.text).val();
+          //検索文字列が同じ場合、前の要素
+          if(result.txt == txt) {
+            result.act = _prev(result.act);
+            active(result.act);
+          }
+          else {
+            result = getData(txt);
+            active(0);
+          }
+        })
+        .on('click',opt.list,function() {
+        
+        })
+      //入力補完機能の設定
+      $(this).find(opt.text).autocomplete({
+        position : {
+            my : 'left bottom',
+            at : 'left top'
+        },
+        select : function(a,b) {
+          result = getData(b.item.value);
+          //必ず検索結果先頭
+          active(0);
+          $(this).trigger('blur');
+        },
+        source : function(req,res) {
+          var
+            sug = $.map(obj.allNode(),function(d){return d.name}),
+            inp = req.term.replace(/\W/g,'\\$&'),
+            reg = new RegExp(inp,'mi');
+          //データなし
+          if(sug == undefined || !$.isArray(sug) || sug.length < 1) {
+            return false;
+          }
+          //部分一致したノード群を返却
+          res($.map(sug,function(d) {
+            if(d.match(reg)) {
+              return {
+                label : d,
+                value : d
+              }
+            }
+          }));
+        }
+      })
+      return $.each(this,function() {
         return this;
       });
     },

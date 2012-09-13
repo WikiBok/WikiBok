@@ -221,13 +221,15 @@ $messages['ja'] = array(
 			'title' => '選択',
 			'itemgroup' => array(
 				'view' => '確認',
-				'edit' => '編集'
+				'edit' => '編集',
+				'special' => '特殊(追加)'
 			),
 			'description' => array(
 				'width' => 300,
 				'height' => 200,
 				'view' => '記事内容表示',
 				'add' => 'BOKツリーへ追加',
+				'rename' => '記事名称変更',
 				'searchsmw' => 'SMWリンク先ごとBOKツリーへ追加',
 				'represent' => '代表表現へ置き換え',
 			),

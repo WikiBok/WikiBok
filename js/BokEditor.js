@@ -98,6 +98,8 @@ jQuery(function($) {
             + '<dd class="command bokeditor-find-childs">'+$.wikibok.wfMsg('wikibok-contextmenu','bok','find-childs')+'</dd>'
             + '<dd class="command bokeditor-only-delete">'+$.wikibok.wfMsg('wikibok-contextmenu','bok','only-delete')+'</dd>'
             + '<dd class="command bokeditor-node-create">'+$.wikibok.wfMsg('wikibok-contextmenu','bok','node-create')+'</dd>'
+            + '<dt>'+$.wikibok.wfMsg('wikibok-contextmenu','itemgroup','special')+'</dt>'
+            + '<dd class="command bokeditor-rename">'+$.wikibok.wfMsg('wikibok-contextmenu','description','rename')+'</dd>'
             + '<dd class="command bokeditor-represent">'+$.wikibok.wfMsg('wikibok-contextmenu','description','represent')+'</dd>';
         }
         open = true;
@@ -158,7 +160,8 @@ jQuery(function($) {
           + ((arguments.length < 1)
           ? inp
           : '<dt>'+$.wikibok.wfMsg('wikibok-new-element','bok','headline1')+'</dt><dd>'+a+'</dd>' + inp)
-          + '</dl>';
+          + '</dl>',
+      addTo =(arguments.length < 1) ? '' : a;
     if($('#'+_id).dialog('isOpen')) {
       $('#'+_id).dialog('close');
     }
@@ -167,23 +170,57 @@ jQuery(function($) {
       '',
       {
         create : function() {
-          dialog = this;
         },
         open : function() {
-          var inp_elem;
-          $(dialog).html(tmp);
-          inp_elem = $(dialog).find('input.name');
-          inp_elem.setAutoComplete({
+          $(this).html(tmp);
+          $(this).dialog('widget').setInterruptKeydown([{
+            class : 'name',
+            next : $.wikibok.wfMsg('wikibok-new-element','bok','button','class'),
+            prev : $.wikibok.wfMsg('common','button_close','class')
+          }]);
+          $(this).find('input.name').setAutoComplete({
             position : {
               my : 'left bottom',
               at : 'right bottom',
             },
           },{},{});
-        }
+        },
+        buttons : [{
+          text : $.wikibok.wfMsg('wikibok-new-element','bok','button','text'),
+          class: $.wikibok.wfMsg('wikibok-new-element','bok','button','class'),
+          title: $.wikibok.wfMsg('wikibok-new-element','bok','button','title'),
+          click: function(){
+            var
+              newName = $(this).find('input.name').val();
+            if(newName == '') {
+              alert("ちゃんと入力しろ!\n失敗");
+            }
+            else {
+              svg.addNode(newName,addTo);
+            }
+          }
+        },{
+          text : $.wikibok.wfMsg('common','button_close','text'),
+          class: $.wikibok.wfMsg('common','button_close','class'),
+          title: $.wikibok.wfMsg('common','button_close','title'),
+          click: function(){
+            $(this).dialog('close');
+          }
+        }]
       }
     );
   }
-  
+  $('#wikibok-search')
+    //位置固定/アイコン化
+    .setPosition({position : 'lb'},true)
+    //検索用イベント定義
+    .setSearch(svg,{
+      find : '.commit',
+      next : '.down',
+      prev : '.up',
+      list : '.list',
+      text : '.text'
+    });
   //編集ツールコマンド
   $('#wikibok-edit')
     .on('click','.checked',function(ev) {
@@ -191,7 +228,7 @@ jQuery(function($) {
         //キャンセル確認ダイアログ表示
       }
       else {
-        checkCancel();
+        //checkCancel();
       }
     })
     .on('click','.new',function(ev) {
@@ -202,16 +239,13 @@ jQuery(function($) {
       createNewNode();
     })
     .on('click','.commit',function(ev) {
-      
     })
     .on('click','.save_as',function(ev) {
     })
     .on('click','.undo',function(ev) {
     })
     .on('click','.redo',function(ev) {
-      $.wikibok.requestCGI('WikiBokJs::getBokJson');
     });
-
 
   //アクション選択
   switch(wgAction) {

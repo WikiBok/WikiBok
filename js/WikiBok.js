@@ -1,5 +1,5 @@
 jQuery(function($) {
-	//ログイン処理
+	//ログイン処琁E
 	function wikiLogin(param,sfunc,nfocus) {
 		var me = this,
 				_param = $.extend({},{
@@ -10,7 +10,7 @@ jQuery(function($) {
 			function(dat,stat,xhr) {
 				var res = dat['login']['result'],
 						token = dat['login']['token'];
-				//通信失敗・その他
+				//通信失敗
 				if(res == undefined) {
 					$.wikibok.exDialog(
 						$.wikibok.wfMsg('wikibok-popupLogin','title')+' '+$.wikibok.wfMsg('common','error'),
@@ -20,7 +20,7 @@ jQuery(function($) {
 								$(this).html($.wikibok.wfMsg('wikibok-popupLogin','error',res.toLowerCase()));
 							},
 							close : function() {
-								//フォーカス移動
+								//フォーカス移勁E
 								$('#'+nfocus).find('input:first').focus();
 							}
 						}
@@ -28,7 +28,7 @@ jQuery(function($) {
 				}
 				else {
 					switch(res.toLowerCase()) {
-						//トークンなしの場合、レスポンスからトークンを設定して再実行
+						//トークンが必要な場合、レスポンスデータから設定して再実行
 						case 'needtoken':
 							setTimeout(function() {
 								var _next = $.extend({},param,{
@@ -84,7 +84,7 @@ jQuery(function($) {
 							$(this).html($.wikibok.wfMsg('wikibok-popupLogin','error','other'));
 						},
 						close : function() {
-							//フォーカス移動
+							//フォーカス移勁E
 							$('#'+nfocus).find('input:first').focus();
 						}
 					}
@@ -93,7 +93,7 @@ jQuery(function($) {
 			}
 		);
 	}
-	//Ajax処理中の画面表示
+	//Ajax処理によるローディング表示
 	$('#wikibok-loading')
 		.setPosition({position : 'lt'})
 		.on('ajaxStart', function(){
@@ -102,7 +102,7 @@ jQuery(function($) {
 		.on('ajaxStop', function(){
 			$(this).hide();
 		});
-	//ページを破棄する前にすべてのajax通信を停止
+	//ページ破棄前にすべてのajax通信を停止
 	$('body').on('ajaxSend',function(c,xhr) {
 		$(window).one('beforeunload',function(){
 			xhr.abort();
@@ -121,32 +121,41 @@ jQuery(function($) {
 	$('#wikibok-tooltip').find('li:has(a)').each(function() {
 		var _wrap = $('<div></div>').addClass('hide hover linkitem'),
 			_a = $(this).find('> a');
-		//リンク要素の必要情報を親要素へ再設定
-		$(this).attr({href : _a.attr('href'),title : _a.attr('title')}).html(_a.html()).wrap(_wrap);
-		//リンクを削除
+		//リンク情報を親要素へ移動
+		$(this).attr({
+			href : _a.attr('href'),
+			title : _a.attr('title')}).html(_a.html()).wrap(_wrap);
+		//リンクタグを削除
 		_a.remove();
 	});
 
 //ツールチップ
 	$('#wikibok-tooltip')
-		//位置固定・アイコン化
+		//位置固定
 		.setPosition({position : 'rt'},true)
 		//表示/非表示切り替え
 		.on('click','div.wikibok-link',function() {
 			var elem = $(this).get(0),
 				_count = $.data(elem,'click');
-			if(_count == undefined || _count == 0) {
-				$(this).find('.hide').show();
-				$(this).find('.ui-icon').addClass('ui-icon-circle-arrow-s');
-				$(this).find('.ui-icon').removeClass('ui-icon-circle-arrow-e');
-				_count = 1;
+			//$.toggleと同様の動作をさせる(設定イベントを順番に実行)
+			switch(_count) {
+				case 1:
+					$(this).find('.hide').hide();
+					$(this).find('.ui-icon').addClass('ui-icon-circle-arrow-e');
+					$(this).find('.ui-icon').removeClass('ui-icon-circle-arrow-s');
+					break;
+				case 0:
+				default:
+				//初回 Or 設定イベント回数以上になった場合
+					$(this).find('.hide').show();
+					$(this).find('.ui-icon').addClass('ui-icon-circle-arrow-s');
+					$(this).find('.ui-icon').removeClass('ui-icon-circle-arrow-e');
+					//実施カウント数を初期化
+					_count = 0;
+					break;
 			}
-			else {
-				$(this).find('.hide').hide();
-				$(this).find('.ui-icon').addClass('ui-icon-circle-arrow-e');
-				$(this).find('.ui-icon').removeClass('ui-icon-circle-arrow-s');
-				_count = 0;
-			}
+			//実施回数をカウントアップ
+			_count = _count + 1;
 			$.data(elem,'click',_count);
 		})
 		//ログイン処理
@@ -207,7 +216,7 @@ jQuery(function($) {
 				);
 			});
 		})
-		//別画面への遷移前の確認処理
+		//別画面への遷移前確認処理
 		.on('click','li.wikibok-linkcaution',function(e) {
 			var t = $(e.target);
 			if(t.hasClass('selected')) {
@@ -225,10 +234,9 @@ jQuery(function($) {
 						title: $.wikibok.wfMsg('common','button_ok','title'),
 						class: $.wikibok.wfMsg('common','button_ok','class'),
 						click: function() {
-							//ページ遷移を設定
+							//リンク先データの設定(ページ名称補完)
 							var	_h = t.attr('href'),
 									_name = $.wikibok.getPageName(),
-									//特別ページではページ名を補完しない
 									_uri = (wgCanonicalSpecialPageName || (_name.length < 1)) ? _h : _h+'#'+encodeURIComponent(_name);
 							$(this).dialog('close');
 							location.href = _uri;
@@ -244,26 +252,8 @@ jQuery(function($) {
 				}
 			);
 		});
-//検索ツール
-	$('#wikibok-search')
-		//位置固定・アイコン化
-		.setPosition({position : 'lb'},true)
-	//自動補完は別実行...
-	$('#wikibok-search').find('.text').autocomplete({
-		position : {my : 'left bottom',at : 'left top'},
-		appendTo : '#wikibok-search',
-		select : function() {
-			$(this).trigger('blur');
-		},
-		source : function(req,res) {
-			res($.map([],function(d){
-				return {label : d,value : d};
-			}));
-		},
-	});
-//編集ツール
+//編集ツール(共通)
 	$('#wikibok-edit')
-		//位置固定・アイコン化
 		.setPosition({position : 'rb'},true)
 		.on('click','.print',function() {
 			var svgs = $('svg').parent().each(function(){
@@ -277,7 +267,7 @@ jQuery(function($) {
 						[svg],
 						function(result) {
 							//PDF化したものをダウンロード
-							$('#wikibok-dwn').attr('src',cgi_uri+'?action=ajax&rs=WikiBokJs::download_pdf&rsargs[]='+result['outfile']);
+							$('#wikibok-dwn').attr('src',wgScript+'?action=ajax&rs=WikiBokJs::download_pdf&rsargs[]='+result['outfile']);
 							return false;
 						},
 						function() {},
@@ -287,7 +277,7 @@ jQuery(function($) {
 			}
 			
 		});
-//その他(Liveイベント定義)
+//イベント定義
 	$(document)
 		.on('click','.remine',function(e) {
 			//パスワード変更処理
@@ -315,7 +305,7 @@ jQuery(function($) {
 								_rp = $(this).find('.repass').val() || false,
 								j = ((_us && _op && _np && _rp) == false) ? 'EmptyItem' : ((_np != _rp) ? 'WrongPass' : true);
 							if(j == true) {
-								//旧パスワードの確認
+								//旧パスワード確認
 								wikiLogin({
 										lgname : _us,
 										lgpassword : _op
@@ -343,7 +333,7 @@ jQuery(function($) {
 																					lgname : _us,
 																					lgpassword : _np
 																				},function() {
-																					//リロードしてユーザ情報を更新...
+																					//リロードしてユーザ惁E��を更新...
 																					setTimeout(function(){location.reload(true);},100);
 																				}
 																			);
@@ -404,7 +394,7 @@ jQuery(function($) {
 			);
 		})
 		.on('click','.adduser',function(e) {
-			//新規アカウント作成処理
+			//新規アカウント作�E処琁E
 			$.wikibok.exDialog(
 				$.wikibok.wfMsg('wikibok-create-user','title'),
 				$('#wikibok-createaccount'),
@@ -431,7 +421,7 @@ jQuery(function($) {
 								_rn = $(this).find('.realname').val() || false,
 								j = ((_us && _np && _rp && _em && _rn) == false) ? 'EmptyItem' : ((_np != _rp) ? 'WrongPass' : true);
 							if(j == true) {
-								//CGIリクエスト
+								//CGIリクエスト(アカウント作成)
 								$.wikibok.requestCGI(
 									'WikiBokJs::createUserAccount',
 									[_us,_np,_em,_rn],
@@ -439,7 +429,7 @@ jQuery(function($) {
 										if(r.res == true) {
 											var w = $.wikibok.uniqueID('dialog',$.wikibok.wfMsg('wikibok-create-user','title'));
 											$('#'+w).dialog('close');
-											//ログイン処理を実施
+											//ログイン処理実施
 											$.wikibok.exDialog(
 												$.wikibok.wfMsg('wikibok-create-user','title')+' '+$.wikibok.wfMsg('common','success'),
 												$.wikibok.wfMsg('wikibok-create-user','success'),
@@ -496,8 +486,9 @@ jQuery(function($) {
 			var t = $.data(e.target,'id');
 			
 		});
-	//非表示項目を隠す
+	//非表示要素
 	$('.hide').hide();
+	//タイマ定義
 	$.timer.setIntervalTime(1*60*1000);
 	$.timer.add($.revision.sync);
 	$.timer.start();

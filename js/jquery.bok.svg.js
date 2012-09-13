@@ -4,15 +4,15 @@
  */
 (function($){
 	/**
-	 * パラメータ2つを元に座標表現文字列を作成
-	 * @param x 横[省略時:0]
-	 * @param y 縦[省略時:0]
+	 * パラメータ2つから座標表現文字列へ変更
+	 * @param x 横[省略:0]
+	 * @param y 縦[省略:0]
 	 */
 	function _pos(x,y) {
 		return (x || 0)+','+(y || 0);
 	}
 	/**
-	 * 指定半径の円に内接する横向き三角(▶)の座標文字列を作成
+	 * 表示半径に内接する三角形(▶)となる座標文字列を作成
 	 * @param r 半径
 	 */
 	function triangel(r) {
@@ -25,7 +25,8 @@
 			return mpos.join(' ');
 	}
 	/**
-	 * 指定半径の円に内接する正方形(■)の座標文字列を作成する
+	 * 表示半径に内接する四角形(■)となる座標文字列を作成
+	 * @param r 半径
 	 */
 	function rect(r) {
 		var
@@ -54,23 +55,24 @@
 	}
 	/**
 	 * BOK-XMLからD3ライブラリで利用するデータ形式に変換
-	 *   - XMLデータはthisとして渡すこと(callメソッド必須)
+	 *   - XMLデータをthisとして渡すこと(callメソッドを利用)
 	 */
 	function convert() {
 		var
 			me = $(this),
 			cs = [];
-		//同一階層のデータをチェック
+		//同一階層の子ノードをチェック
 		$.each(me,function(i,o) {
 			var
-				//	名称、子ノードの取得
 				n = $(o).find('>name').text(),
 				c = $(o).find('>nodes'),
 				cn = $(c).find('>node'),
 				_cs = null;
+			//子ノードを再帰(子ノード群として自身にデータを持つため)
 			if(c.length > 0) {
 				_cs = convert.call(cn);
 			}
+			//戻り値へ追加
 			cs.push({
 				name : n,
 				children : _cs
@@ -78,11 +80,17 @@
 		});
 		return cs;
 	}
+	/**
+	 * データロード
+	 */
 	function load(xml) {
 		var	root = convert.call($(xml));
 		allData = root[0];
 		return update(allData)
 	}
+	/**
+	 * 描画更新
+	 */
 	function update(source) {
 		var
 			diagonal = d3.svg
@@ -90,33 +98,38 @@
 				.projection(function(d) {
 					return [((d.y == undefined) ? 0 : d.y) , ((d.x == undefined) ? 0 : d.x)]
 				}),
+			//ノード
 			nodes = tree.nodes(allData).reverse().filter(function(d){
-				//TOPノードを排除
+				//depth=0は疑似TOPノードなので排除
 				return (d.depth > 0);
 			}),
+			//リンク(エッジ)
 			links = tree.links(nodes).filter(function(d) {
 				return (d.source.depth > 0);
-			});
+			}),
+			node,
+			link,
+			add;
+		//キャンパスサイズを再計算
 		setSize(getSize());
 		//深さで横位置を決定
 		nodes.forEach(function(d) {
 			d.y = (d.depth - 1) * options.w + d.depth * 5;
 		});
-		var
-			i = 0,
-			node = vis
-				.selectAll('g.node')
-				.data(nodes,function(d){return d.id || (d.id = ++i);}),
-			link = vis
-				.selectAll('path.link')
-				.data(links,function(d){return d.target.id;}),
-			add = node.enter()
-				.append('svg:g')
-				.attr('id',function(d) {return d.name})
-				.attr('transform',function(d) {
-					return 'translate('+_pos(source.y0,source.x0)+')';
-				})
-				.classed('node',true);
+		//各要素をObject化
+		node = vis
+			.selectAll('g.node')
+			.data(nodes,function(d){return d.id || (d.id = ++i);}),
+		link = vis
+			.selectAll('path.link')
+			.data(links,function(d){return d.target.id;}),
+		add = node.enter()
+			.append('svg:g')
+			.attr('id',function(d) {return d.name})
+			.attr('transform',function(d) {
+				return 'translate('+_pos(source.y0,source.x0)+')';
+			})
+			.classed('node',true);
 
 		//折り畳み用アイコンタグの追加
 		add.append('svg:polygon')
@@ -124,9 +137,10 @@
 				var	r = d.r || 4.5;
 				return (d.children ? rect(r) : ((d._children) ? triangel(r) : rect(r)));
 			})
+			//クリックイベントを基本(折畳/展開)+追加(init設定にて変更可能)の2つ設定
 			.on('click.add', options.polygonClick)
 			.on('click.orig', function(d) {
-				//トグル動作
+				//トグル動佁E
 				if (d.children) {
 					d._children = d.children;
 					d.children = null;
@@ -145,6 +159,7 @@
 			.text(function(d) { return d.name; })
 			.on('click.add', options.textClick)
 			.on('click.orig', function(d){});
+		//ノード要素
 		node
 			.classed(options.node.class,options.node.func)
 			.transition()
@@ -152,17 +167,21 @@
 			.attr('transform',function(d) {
 				return 'translate('+_pos(d.y,d.x)+')';
 			})
+		//アイコンのみを限定選択
 		.selectAll('polygon')
 			.attr('data',function(d){return d.name;})
 			.attr('points',function(d){
 				var r = d.r || 4.5;
+				//折畳/展開の状態によって表示形状を変える
 				return (d.children ? rect(r) : ((d._children) ? triangel(r) : rect(r)));
 			});
+		//ノードの消去時
 		node.exit().transition()
 			.duration(options.duration)
 			.attr('transform',function(d) {return 'translate('+_pos(source.y,source.x)+')'})
+			.style('opacity', 1e-6)
 			.remove();
-		//エッジタグ
+		//エッジ要素
 		link.enter()
 				.insert('svg:path','g')
 				.classed('link',true)
@@ -170,6 +189,7 @@
 					var o = {x:(d.source.x0 || 0),y:(d.source.y0 || 0)};
 					return diagonal({source: o , target : o});
 				})
+				//クリックイベントを基本(未設定)+追加(init設定にて変更可能)の2つ設定
 				.on('click.add',options.pathClick)
 				.on('click.orig',function(d){});
 		link.transition()
@@ -192,40 +212,109 @@
 			d.y0 = d.y;
 		});
 	}
+	/**
+	 * ノードを追加する
+	 * @param a 追加するノードの名称
+	 * @param b 追加するノードの親ノード名称
+	 */
 	function addNode(a,b) {
 		var
 			c = {name : a,children : null},
-			p = searchNode('')[0],
-			add = p.children || p._children || [];
-		if(serarchNode(a) == false) {
-			add.push(c);
+			pname = (arguments.length < 2) ? '' : b,
+			//指定なし/見つからない場合=>疑似TOPに追加
+			p = searchNode(pname) || allData,
+			//どちらもなかった場合、表示するように追加
+			add = p._children || p.children || false;
+		if(searchNode(a) !== false) {
+			alert('もうある')
 		}
 		else {
-			//既存ノードあり
+			if(add == false) {
+				p.children = [c];
+			}
+			else {
+				add.push(c);
+			}
+			update(p);
 		}
+		actNode(a);
 	}
+	/**
+	 * ノードを移動する
+	 * @param a 移動対象のノード名称
+	 * @param b 移動先のノード名称
+	 */
 	function moveNode(a,b) {
 		var
-			c = (serarchNode(a))[0],
-			p = (serarchNode(b) || searchNode(''))[0],
+			c = serarchNode(a),
+			p = serarchNode(b),
 			add = p.children || p._children || [],
-			del = c.parent.children || c.parent._children,
-			del_id;
-		if(seachNode(a) == false) {
+			//元ノードを削除するため...
+			del = c.parent.children || c.parent._children || false;
+		add.push(c);
+		del = $.map(del,function(d) {
+			if(d !== c) {
+				return d;
+			}
+		});
+//		update(c);
+//		update(p);
+	}
+	/**
+	 * ノードを削除する
+	 * @param a 対象ノード名称
+	 * @para, b 対象ノード配下の子ノードの扱い[true:一緒に削除/false:上位ノードへ移動] 省略時は削除
+	 */
+	function delNode(a,b) {
+		var
+			c = searchNode(a),
+			p = c.parent || false,
+			del = p.children || p._children || false,
+			cc = c.children || c._children || false,
+			move = (arguments.length < 2 || b == undefined) ? true : b,
+			i;
+			
+		//自身の子ノードを上位ノードに移動する必要がある場合
+		if(cc !== false && move) {
+			//子ノード毎に移動処理を実施
+			i = cc.length;
+			while(--i >= 0) {
+				moveNode(cc[i],p);
+			}
+		}
+		del = $.map(del,function(d) {
+			if(d !== c) {
+				return d;
+			}
+		});
+//		update(c);
+//		update(p);
+	}
+	/**
+	 * ノードの名前を変更する
+	 * @param 変更前の名前
+	 * @param 変更後の名前
+	 */
+	function renameNode(a,b) {
+		var
+			all = allData,
+			after = all.filter(function(d){return d.name == b}),
+			before = searchNode(a);
+		//変更後の名称が使用済み
+		if(after.length < 1) {
+			alert('エラー');
 		}
 		else {
-			add.push(c);
-			del_id = $.map(del,function(d,i) {if (d.name == a) return i}).reverse();
-			$.each(del_id,function(d) {
-				del.splice(d,1);
-			});
+			//変更前のノード名があることを確認
+			if(before.length == 1) {
+				before.name = b;
+			}
+//			update(before);
 		}
-//			update(allData);
-	}
-	function delNode() {
 	}
 	/**
 	 * キャンパスサイズを設定
+	 * @param s (配列[幅,高])
 	 */
 	function setSize(s) {
 		var
@@ -256,7 +345,109 @@
 		vis = svg.append('svg:g')
 			.attr('transform','translate(10,10)');
 	}
+	/**
+	 * 対象ノードを検索
+	 * @param a 対象ノード名称
+	 */
+	function searchNode(a) {
+		var
+			target = (arguments.length < 1 || a == '')
+				? []
+				: $.map(allNode(),function(d){
+					if(d.name == a) {
+						return d;
+					}
+				});
+		return (target.length < 1) ? false : target[0];
+	}
+	/**
+	 * 対象ノードを選択表示
+	 * @param a 対象ノード名称
+	 */
+	function actNode(a) {
+		openTree(a)
+		clearClassed('active');
+		classed(a,'active');
+	}
+	/**
+	 * 対象ノードまでを展開
+	 * @param a 対象ノード名称
+	 */
+	function openTree(a) {
+		var
+			target = $.map(allNode(),function(d){
+				if(d.name == a) {
+					return d;
+				}
+			});
+		//対象ノードまでを展開
+		(function() {
+			var p = this.parent || false;
+			if(p === false) {
+				return;
+			}
+			else {
+				//展開済み状態に変更
+				if(p._children) {
+					p.children = p._children;
+					p._children = null;
+					update(p);
+				}
+				arguments.callee.call(p);
+			}
+		}).call(target);
+	}
+	/**
+	 * 対象の[svg:g]ノードにCSS-Classを追加/削除する
+	 * @param a 対象ノードID
+	 * @param b 設定CSS名称
+	 * @param c true(追加)/false(削除)
+	 */
+	function classed(a,b,c) {
+		var
+			_id = (typeof a == 'string') ? a : a.name,
+			tid = (_id.indexOf('#') < 0) ? 'g#'+_id : 'g'+_id,
+			cls = (arguments.length < 2) ? 'active' : b,
+			flg = (arguments.length < 3) ? true : c;
+		//対象ノードのみ選択済み[active]クラスを追加
+		d3.selectAll(tid).classed(cls,flg);
+	}
+	/**
+	 * 指定したクラスをすべてのノードから削除する
+	 * @param cls  クラス名称
+	 * @param node 対象ノード[省略時:g(ノード全体)]
+	 */
+	function clearClassed(cls,node) {
+		var n = (arguments.length < 2) ? 'g' : node
+		d3.selectAll(n).classed(cls,false);
+	}
+	function changeColor(a,b) {
+	}
+	/**
+	 * 折り畳み済みのものも含めすべてのノードデータを取得
+	 */
+	function allNode() {
+		var nodes = [];
+		(function(c) {
+			//子ノード[展開:children/折畳:_children]
+			var child = this.children || this._children || false;
+			if(this.name != '') {
+				c.push(this);
+			}
+			//子ノードに対して再帰的に処理する
+			if(child === false) {
+				return;
+			}
+			else {
+				for(var i=0;i<child.length;i++) {
+					arguments.callee.call(child[i],c);
+				}
+			}
+		}).call(allData,nodes);
+		return nodes;
+	}
 	var
+		i = 0,
 		tree,
 		svg,
 		vis,
@@ -285,7 +476,11 @@
 					update(source);
 				}
 			},
-			addNode : addNode
+			addNode : addNode,
+			actNode : actNode,
+			allNode : allNode,
+			classed : classed,
+			clearClassed : clearClassed,
 		};
 	$.fn.extend({
 		bok : BokEditor.init,
