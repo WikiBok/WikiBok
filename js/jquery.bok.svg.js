@@ -12,7 +12,7 @@
 		return (x || 0)+','+(y || 0);
 	}
 	/**
-	 * 表示半径に内接する三角形(▶)となる座標文字列を作成
+	 * 表示半径に内接する三角形(笆ｶ)となる座標文字列を作成
 	 * @param r 半径
 	 */
 	function triangel(r) {
@@ -140,7 +140,7 @@
 			//クリックイベントを基本(折畳/展開)+追加(init設定にて変更可能)の2つ設定
 			.on('click.add', options.polygonClick)
 			.on('click.orig', function(d) {
-				//トグル動佁E
+				//トグル動菴・
 				if (d.children) {
 					d._children = d.children;
 					d.children = null;
@@ -222,7 +222,11 @@
 			c = {name : a,children : null},
 			pname = (arguments.length < 2) ? '' : b,
 			//指定なし/見つからない場合=>疑似TOPに追加
-			p = searchNode(pname) || allData,
+			p = searchNode(pname) || allData || {
+				name : '',
+				children : null,
+				_children : null,
+			},
 			//どちらもなかった場合、表示するように追加
 			add = p._children || p.children || false;
 		if(searchNode(a) !== false) {

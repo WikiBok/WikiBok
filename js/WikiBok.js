@@ -1,5 +1,5 @@
 jQuery(function($) {
-	//ログイン処琁E
+	//ログイン処逅・
 	function wikiLogin(param,sfunc,nfocus) {
 		var me = this,
 				_param = $.extend({},{
@@ -333,7 +333,7 @@ jQuery(function($) {
 																					lgname : _us,
 																					lgpassword : _np
 																				},function() {
-																					//リロードしてユーザ惁E��を更新...
+																					//リロードしてユーザ諠・ꀀｱを更新...
 																					setTimeout(function(){location.reload(true);},100);
 																				}
 																			);
@@ -394,7 +394,7 @@ jQuery(function($) {
 			);
 		})
 		.on('click','.adduser',function(e) {
-			//新規アカウント作�E処琁E
+			//新規アカウント作諱E処逅・
 			$.wikibok.exDialog(
 				$.wikibok.wfMsg('wikibok-create-user','title'),
 				$('#wikibok-createaccount'),

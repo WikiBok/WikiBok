@@ -262,7 +262,7 @@ class WikiBokJs {
 	 * BOK-XMLデータ保存用DBへの接続を取得
 	 * @param $user	ログインユーザID
 	 */
-	private function getDB() {
+	private static function getDB() {
 		//BOKデータベースへ接続
 		$db = new RevisionDB(BOK_DATABASE_HOST,
 							 BOK_DATABASE_DB,
