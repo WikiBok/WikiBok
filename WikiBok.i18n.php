@@ -198,6 +198,7 @@ $messages['ja'] = array(
 			'bok'=>array(
 				'headline1'=>'追加対象ノード名称',
 				'headline2'=>'新規ノード名称',
+				'headline3'=>'記事内容',
 				'button' => array(
 					'text' => 'ノード作成',
 					'title' => '新しいBOKノードを作成します',

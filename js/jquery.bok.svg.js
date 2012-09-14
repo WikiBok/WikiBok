@@ -125,7 +125,7 @@
 			.data(links,function(d){return d.target.id;}),
 		add = node.enter()
 			.append('svg:g')
-			.attr('id',function(d) {return d.name})
+			.attr('data',function(d) {return d.name})
 			.attr('transform',function(d) {
 				return 'translate('+_pos(source.y0,source.x0)+')';
 			})
@@ -155,7 +155,6 @@
 		add.append('svg:text')
 			.attr('x', 8)
 			.attr('y', 3)
-			.attr('data',function(d){return d.name;})
 			.text(function(d) { return d.name; })
 			.on('click.add', options.textClick)
 			.on('click.orig', function(d){});
@@ -169,7 +168,6 @@
 			})
 		//アイコンのみを限定選択
 		.selectAll('polygon')
-			.attr('data',function(d){return d.name;})
 			.attr('points',function(d){
 				var r = d.r || 4.5;
 				//折畳/展開の状態によって表示形状を変える
@@ -403,18 +401,18 @@
 	}
 	/**
 	 * 対象の[svg:g]ノードにCSS-Classを追加/削除する
-	 * @param a 対象ノードID
+	 * @param a 対象ノード名称
 	 * @param b 設定CSS名称
 	 * @param c true(追加)/false(削除)
 	 */
 	function classed(a,b,c) {
 		var
 			_id = (typeof a == 'string') ? a : a.name,
-			tid = (_id.indexOf('#') < 0) ? 'g#'+_id : 'g'+_id,
+			target = 'g[data="'+_id+'"]',
 			cls = (arguments.length < 2) ? 'active' : b,
 			flg = (arguments.length < 3) ? true : c;
 		//対象ノードのみ選択済み[active]クラスを追加
-		d3.selectAll(tid).classed(cls,flg);
+		d3.selectAll(target).classed(cls,flg);
 	}
 	/**
 	 * 指定したクラスをすべてのノードから削除する

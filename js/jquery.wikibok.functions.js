@@ -362,7 +362,7 @@
             generator : 'allpages',
             gapnamespace : wgNsDesc,
             prop : 'info',
-            gaplimit : ((_one) ? 500 : 1)
+            gaplimit : ((_one === true) ? 1 : 500)
           },{
             gapfrom : ((arguments.length < 1) ? '' : next)
           });
@@ -427,7 +427,7 @@
       function findDescriptionPage(a,b,c) {
         var
           inp = a.replace(/\W/g,'\\$&'),
-          reg = new RegExp((arguments.length < 2) ? inp : ((b) ? ('^'+inp+'$') : inp)),
+          reg = new RegExp((arguments.length < 2) ? inp : ((!b) ? ('^'+inp+'$') : inp)),
           pagesize = (arguments.length < 3) ? 0 : ((c == true) ? 1 : 0);
         return $.map(description_pages,function(d) {
           if(d.name.match(reg)) {
@@ -476,9 +476,12 @@
         requestAPI(
           _pdata,
           function(dat,stat,xhr) {
-            if(dat['parse']['text']['*'] != undefined && dat['parse']['displaytitle'] != undefined) {
+            if(dat['parse'] != undefined && dat['parse']['text']['*'] != undefined && dat['parse']['displaytitle'] != undefined) {
               //記事の取得に成功
               def.resolve(dat);
+            }
+            else {
+              def.reject(dat['error']);
             }
           },
           function(xhr,stat,err) {
@@ -941,10 +944,10 @@
     },
     /**
      * @param _opt 自動補完に設定するパラメータ
-     * @param _dat $.Defferdオブジェクトで指定し、
+     * @param _dat $.Deferredオブジェクトで指定し、
      *             resolve|reject関数の引数に設定用データを返す
      */
-    setAutoComplete : function(_opt,_dat,_ext,_top) {
+    setCompleteDescription : function(_opt,_dat,_ext,_top) {
       var
         alldata = false,
         top = (arguments.length < 4) ? true : _top,
@@ -990,30 +993,37 @@
           emptyItem : $.wikibok.wfMsg('wikibok-description','listview','empty'),
           view : $('<div/>'),
           time : false,
-          get : function(ev,ui) {
+          //表示要素へ記事内容を表示
+          get : function(ui) {
             var p = this;
+            ext.view.html('loading...');
+            //連続イベントをある程度抑止
             if(ext.time !== false) {
               clearTimeout(ext.time);
             }
             ext.time = setTimeout(function() {
-              $.wikibok.getDescriptionPage(ui.item.value,[])
+              //記事内容の取得$.Deferredオブジェクト
+              $.wikibok.getDescriptionPage(ui,[])
               .done(function(d) {
-                ext.view.html(($(d['parse']['text']['*']).html() == null) ? ext.emptyItem : d['parse']['text']['*']);
+                //取得に成功したので記事内容を書き換え
+                var
+                  t = d['parse']['text']['*'],
+                  ht= $(t).html(),
+                  ot= $('<div/>').html(ht);
+                if(ht == null) {
+                  ext.view.html(ext.emptyItem)
+                }
+                else {
+                  //リンクを停止...
+                  $(ot).find('a').removeAttr('title').removeAttr('href');
+                  ext.view.html($(ot).html());
+                }
               })
               .fail(function() {
-                ext.view.html(emptyItem);
-              })
-              .always(function() {
-                //記事詳細の表示位置設定
-                ext.view.show();
-                ext.view.position({
-                  my : 'left bottom',
-                  at : 'right bottom',
-                  of : p,
-                  collision : 'fit',
-                });
+                //記事がない場合、規定文字へ
+                ext.view.html(ext.emptyItem);
               });
-            },100)
+            },500);
           }
         },_ext);
       return $.each(this,function() {
@@ -1021,20 +1031,19 @@
           elem = $(this).autocomplete(opt),
           widget = elem.autocomplete('widget');
         if(ext !== false) {
-          widget.after(ext.view);
-          ext.view.addClass('wikibok ui-autocomplete description').hide();
-          ext.view.css('z-index', parseInt(widget.css('z-index')) + 1);
+          ext.view.addClass('wikibok ui-autocomplete description');
           //追加イベント定義
-          elem.on('autocompletefocus.wikibok',widget,function(ev,ui) {
-            if(ext !== false) {
-              ext.get.apply(widget,arguments);
-            }
-          }).on('autocompleteselect.wikibok',widget,function(ev,ui) {
-          }).on('autocompleteclose.wikibok',widget,function(ev,ui) {
-            if(ext !== false) {
-              ext.view.hide();
-            }
-          });
+          elem
+            .on('blur.wikibok',function(ev) {
+              if(ext !== false) {
+                ext.get.call(widget,$(ev.target).val());
+              }
+            })
+            .on('autocompletefocus.wikibok',widget,function(ev,ui) {
+              if(ext !== false) {
+                ext.get.call(widget,ui.item.value);
+              }
+            });
         }
         return this;
       });

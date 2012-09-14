@@ -24,7 +24,6 @@ jQuery(function($) {
         }
       }
     });
-//  $.extend({mySvg : svg});
   function moveNode(a,b) {
     $.wikibok.requestCGI(
       'WikiBokJs::moveNodeRequest',
@@ -56,13 +55,11 @@ jQuery(function($) {
       //後から選択した方が親
       case 'parent':
         alert("親:"+tid+"\n子:"+pid);
-        svg.addNode(pid,tid);
         mode = 'normal';
         break;
       //後から選択した方が子
       case 'childs':
         alert("親:"+pid+"\n子:"+tid);
-        svg.addNode(tid,pid);
         mode = 'normal';
         break;
       //BOK上に表示しないノードを複数選択
@@ -135,7 +132,6 @@ jQuery(function($) {
               })
               .on('click','.bokeditor-node-create',function(a,b) {
                 createNewNode(tid);
-                
               })
               .on('click','.bokeditor-represent',function(a,b) {
                 pid = tid;
@@ -155,11 +151,14 @@ jQuery(function($) {
     var
       _id = $.wikibok.uniqueID('dialog',$.wikibok.wfMsg('wikibok-new-element','title')),
       inp = '<dt>'+$.wikibok.wfMsg('wikibok-new-element','bok','headline2')+'</dt>'
-          + '<dd><input type="text" name="name" class="name"/></dd>',
+          + '<dd class="create_new_node"><input type="text" name="name" class="name"/></dd>',
       tmp = '<dl>'
           + ((arguments.length < 1)
           ? inp
           : '<dt>'+$.wikibok.wfMsg('wikibok-new-element','bok','headline1')+'</dt><dd>'+a+'</dd>' + inp)
+          + '<dt><hr/></dt>'
+          + '<dt>'+$.wikibok.wfMsg('wikibok-new-element','bok','headline3')+'</dt>'
+          + '<dd class="create_new_node description">loading...</dd>'
           + '</dl>',
       addTo =(arguments.length < 1) ? '' : a;
     if($('#'+_id).dialog('isOpen')) {
@@ -169,6 +168,7 @@ jQuery(function($) {
       $.wikibok.wfMsg('wikibok-new-element','title'),
       '',
       {
+        width : 500,
         create : function() {
         },
         open : function() {
@@ -178,12 +178,14 @@ jQuery(function($) {
             next : $.wikibok.wfMsg('wikibok-new-element','bok','button','class'),
             prev : $.wikibok.wfMsg('common','button_close','class')
           }]);
-          $(this).find('input.name').setAutoComplete({
+          $(this).find('input.name').setCompleteDescription({
             position : {
               my : 'left bottom',
               at : 'right bottom',
             },
-          },{},{});
+          },{},{
+            view : $(this).find('dd.description')
+          });
         },
         buttons : [{
           text : $.wikibok.wfMsg('wikibok-new-element','bok','button','text'),
@@ -191,11 +193,23 @@ jQuery(function($) {
           title: $.wikibok.wfMsg('wikibok-new-element','bok','button','title'),
           click: function(){
             var
-              newName = $(this).find('input.name').val();
+              newName = $(this).find('input.name').val(),
+              error = false;
             if(newName == '') {
-              alert("ちゃんと入力しろ!\n失敗");
+              error = $.wikibok.wfMsg('wikibok-new-element','error','empty');
+            }
+            if(svg.allNode().filter(function(d) {return d.name == newName}).length > 0) {
+              error = $.wikibok.wfMsg('wikibok-new-element','error','already');
+            }
+            if(error !== false) {
+              $.wikibok.exDialog(
+                $.wikibok.wfMsg('wikibok-new-element','title')+' '+$.wikibok.wfMsg('common','error'),
+                error,
+                {}
+              );
             }
             else {
+              alert('サーバリクエスト');
               svg.addNode(newName,addTo);
             }
           }
