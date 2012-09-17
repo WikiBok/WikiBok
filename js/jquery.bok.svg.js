@@ -259,6 +259,8 @@
 				return d;
 			}
 		});
+		c.parent.children = del;
+		p.children = add;
 //		update(c);
 //		update(p);
 	}
@@ -277,20 +279,19 @@
 			i;
 			
 		//自身の子ノードを上位ノードに移動する必要がある場合
-		if(cc !== false && move) {
+		if(cc !== false && move !== false) {
 			//子ノード毎に移動処理を実施
 			i = cc.length;
 			while(--i >= 0) {
 				moveNode(cc[i],p);
 			}
 		}
-		del = $.map(del,function(d) {
+		p.children = $.map(del,function(d) {
 			if(d !== c) {
 				return d;
 			}
 		});
-//		update(c);
-//		update(p);
+		update(p);
 	}
 	/**
 	 * ノードの名前を変更する
@@ -481,6 +482,7 @@
 			addNode : addNode,
 			actNode : actNode,
 			allNode : allNode,
+			delNode : delNode,
 			classed : classed,
 			clearClassed : clearClassed,
 		};

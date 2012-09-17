@@ -122,10 +122,10 @@ jQuery(function($) {
                 mode = 'childs';
               })
               .on('click','.bokeditor-only-delete',function(a,b) {
-                alert('のみ削除:'+tid);
+                svg.delNode(tid,false);
               })
               .on('click','.bokeditor-node-delete',function(a,b) {
-                alert('以下削除:'+tid);
+                svg.delNode(tid,true);
               })
               .on('click','.bokeditor-edge-delete',function(a,b) {
                 alert('紐削除:'+tid);
@@ -211,6 +211,7 @@ jQuery(function($) {
             else {
               alert('サーバリクエスト');
               svg.addNode(newName,addTo);
+              $(this).dialog('close');
             }
           }
         },{
