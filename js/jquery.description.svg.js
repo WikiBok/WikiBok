@@ -10,13 +10,6 @@
 		svg = d3.select(this.get(0)).append('svg:svg').attr('id','BokXml');
 		vis = svg.append('svg:g')
 			.attr('transform','translate(10,10)');
-		//クリックで描画更新を停止
-		$('#BokXml').on('click',function() {
-			//何も書かれていない場合を考慮して、一度描画計算処理をする
-			draw = true;
-			force.tick();
-			force.stop();
-		});
 	}
 	/**
 	 * 対象の[svg:g]ノードにCSS-Classを追加/削除する
@@ -27,7 +20,7 @@
 	function classed(a,b,c) {
 		var
 			_id = (typeof a == 'string') ? a : a.name,
-			target = '',
+			target = 'g[data="'+_id+'"]',
 			cls = (arguments.length < 2) ? 'active' : b,
 			flg = (arguments.length < 3) ? true : c;
 		//対象ノードのみ選択済み[active]クラスを追加
@@ -46,27 +39,28 @@
 	 * レイアウト位置算出1回ごとのイベント処理
 	 */
 	function tick(ev) {
-		if(draw == false) {
-			draw = (ev.alpha < 0.04);
-			return;
+		if(draw !== true) {
+			draw = (ev.alpha < 0.07);
 		}
-		//紐付描画
-		path.selectAll('path')
-			.attr('d',function(d) {
-				var
-					dx = d.target.x - d.source.x,
-					dy = d.target.y - d.source.y,
-					dr = Math.sqrt(dx * dx + dy * dy);
-				return 'M'+d.source.x+','+d.source.y+' '+d.target.x+','+d.target.y;
-			});
-		path.selectAll('text')
-			.attr('x',function(d) {return d.target.x - ((d.target.x - d.source.x) / 2);})
-			.attr('y',function(d) {return d.target.y - ((d.target.y - d.source.y) / 2);});
-		//記事○位置
-		descs
-			.attr('transform',function(d){
-				return 'translate('+d.x+','+d.y+')';
-			});
+		else {
+			//紐付描画
+			path.selectAll('path')
+				.attr('d',function(d) {
+					var
+						dx = d.target.x - d.source.x,
+						dy = d.target.y - d.source.y,
+						dr = Math.sqrt(dx * dx + dy * dy);
+					return 'M'+d.source.x+','+d.source.y+' '+d.target.x+','+d.target.y;
+				});
+			path.selectAll('text')
+				.attr('x',function(d) {return d.target.x - ((d.target.x - d.source.x) / 2);})
+				.attr('y',function(d) {return d.target.y - ((d.target.y - d.source.y) / 2);});
+			//記事○位置
+			descs
+				.attr('transform',function(d){
+					return 'translate('+d.x+','+d.y+')';
+				});
+		}
 	}
 	/**
 	 *
@@ -74,7 +68,6 @@
 	function update() {
 		var
 			addDesc,addPath,
-			_circle,
 			_desc;
 	//データ定義
 		descs = vis
@@ -109,7 +102,25 @@
 			.classed('empty',options.emptyFunc)
 			.classed('node',true);
 		addDesc.append('svg:circle')
-			.attr('r',6);
+			.attr('r',6)
+			.on('mouseover.orig',function(d){
+/*
+				var
+					t = $(this).next().children(),
+					z = parseInt(t.css('z-index')) || 10;
+				$.data($(this).get(0),'z-i',z);
+				t.each(function(){$(this).css('z-index',99999)});
+*/
+			})
+			.on('mouseout.orig',function(d){
+/*
+				var
+					t = $(this).next().children(),
+					z = $.data($(this).get(0),'z-i');
+				$.removeData($(this).get(0),'z-i')
+				t.each(function(){$(this).css('z-index',z)});
+*/
+			});
 		_desc = addDesc.append('svg:g')
 			.on('click.add',options.textClick)
 			.on('click.orig',function(){
@@ -296,6 +307,17 @@
 			.attr('viewBox','0 0 '+parseInt(_size)+' '+parseInt(_size));
 		force.size([_size,_size]);
 	}
+	function allNode() {
+		return $.map(nodes,function(d){
+			if(typeof d.name =='string' && d.name.length > 0) {
+				return d;
+			}
+		});
+	}
+	function actNode(a) {
+		clearClassed('active');
+		classed(a,'active');
+	}
 	var
 		advDrag = d3.behavior.drag()
 			.on('dragstart',function(d,i) {
@@ -366,6 +388,13 @@
 						.append('path')
 						.attr('d', 'M0,0L0,5L5,2.5L0,0');
 				setSize();
+				//クリックで描画更新を停止
+				$('#BokXml').on('click',function() {
+					//何も書かれていない場合を考慮して、一度描画計算処理をする
+					draw = true;
+					force.tick();
+					force.stop();
+				});
 				update();
 				force.start();
 			},
@@ -376,6 +405,8 @@
 			linkconvert: linkconvert,
 			addDescription : addDescription,
 			links : _links,
+			actNode : actNode,
+			allNode : allNode,
 		};
 	$.fn.extend({
 		description : DescriptionEditor.init,

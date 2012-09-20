@@ -280,14 +280,6 @@ dl.context dd {
 .imagefileslist td {
 	border: 1px solid #330000;
 }
-g.active > text{
-	fill : #FF0000;
-}
-g.active > polygon,
-g.active > circke {
-	fill : #FF0000;
-	stroke : #FF0000;
-}
 .create_new_node,
 .create_new_node > input {
 	width : 300px;

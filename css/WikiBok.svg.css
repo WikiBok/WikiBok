@@ -3,9 +3,6 @@ g.node {
     cursor : pointer;
     fill-opacity : 1.0
 }
-g.empty > polygon{
-    fill-opacity : 0.2
-}
 /* BOKEditor */
 /* アイコン用 */
 polygon {
@@ -33,29 +30,29 @@ g.edge path {
 /* 種類別の色指定(エッジ) */
 /* 種類別の色指定(マーカ:エッジ矢印) */
 g.smw path {
-    stroke : #F00;
+    stroke : #C99;
     /* 点線 */
     stroke-dasharray: 1 2,2 1;
 }
 g.bok path {
-    stroke : #00F;
+    stroke : #CCF;
     stroke-dasharray: 2 1,1 2;
 }
 g.prebok path {
-    stroke : #0FF;
+    stroke : #CFF;
     stroke-dasharray: 1,3,1;
 }
 marker#smw {
-	stroke : #F00;
-	fill : #F00;
+	stroke : #C99;
+	fill : #C99;
 }
 marker#bok {
-	stroke : #00F;
-	fill : #00F;
+	stroke : #CCF;
+	fill : #CCF;
 }
 marker#prebok {
-	stroke : #0FF;
-	fill : #0FF;
+	stroke : #CFF;
+	fill : #CFF;
 }
 
 
@@ -89,5 +86,22 @@ text.shadow {
     stroke-width: 3px;
 }
 g.smw.edge text {
-    fill : #FCC;
+    fill : #C99;
+}
+
+/* 記事内容が何もない場合 */
+g.empty > polygon{
+    fill-opacity : 0.2
+}
+/* 検索結果：強調 */
+g.active > text,
+g.active > g > text{
+	fill : #FF0000;
+}
+g.active > polygon {
+	fill : #FF0000;
+	stroke : #FF0000;
+}
+g.active > circle {
+	stroke : #FF0000;
 }

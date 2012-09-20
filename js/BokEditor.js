@@ -437,7 +437,7 @@ jQuery(function($) {
 						}
 						else {
 							svg.actNode(h);
-							aNode.scrollTo();
+							$.scrollTo(aNode);
 						}
 					}
 				}

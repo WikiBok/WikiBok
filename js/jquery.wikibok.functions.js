@@ -1100,7 +1100,8 @@
 			 */
 			function getData(text) {
 				var
-					reg = new RegExp(text,'igm'),
+					txt = text.replace(/\W/g,'\\$&'),
+					reg = new RegExp(txt,'igm'),
 					nodes = obj.allNode(),
 					node = (text == '') ? nodes : nodes.filter(function(d) {
 						return d.name.match(reg);
@@ -1115,8 +1116,12 @@
 			 * 検索結果番号から対象のノードを取得
 			 */
 			function active(act) {
+				var
+					o = result.dat[act];
 				result.act = act;
-				obj.actNode(result.dat[act]);
+				obj.actNode(o);
+				//スクロール...
+				$.scrollTo($('g[data="'+o.name+'"]'));
 				return ;
 			}
 			/**
@@ -1167,7 +1172,7 @@
 					}
 				})
 				.on('click',opt.list,function() {
-				
+					//未実装
 				})
 			//入力補完機能の設定
 			$(this).find(opt.text).autocomplete({
