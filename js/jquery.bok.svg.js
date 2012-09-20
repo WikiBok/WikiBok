@@ -41,6 +41,9 @@
 			];
 			return mpos.join(' ');
 	}
+	/**
+	 * ノード検索
+	 */
 	function serarchNode(a,b) {
 		var
 			_target,
@@ -99,7 +102,8 @@
 					return [((d.y == undefined) ? 0 : d.y) , ((d.x == undefined) ? 0 : d.x)]
 				}),
 			//ノード
-			nodes = tree.nodes(allData).reverse().filter(function(d){
+			//nodes = tree.nodes(allData).reverse().filter(function(d){
+			nodes = tree.nodes(source).reverse().filter(function(d){
 				//depth=0は疑似TOPノードなので排除
 				return (d.depth > 0);
 			}),
@@ -166,6 +170,9 @@
 			.attr('transform',function(d) {
 				return 'translate('+_pos(d.y,d.x)+')';
 			})
+		//記事名称の書き換えを即時展開
+		.selectAll('text').transition()
+			.text(function(d){return d.name;})
 		//アイコンのみを限定選択
 		.selectAll('polygon')
 			.attr('points',function(d){
@@ -300,20 +307,16 @@
 	 */
 	function renameNode(a,b) {
 		var
-			all = allData,
-			after = all.filter(function(d){return d.name == b}),
-			before = searchNode(a);
-		//変更後の名称が使用済み
-		if(after.length < 1) {
-			alert('エラー');
-		}
-		else {
-			//変更前のノード名があることを確認
-			if(before.length == 1) {
+			before = searchNode(a),
+			after = $.map(allNode,function(d){if(d.name == b) return d});
+		if(before !== false) {
+			if(after.length < 1) {
 				before.name = b;
+				update(before);
+				return true;
 			}
-//			update(before);
 		}
+		return false;
 	}
 	/**
 	 * キャンパスサイズを設定
@@ -462,7 +465,10 @@
 			node : {
 				class : '',
 				func : function() {return false;}
-			}
+			},
+			polygonClick : function(){},
+			pathClick : function() {},
+			textClick : function() {},
 		},
 		BokEditor = {
 			init : function(option) {
@@ -483,6 +489,7 @@
 			actNode : actNode,
 			allNode : allNode,
 			delNode : delNode,
+			renameNode : renameNode,
 			classed : classed,
 			clearClassed : clearClassed,
 		};

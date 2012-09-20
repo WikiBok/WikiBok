@@ -378,99 +378,55 @@ class WikiBokJs {
 	 * DescriptionEditor表示データの取得
 	 */
 	public static function getDescriptionJson($rev="",$user="") {
-		//BOKデータベースへ接続
-		$db = self::getDB();
-		//2012/06/14 BASEデータを取得し、コミット前のノードを色別に表示する
-		$headdb = $db->getBokHead();
-		$headxml = new BokXml($headdb['bok']);
-		$headbok = $headxml->getLinkData();
+		//戻り値初期化
+		$link = array();
+		$node = array();
 
-		//なるべく最新データを取得する
-		//  BOKへのノード追加などを考慮し、編集中データがある場合はそちらを優先...
+		//BOK-XML用データベースへ接続
+		$db = self::getDB();
+		$bHead = $db->getBokHead();
+		$bBok = new BokXml($bHead['bok']);
 		if($user != "") {
 			$db->setUser($user);
-			$boktree = $db->getUserHead();
-			if($boktree === FALSE) {
-				//ユーザー編集データがないので最新BOKを取得
-				$boktree = $db->getBokHead();
-			}
+			$uHead = $db->getUserHead();
+			$uBok = new BokXml($uHead['bok']);
 		}
-		else {
-			$boktree = $db->getBokHead();
-		}
-		$rev = $boktree["rev"];
-		$xml = new BokXml($boktree["bok"]);
-		$bok = $xml->getLinkData();
-		$bok_names = $xml->getNodeTree();
-
-		//Descriptionノードを追加
+		//Javascriptで処理するため、宣言文を削除
+		$base_xml = preg_replace('/^[^\n]+\n/i','',$bBok->saveXML(),1);
+		$user_xml = preg_replace('/^[^\n]+\n/i','',$uBok->saveXML(),1);
+		
+		//Wikiデータベースへ接続
 		$dbr = wfGetDB(DB_SLAVE);
-		$page = $dbr->tableName('page');
-		//Descriptionノードのページデータを取得
-		$rows = $dbr->select($page,
-								array('page_id','page_title'),
-								array('page_namespace' => NS_SPECIAL_DESCRIPTION),
-								__METHOD__
-							);
-		$desc = array();
-		if($dbr->numRows($rows) > 0) {
-			while($row = $dbr->fetchObject($rows)) {
-				$v = $row->page_title;
-				//ページ名なし/BOKへ追加済みは出力しない
-				if($v == '' || array_key_exists($v,$bok_names)) {
-					continue;
-				}
-				$desc["{$v}"] = array('name'=>$v,'type'=>'desc');
-			}
-		}
-		//SMWテーブル名称取得
-		$smw_rels2 = $dbr->tableName('smw_rels2');
 		$smw_ids = $dbr->tableName('smw_ids');
-		$rows = $dbr->select($smw_ids,
-								array('smw_id','smw_title'),
-								array('smw_namespace' => NS_SPECIAL_DESCRIPTION),
-								__METHOD__
-							);
-		$link = array();
-		while($row = $rows->fetchRow()) {
-			$v = $row['smw_title'];
-			if($v != '') {
-				//SMWリンクを出力
-				$query = 'SELECT s_id.smw_namespace subject_namespace,'.
-				'       s_id.smw_title s,'.
-				'       p_id.smw_title p,'.
-				'       o_id.smw_title o,'.
-				'       s_id.smw_id s_id,'.
-				'       p_id.smw_id p_id,'.
-				'       o_id.smw_id o_id '.
-				'  FROM '.$smw_ids.' s_id '.
-				'  JOIN '.$smw_rels2.' s_rel ON s_id.smw_id = s_rel.s_id '.
-				'  JOIN '.$smw_ids.' p_id ON s_rel.p_id = p_id.smw_id'.
-				'  JOIN '.$smw_ids.' o_id ON s_rel.o_id = o_id.smw_id '.
-				' WHERE s_id.smw_id = '.$row['smw_id'].
-				'   AND o_id.smw_namespace = '.NS_SPECIAL_DESCRIPTION;
-				$res = $dbr->query($query);
-				if($dbr->numRows($res) > 0) {
-					while($link_row = $dbr->fetchObject($res)) {
-						$link[] = array(
-							'source' => "{$link_row->s}",
-							'target' => "{$link_row->o}",
-							'type' => "smw",
-							'linkName' => "{$link_row->p}"
-						);
-					}
-				}
-				$dbr->freeResult($res);
+		$smw_rels2 = $dbr->tableName('smw_rels2');
+		//SMWリンクデータを取得
+		$query = 
+		'SELECT s_id.smw_namespace subject_namespace,'.
+		'       s_id.smw_title s,'.
+		'       p_id.smw_title p,'.
+		'       o_id.smw_title o,'.
+		'       s_id.smw_id s_id,'.
+		'       p_id.smw_id p_id,'.
+		'       o_id.smw_id o_id '.
+		'  FROM '.$smw_ids.' s_id '.
+		'  JOIN '.$smw_rels2.' s_rel ON s_id.smw_id = s_rel.s_id '.
+		'  JOIN '.$smw_ids.' p_id ON s_rel.p_id = p_id.smw_id'.
+		'  JOIN '.$smw_ids.' o_id ON s_rel.o_id = o_id.smw_id '.
+		' WHERE o_id.smw_namespace = '.NS_SPECIAL_DESCRIPTION.
+		' ORDER BY s_id.smw_id,p_id.smw_id,o_id.smw_id ';
+		$res = $dbr->query($query);
+		if($dbr->numRows($res) > 0) {
+			while($row = $dbr->fetchObject($res)) {
+				$link[] = array(
+					'source' => "{$row->s}",
+					'target' => "{$row->o}",
+//					'type' => "smw",
+					'linkName' => "{$row->p}"
+				);
 			}
 		}
-		//headlink => boklinkの順に描画することで、「コミット済み > コミット前」の色分けが可能
-		//  -- 2012/06/14対応
-		return json_encode(array(
-			'node'=>$desc,
-			'boklink'=>$bok,
-			'smwlink'=>$link,
-			'headlink'=>$headbok
-		));
+		$dbr->freeResult($res);
+		return json_encode(array('basexml'=>$base_xml,'userxml'=>$user_xml,'smwlink'=>$link));
 	}
 	/**
 	 * SMWLink取得
@@ -523,7 +479,20 @@ class WikiBokJs {
 		$result = (count($links) > 0);
 		return json_encode(array('res'=>$result,'data'=>$links));
 	}
-
+	public static function representNodeRequest($rev,$user,$from,$to) {
+		$db = self::getDB();
+		$db->serUser($user);
+		$data = $db->getEditData($rev);
+		if($data !== false) {
+			$boktree = $data["bok"];
+			$rev = $data["rev"];
+			$xml = new BokXml($boktree);
+		}
+		else {
+			$rev = 0;
+			$xml = new BokXml();
+		}
+	}
 	/**
 	 * ノードを作成する
 	 * @param	$rev	編集対象リビジョン

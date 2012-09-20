@@ -726,6 +726,7 @@ class RevisionDB {
 		$ddl .= '  session_id varchar(30) NOT NULL,';
 		$ddl .= '  rev        int(10) unsigned NOT NULL,';
 		$ddl .= '  bok        longtext,';
+		$ddl .= '  represent  longtext,';
 		$ddl .= '  user_id    int(10) NOT NULL,';
 		$ddl .= '  time       timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,';
 		$ddl .= '  PRIMARY KEY `user_edit` (session_id,user_id,rev),';

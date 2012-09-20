@@ -192,9 +192,8 @@ $messages['ja'] = array(
 		),
 		'wikibok-new-element' => array(
 			'title'=>'新規作成',
-			'width' => 300,
-			'height' => 150,
-			'itemheight' => 20,
+			'width' => 500,
+			'height' => 300,
 			'bok'=>array(
 				'headline1'=>'追加対象ノード名称',
 				'headline2'=>'新規ノード名称',
@@ -216,6 +215,32 @@ $messages['ja'] = array(
 			'error' => array(
 				'empty'=>'作成するノードの名称が入力されていません',
 				'already'=>'すでに同じ名前の記事があります'
+			),
+		),
+		'wikibok-rename-node' => array(
+			'title' => 'ノード名称変更',
+			'headline1' => '変更前ノード名称',
+			'headline2' => '変更後ノード名称',
+			'button' => array(
+				'text' => '名称変更',
+				'title' => 'ノード名称を変更します',
+				'class' => 'commit',
+			),
+			'error' => array(
+				'empty' => '変更後ノード名称が入力されていません',
+				'already' => 'すでに同じ名前のノードがあります',
+				'different' => nl2br("すでに同じ名前の記事があります\n名称変更はできません"),
+			)
+		),
+		//participant
+		'wikibok-represent-node' => array(
+			'title' => '代表表現選択',
+			'headline1' => '代表ノード名称',
+			'headline2' => '従属ノード名称',
+			'button' => array(
+				'text' => '実行',
+				'title' => 'ノード名称を変更します',
+				'class' => 'commit',
 			),
 		),
 		'wikibok-contextmenu' => array(

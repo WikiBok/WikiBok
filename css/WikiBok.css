@@ -292,3 +292,11 @@ g.active > circke {
 .create_new_node > input {
 	width : 300px;
 }
+.rename_new_node .txt{
+	margin-left : 18px;
+}
+.rename_new_node .del{
+	background-image : url("images/delete.png");
+	width : 16px;
+	height: 16px;
+}

@@ -26,60 +26,68 @@ circle {
     stroke-width : 1.5px;
 }
 /* エッジ */
-path.edge,
-path.edge_other {
+g.edge path {
     fill : none;
-    stroke : #000;
     stroke-width : 1.5px;
 }
-/* 種類別の色指定(アイコン) */
-circle.bok {
-    fill : #00F;
-    stroke : #00F;
-}
-circle.desc {
-    fill : #0F0;
-    stroke : #0F0;
-}
-circle.preBok {
-    fill : #0FF;
-    stroke : #0FF;
-}
 /* 種類別の色指定(エッジ) */
-path.smw {
+/* 種類別の色指定(マーカ:エッジ矢印) */
+g.smw path {
     stroke : #F00;
     /* 点線 */
     stroke-dasharray: 1 2,2 1;
 }
-path.bok {
+g.bok path {
     stroke : #00F;
     stroke-dasharray: 2 1,1 2;
 }
-path.preBok {
+g.prebok path {
     stroke : #0FF;
     stroke-dasharray: 1,3,1;
 }
-/* 種類別の色指定(マーカ:エッジ矢印) */
-/* マーカ(エッジ矢印)の色 */
-marker#bok {
-    fill : #00F;
-}
-marker#preBok {
-    fill : #0FF;
-}
 marker#smw {
-    fill : #F00;
+	stroke : #F00;
+	fill : #F00;
 }
+marker#bok {
+	stroke : #00F;
+	fill : #00F;
+}
+marker#prebok {
+	stroke : #0FF;
+	fill : #0FF;
+}
+
+
+/* 種類別の色指定(アイコン) */
+g.node circle {
+	fill-opacity : 1;
+}
+g.node.empty circle {
+	fill-opacity : 0.2;
+}
+g.bok  circle{
+    fill : #00F;
+    stroke : #00F;
+}
+g.desc circle {
+    fill : #0F0;
+    stroke : #0F0;
+}
+g.prebok circle {
+    fill : #0FF;
+    stroke : #0FF;
+}
+
 /* ノード(記事)名称 */
 text {
     font : 9px sans-serif;
     fill : #000;
 }
-text.smw {
-    fill : #F00;
-}
-/* Descriptionのみ 名称の背景色(重なり時、見えなくならないようにする) */
 text.shadow {
     stroke: #FFF;
     stroke-width: 3px;
+}
+g.smw.edge text {
+    fill : #FCC;
 }
