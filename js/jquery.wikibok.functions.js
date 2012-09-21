@@ -1249,6 +1249,9 @@
 			});
 		},
 		setTextEdit : function(a,b) {
+/**
+http://surferonwww.info/BlogEngine/post/2012/01/09/Inserting-string-at-caret-position-in-textarea.aspx
+*/
 			var
 				area = $(this),
 				text = (arguments.length < 1) ? '.wikibok-text' : _selecter(a),
@@ -1264,12 +1267,11 @@
 					len,
 					sel,
 					cur,
-					add = (pre || '')+((rep) ? sample : sel)+(post || '');
+					add;
 				if(textRange == null) {
 					idx = ta.selectionStart;
 					len = ta.selectionEnd - idx;
 					sel = ta.value.substr(idx,len);
-
 					add = (pre || '')+((rep) ? sample : sel)+(post || '');
 					ta.value = ta.value.substr(0,idx)+add+ta.value.substr(idx+len);
 					ta.focus();
@@ -1277,7 +1279,8 @@
 					ta.setSelectionRange(cur,cur);
 				}
 				else {
-					textRange.text = add;
+//					sel = ta.value.substr(idx,len);
+					textRange.text = (pre || '')+((rep) ? sample : sel)+(post || '');
 					textRange.select();
 				}
 			}
