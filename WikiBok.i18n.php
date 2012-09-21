@@ -251,10 +251,9 @@ $messages['ja'] = array(
 				'special' => '特殊(追加)'
 			),
 			'description' => array(
-				'width' => 300,
-				'height' => 200,
 				'view' => '記事内容表示',
-				'add' => 'BOKツリーへ追加',
+				'addnode' => 'BOKツリーへ追加',
+				'delete' => '記事削除',
 				'rename' => '記事名称変更',
 				'searchsmw' => 'SMWリンク先ごとBOKツリーへ追加',
 				'represent' => '代表表現へ置き換え',
@@ -334,9 +333,7 @@ $messages['ja'] = array(
 			)
 		),
 		'wikibok-description' => array(
-			'listview' => array(
-				'empty' => '記事の内容が記述されていません'
-			),
+			'empty' => '現在このページには内容がありません'
 		),
 		'wikibok-empty-article' => "WikiBOKシステムによって自動生成されました。\n\n編集時は、この文章を上書きしてください。"
 	)),

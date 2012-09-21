@@ -379,20 +379,20 @@ function efWikiBokDescriptionEdit($id="wikibok-description-edit") {
 	$txt .= '<dt>'.wfMsg('wikibok-article-summary').'</dt>';
 	//編集用ツールチップ
 	$txt .= '<dd class="wikibok-descriptioneditor-tooltip">';
-	$txt .= '<span class="inIcon bold" sample="'.wfMsg('bold_sample').'">'.wfMsg('bold_tip').'</span>';
-	$txt .= '<span class="inIcon italic" sample="'.wfMsg('italic_sample').'">'.wfMsg('italic_tip').'</span>';
-	$txt .= '<span class="inIcon normal_link" sample="'.wfMsg('link_sample').'">'.wfMsg('link_tip').'</span>';
-	$txt .= '<span class="inIcon smw_link" sample="'.wfMsg('wikibok-smwlink_sample').'">'.wfMsg('wikibok-smwlink_tip').'</span>';
-	$txt .= '<span class="inIcon world_link" sample="'.wfMsg('extlink_sample').'">'.wfMsg('extlink_tip').'</span>';
-	$txt .= '<span class="inIcon file popup" nsn="'.$wgContLang->getNsText(NS_FILE).'" ns="'.NS_FILE.'" sample="'.wfMsg('image_sample').'">'.wfMsg('image_tip').'</span>';
-	$txt .= '<span class="inIcon media popup" nsn="'.$wgContLang->getNsText(NS_MEDIA).'" ns="'.NS_MEDIA.'" sample="'.wfMsg('media_sample').'">'.wfMsg('media_tip').'</span>';
+	$txt .= '<span class="inIcon bold" pre="'."'''".'" post="'."'''".'" sample="'.wfMsg('bold_sample').'">'.wfMsg('bold_tip').'</span>';
+	$txt .= '<span class="inIcon italic" pre="'."''".'" post="'."''".'" sample="'.wfMsg('italic_sample').'">'.wfMsg('italic_tip').'</span>';
+	$txt .= '<span class="inIcon normal_link" pre="[[" post="]]" sample="'.wfMsg('link_sample').'">'.wfMsg('link_tip').'</span>';
+	$txt .= '<span class="inIcon smw_link" pre="[[" post="]]" sample="'.wfMsg('wikibok-smwlink_sample').'">'.wfMsg('wikibok-smwlink_tip').'</span>';
+	$txt .= '<span class="inIcon world_link" pre="[" post="]" sample="'.wfMsg('extlink_sample').'">'.wfMsg('extlink_tip').'</span>';
+	$txt .= '<span class="inIcon file popup" pre="[[" post="]]" nsn="'.$wgContLang->getNsText(NS_FILE).'" ns="'.NS_FILE.'" sample="'.wfMsg('image_sample').'">'.wfMsg('image_tip').'</span>';
+	$txt .= '<span class="inIcon media popup" pre="[[" post="]]" nsn="'.$wgContLang->getNsText(NS_MEDIA).'" ns="'.NS_MEDIA.'" sample="'.wfMsg('media_sample').'">'.wfMsg('media_tip').'</span>';
 	if($wgUseTeX) {
 		//TeXが有効な場合のみ追加...
-		$txt .= '<span class="inIcon math" sample="'.wfMsg('math_sample').'">'.wfMsg('math_tip').'</span>';
+		$txt .= '<span class="inIcon math" pre="<math>" post="</math>" sample="'.wfMsg('math_sample').'">'.wfMsg('math_tip').'</span>';
 	}
-	$txt .= '<span class="inIcon nowiki" sample="'.wfMsg('nowiki_sample').'">'.wfMsg('nowiki_tip').'</span>';
-	$txt .= '<span class="inIcon signed" sample="">'.wfMsg('sig_tip').'</span>';
-	$txt .= '<span class="inIcon hr" sample="">'.wfMsg('hr_tip').'</span>';
+	$txt .= '<span class="inIcon nowiki" pre="<nowiki>" post="</nowiki>" sample="'.wfMsg('nowiki_sample').'">'.wfMsg('nowiki_tip').'</span>';
+	$txt .= '<span class="inIcon signed" pre="--~~~~" post="" sample="">'.wfMsg('sig_tip').'</span>';
+	$txt .= '<span class="inIcon hr" pre="\n----" post="\n" sample="">'.wfMsg('hr_tip').'</span>';
 	$txt .= '</dd>';
 	$txt .= '<dd><textarea class="wikibok-text" rows="5"></textarea></dd>';
 	$txt .= '</dl>';

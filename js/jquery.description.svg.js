@@ -103,23 +103,15 @@
 			.classed('node',true);
 		addDesc.append('svg:circle')
 			.attr('r',6)
+			//テキスト要素の表示/非表示切り替え(Mouseoverによるトグル動作)
 			.on('mouseover.orig',function(d){
-/*
-				var
-					t = $(this).next().children(),
-					z = parseInt(t.css('z-index')) || 10;
-				$.data($(this).get(0),'z-i',z);
-				t.each(function(){$(this).css('z-index',99999)});
-*/
+				if(d.vis == undefined) {
+					d.vis = true;
+				}
+				$('g[data="'+d.name+'"]').find('g').toggle(d.vis);
 			})
-			.on('mouseout.orig',function(d){
-/*
-				var
-					t = $(this).next().children(),
-					z = $.data($(this).get(0),'z-i');
-				$.removeData($(this).get(0),'z-i')
-				t.each(function(){$(this).css('z-index',z)});
-*/
+			.on('mouseout.orig',function(d) {
+				d.vis = (d.vis == undefined) || (!d.vis);
 			});
 		_desc = addDesc.append('svg:g')
 			.on('click.add',options.textClick)
@@ -127,7 +119,9 @@
 				force.stop();
 				event.preventDefault();
 				return false;
-			});
+			})
+			//初期状態を非表示にする
+			.style('display','none');
 		_desc.append('svg:text')
 			.attr('x',8)
 			.attr('y','.31em')

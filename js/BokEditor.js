@@ -110,6 +110,9 @@ jQuery(function($) {
 							dialog = this;
 						$(dialog).html(tmp);
 						$(dialog)
+							.on('click','.description-view',function(a,b){
+								viewDescriptionDialog(tid);
+							})
 							.on('click','.bokeditor-find-parent',function(a,b) {
 								pid = tid;
 								mode = 'parent';

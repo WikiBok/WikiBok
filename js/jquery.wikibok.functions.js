@@ -72,12 +72,12 @@
 			 * @param ... 複数指定可、PHP配列キーを順番に記述
 			 */
 			function wfMsg() {
-				//パラメータ指定がない場合、空文字を返す
-				if(arguments.length < 1) return '';
 				//複数キー指定対応(配列ではなくした...)
 				var arg = Array.prototype.slice.call(arguments),
 					mes = meta_message,
 					res = '';
+				//パラメータ指定がない場合、空文字を返す
+				if(arguments.length < 1) return '';
 				if($.isArray(arg)) {
 					for(var i=0;i<arg.length;i++) {
 						var _res = mes[arg[i]];
@@ -394,6 +394,39 @@
 					}
 				});
 			}
+			function getDescriptionEdit(_page,_prop,_rvprop) {
+				var
+					def = $.Deferred(),
+					prop = array_unique($.merge([
+						'info',
+						'revisions',
+					],(_prop || []))),
+					rvprop = array_unique($.merge([
+						'content'
+					],(_rvprop || []))),
+					_pdata = {
+						action : 'query',
+						intoken: 'edit',
+						prop : prop.join('|'),
+						rvprop : rvprop.join('|'),
+						titles : getPageNamespace(_page)+':'+getPageName(_page),
+					};
+				requestAPI(
+					_pdata,
+					function(dat,stat,xhr) {
+						if(dat['query'] != undefined && dat['query']['pages'] != undefined) {
+							def.resolve(dat);
+						}
+						else {
+							def.reject(dat);
+						}
+					},
+					function(xhr,stat,err) {
+						def.reject();
+					}
+				);
+				return def.promise();
+			}
 			/**
 			 * 記事1件分を取得
 			 * @param a 記事名称
@@ -510,6 +543,7 @@
 				findDescriptionPage : findDescriptionPage,
 				allDescriptionPage : function(){return description_pages;},
 				getDescriptionPage : getDescriptionPage,
+				getDescriptionEdit : getDescriptionEdit,
 				getUrlVars : getUrlVars,
 			};
 		},
@@ -765,6 +799,7 @@
 	});
 
 	$.fn.extend({
+		revision : $.revision.construct,
 		/**
 		 * 同一行内に複数画像アイコンを設定する
 		 *	 - 画像ファイルの指定は個別にCSSで設定
@@ -945,9 +980,11 @@
 						if(ev.which == 13) {
 							if(ev.shiftKey) {
 								active(_act.prev);
+								event.preventDefault();
 							}
 							else {
 								active(_act.next);
+								event.preventDefault();
 							}
 						}
 					}
@@ -956,6 +993,7 @@
 						if(ev.which == 13) {
 							if(ev.shiftKey) {
 								active(_act.next);
+								event.preventDefault();
 							}
 						}
 					}
@@ -1210,7 +1248,60 @@
 				return this;
 			});
 		},
-		revision : $.revision.construct
+		setTextEdit : function(a,b) {
+			var
+				area = $(this),
+				text = (arguments.length < 1) ? '.wikibok-text' : _selecter(a),
+				icon = (arguments.length < 2) ? '.wikibok-descriptioneditor-tooltip' : _selecter(b),
+				textRange = null;
+			function getTextRange(ta) {
+				ta.focus();
+				return document.selection.createRange();
+			}
+			function insertText(ta,pre,post,sample,rep) {
+				var
+					idx,
+					len,
+					sel,
+					cur,
+					add = (pre || '')+((rep) ? sample : sel)+(post || '');
+				if(textRange == null) {
+					idx = ta.selectionStart;
+					len = ta.selectionEnd - idx;
+					sel = ta.value.substr(idx,len);
+
+					add = (pre || '')+((rep) ? sample : sel)+(post || '');
+					ta.value = ta.value.substr(0,idx)+add+ta.value.substr(idx+len);
+					ta.focus();
+					cur = idx + add.length;
+					ta.setSelectionRange(cur,cur);
+				}
+				else {
+					textRange.text = add;
+					textRange.select();
+				}
+			}
+			area.find(text)
+				.on('focus.wikibok',function(ev){
+				})
+				.on('blur.wikibok',function(ev){
+				});
+			area.find(icon)
+				.on('click','.wikibok_icon',function(){
+					var
+						ta = area.find(text).get(0),
+						item = $(this),
+						pre_word = item.attr('pre') || '',
+						post_word = item.attr('post') || '',
+						def_word = item.attr('sample') || '',
+						namespace = item.attr('nsn') || '';
+					//$.supportで判定できないので...IE専用
+					if(document.selection != undefined) {
+						textRange = getTextRange(ta);
+					}
+					insertText(ta,pre_word,post_word,def_word,true);
+				})
+		}
 	});
 //外部から参照されない関数はextendに記述しない
 	/**
@@ -1248,4 +1339,106 @@
 			return (a == undefined) ? false : ((a.indexOf(b) < 0) ? b+a : a);
 			
 		};
+		
 })(jQuery);
+
+/**
+ * 記事編集ダイアログ
+ */
+function editDescriptionDialog(title,desc) {
+	$.wikibok.exDialog(
+		$.wikibok.wfMsg('wikibok-edittool','edit','title'),
+		$('#wikibok-description-edit'),
+		{
+			open : function() {
+				$(this).dialog('widget').setInterruptKeydown([
+					{class : 'wikibok-text', next : 'commit', prev : null}
+				]);
+				$(this).find('.title').val(title);
+				$(this).find('.wikibok-text').val(desc);
+				$(this).setTextEdit();
+			},
+			buttons : [{
+				text : $.wikibok.wfMsg('wikibok-edittool','button_commit','text'),
+				title: $.wikibok.wfMsg('wikibok-edittool','button_commit','title'),
+				class: $.wikibok.wfMsg('wikibok-edittool','button_commit','class'),
+				click: function() {
+					$(this).dialog('close');
+				}
+			},{
+				text : $.wikibok.wfMsg('common','button_close','text'),
+				title: $.wikibok.wfMsg('common','button_close','title'),
+				class: $.wikibok.wfMsg('common','button_close','class'),
+				click: function() {
+					$(this).dialog('close');
+				}
+			}]
+		},
+		title
+	)
+}
+/**
+ * 記事参照ダイアログ
+ */
+function viewDescriptionDialog(title) {
+	$.wikibok.getDescriptionPage(title,['links','revid'])
+	.done(function(dat){
+		var
+			page = dat.parse,
+			_btn = [],
+			//編集ボタン
+			editbtn =  {
+				text : $.wikibok.wfMsg('common','button_edit','text'),
+				title: $.wikibok.wfMsg('common','button_edit','title'),
+				class: $.wikibok.wfMsg('common','button_edit','class'),
+				click: function() {
+					var me = this;
+					$.wikibok.getDescriptionEdit(title)
+					.done(function(dat) {
+						//API結果からWikiTextを取得
+						var
+							edesc = $.map(dat.query.pages,function(d){
+								return $.map(d.revisions,function(d){
+									return d['*'];
+								}).join();
+							}).join();
+						editDescriptionDialog(title,edesc);
+					})
+					.always(function() {
+						$(me).dialog('close');
+					})
+				}
+			},
+			closebtn = {
+				text : $.wikibok.wfMsg('common','button_close','text'),
+				title: $.wikibok.wfMsg('common','button_close','title'),
+				class: $.wikibok.wfMsg('common','button_close','class'),
+				click: function() {
+					$(this).dialog('close');
+				}
+			},
+			ptxt = $(page.text['*']),
+			//作成されていない Or 記事内容が空
+			desc = (page.revid == 0 || ptxt.html() == null)
+					 ? $('<div>'+$.wikibok.wfMsg('wikibok-description','empty')+'</div>') 
+					 : ptxt;
+		//リンクを別タブ(ウィンドウ)で開く
+		desc.find('a').attr({target:'_blank'});
+		if(wgLogin) {
+			_btn.push(editbtn);
+		}
+		_btn.push(closebtn);
+		$.wikibok.exDialog(
+			$.wikibok.wfMsg('wikibok-edittool','view','title'),
+			$('#wikibok-description-view'),
+			{
+				open : function() {
+					$(this).find('dd.title').html(page.displaytitle);
+					$(this).find('dd.wikibok-text').html(desc);
+				},
+				buttons:_btn
+			},
+			title
+		);
+	});
+}

@@ -481,10 +481,6 @@ jQuery(function($) {
 					}
 				}
 			);
-		})
-		.on('click','.description-view',function(e){
-			var t = $.data(e.target,'id');
-			
 		});
 	//非表示要素
 	$('.hide').hide();
