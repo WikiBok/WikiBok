@@ -192,8 +192,8 @@ function efWikiBokInsertScript(OutputPage $out) {
 	$out->addScriptFile("{$wgScriptPath}/extensions/WikiBok/js/jquery-1.7.2.min.js");
 	$out->addScriptFile("{$wgScriptPath}/extensions/WikiBok/js/jquery-ui-1.8.16.custom.min.js");
 	$out->addScriptFile("{$wgScriptPath}/extensions/WikiBok/js/jquery.selection-min.js");
-	//$out->addScriptFile("{$wgScriptPath}/extensions/WikiBok/js/d3.v2.min.js");
-	$out->addScriptFile("{$wgScriptPath}/extensions/WikiBok/js/d3.v2.js");
+	$out->addScriptFile("{$wgScriptPath}/extensions/WikiBok/js/d3.v2.min.js");
+	//$out->addScriptFile("{$wgScriptPath}/extensions/WikiBok/js/d3.v2.js");
 	$out->addScriptFile("{$wgScriptPath}/extensions/WikiBok/js/scroll_event.js");
 	$out->addScriptFile("{$wgScriptPath}/extensions/WikiBok/js/jquery.scrollTo.js");
 	$out->addScriptFile("{$wgScriptPath}/extensions/WikiBok/js/jquery.tablesorter.js");
@@ -392,7 +392,7 @@ function efWikiBokDescriptionEdit($id="wikibok-description-edit") {
 	}
 	$txt .= '<span class="inIcon nowiki" pre="<nowiki>" post="</nowiki>" sample="'.wfMsg('nowiki_sample').'">'.wfMsg('nowiki_tip').'</span>';
 	$txt .= '<span class="inIcon signed" pre="--~~~~" post="" sample="">'.wfMsg('sig_tip').'</span>';
-	$txt .= '<span class="inIcon hr" pre="\n----" post="\n" sample="">'.wfMsg('hr_tip').'</span>';
+	$txt .= '<span class="inIcon hr" pre="----" post="" sample="">'.wfMsg('hr_tip').'</span>';
 	$txt .= '</dd>';
 	$txt .= '<dd><textarea class="wikibok-text" rows="5"></textarea></dd>';
 	$txt .= '</dl>';

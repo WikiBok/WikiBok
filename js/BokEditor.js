@@ -134,7 +134,6 @@ jQuery(function($) {
 								createNewNode(tid);
 							})
 							.on('click','.bokeditor-rename',function(a,b) {
-								
 								renameNode(tid);
 							})
 							.on('click','.bokeditor-represent',function(a,b) {
@@ -301,7 +300,10 @@ jQuery(function($) {
 					+ '<dt>'+$.wikibok.wfMsg('wikibok-new-element','bok','headline3')+'</dt>'
 					+ '<dd class="create_new_node description">loading...</dd>'
 					+ '</dl>',
-			addTo =(arguments.length < 1) ? '' : a;
+			addTo =(arguments.length < 1) ? '' : a,
+			//サーバへのリクエスト設定が異なる
+			cgi_func = (arguments.length < 1) ? 'WikiBokJs::createNodeRequest' : 'WikiBokJs::createNodeToRequest',
+			cgi_args = [];
 		if($('#'+_id).dialog('isOpen')) {
 			$('#'+_id).dialog('close');
 		}
@@ -335,7 +337,8 @@ jQuery(function($) {
 					title: $.wikibok.wfMsg('wikibok-new-element','bok','button','title'),
 					click: function(){
 						var
-							newName = $(this).find('input.name').val(),
+							dialog = this,
+							newName = $(dialog).find('input.name').val(),
 							error = false;
 						if(newName == '') {
 							error = $.wikibok.wfMsg('wikibok-new-element','error','empty');
@@ -343,18 +346,88 @@ jQuery(function($) {
 						if(svg.allNode().filter(function(d) {return d.name == newName}).length > 0) {
 							error = $.wikibok.wfMsg('wikibok-new-element','error','already');
 						}
-						if(error !== false) {
+						$.wikibok.getDescriptionPage(newName,['links','revid'])
+						.done(function(dat){
+							//記事内容表示
+							var
+								page = dat.parse,
+								ptxt = $(page.text['*']),
+								//作成されていない Or 記事内容が空
+								desc = (page.revid == 0 || ptxt.html() == null)
+										 ? $('<div>'+$.wikibok.wfMsg('wikibok-description','empty')+'</div>') 
+										 : ptxt;
+							//リンクを別タブ(ウィンドウ)で開く
+							desc.find('a').attr({target:'_blank'});
 							$.wikibok.exDialog(
-								$.wikibok.wfMsg('wikibok-new-element','title')+' '+$.wikibok.wfMsg('common','error'),
-								error,
-								{}
+								$.wikibok.wfMsg('wikibok-edittool','view','title'),
+								$('#wikibok-description-view'),
+								{
+									open : function() {
+										$(this).find('dd.title').html(page.displaytitle);
+										$(this).find('dd.wikibok-text').html(desc);
+									},
+									buttons:[{
+										text : $.wikibok.wfMsg('common','button_ok','text'),
+										title: $.wikibok.wfMsg('common','button_ok','title'),
+										class: $.wikibok.wfMsg('common','button_ok','class'),
+										click: function() {
+											var me = this;
+											$(me).dialog('close');
+										}
+									},{
+										text : $.wikibok.wfMsg('common','button_cancel','text'),
+										title: $.wikibok.wfMsg('common','button_cancel','title'),
+										class: $.wikibok.wfMsg('common','button_cancel','class'),
+										click: function() {
+											var me = this;
+											$(me).dialog('close');
+										}
+									}]
+								},
+								newName
 							);
+						})
+						.fail(function(dat) {
+							//記事新規作成...
+							editDescriptionDialog(newName,'');
+						});
+/*
+						if(error === false) {
+							//クライアント-チェック終了 => サーバへリクエスト
+							cgi_args = (addTo == '') ? [newName] : [newName,addTo];
+							$.wikibok.requestCGI(
+								cgi_func,
+								cgi_args,
+								function(cDat,stat,xhr) {
+									if(cDat.res == false) {
+										error = cDat.b;
+										return false;
+									}
+									else {
+										return true;
+									}
+								},
+								function(xhr,stat,err) {
+								}
+							)
+							.done(function(cDat) {
+								svg.addNode(newName,addTo);
+								$.revision.setRev(cDat.res);
+							})
+							.always(function() {
+								if(error !== false) {
+									$.wikibok.exDialog(
+										$.wikibok.wfMsg('wikibok-new-element','title')+' '+$.wikibok.wfMsg('common','error'),
+										error,
+										{}
+									);
+								}
+								else {
+									$(dialog).dialog('close');
+								}
+							});
 						}
-						else {
-							alert('サーバリクエスト');
-							svg.addNode(newName,addTo);
-							$(this).dialog('close');
-						}
+*/
 					}
 				},{
 					text : $.wikibok.wfMsg('common','button_close','text'),

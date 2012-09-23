@@ -325,7 +325,7 @@ class WikiBokJs {
 			'base' => isset($base['rev']) ? $base['rev'] : 0,
 			'head' => isset($head['rev']) ? $head['rev'] : 0,
 			'user' => (isset($uh) && isset($uh['rev'])) ? $uh['rev'] : (isset($head['rev']) ? $head['rev'] : 0),
-			'edit' => $edit
+			'edit' => $edit,
 		));
 	}
 	/**

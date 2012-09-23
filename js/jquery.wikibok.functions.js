@@ -247,7 +247,7 @@
 							rs : rs,
 							rsargs : rsargs,
 						},
-						success : function() {
+						success : function(dat,stat,xhr) {
 							//成功時実行関数でTRUEを返す場合のみOK
 							if(sfunc.apply(me,arguments)) {
 								def.resolve.apply({},arguments);
@@ -256,7 +256,7 @@
 								def.reject.apply({},arguments);
 							}
 						},
-						error : function() {
+						error : function(xhr,stat,err) {
 							efunc.apply(me,arguments);
 							def.reject.apply({},arguments);
 						},
@@ -394,6 +394,9 @@
 					}
 				});
 			}
+			/**
+			 * 記事編集用テキスト取得
+			 */
 			function getDescriptionEdit(_page,_prop,_rvprop) {
 				var
 					def = $.Deferred(),
@@ -1249,61 +1252,73 @@
 			});
 		},
 		setTextEdit : function(a,b) {
-/**
-http://surferonwww.info/BlogEngine/post/2012/01/09/Inserting-string-at-caret-position-in-textarea.aspx
-*/
 			var
 				area = $(this),
 				text = (arguments.length < 1) ? '.wikibok-text' : _selecter(a),
-				icon = (arguments.length < 2) ? '.wikibok-descriptioneditor-tooltip' : _selecter(b),
-				textRange = null;
-			function getTextRange(ta) {
-				ta.focus();
-				return document.selection.createRange();
-			}
-			function insertText(ta,pre,post,sample,rep) {
+				icon = (arguments.length < 2) ? '.wikibok-descriptioneditor-tooltip' : _selecter(b);
+			/**
+			 * テキストエリア内の選択範囲取得
+			 */
+			function getAreaRange(obj) {
 				var
-					idx,
-					len,
-					sel,
-					cur,
-					add;
-				if(textRange == null) {
-					idx = ta.selectionStart;
-					len = ta.selectionEnd - idx;
-					sel = ta.value.substr(idx,len);
-					add = (pre || '')+((rep) ? sample : sel)+(post || '');
-					ta.value = ta.value.substr(0,idx)+add+ta.value.substr(idx+len);
-					ta.focus();
-					cur = idx + add.length;
-					ta.setSelectionRange(cur,cur);
-				}
-				else {
-//					sel = ta.value.substr(idx,len);
-					textRange.text = (pre || '')+((rep) ? sample : sel)+(post || '');
-					textRange.select();
-				}
-			}
-			area.find(text)
-				.on('focus.wikibok',function(ev){
-				})
-				.on('blur.wikibok',function(ev){
-				});
-			area.find(icon)
-				.on('click','.wikibok_icon',function(){
-					var
-						ta = area.find(text).get(0),
-						item = $(this),
-						pre_word = item.attr('pre') || '',
-						post_word = item.attr('post') || '',
-						def_word = item.attr('sample') || '',
-						namespace = item.attr('nsn') || '';
-					//$.supportで判定できないので...IE専用
+					pos = new Object(),
+					range,
+					clone;
 					if(document.selection != undefined) {
-						textRange = getTextRange(ta);
+						//IE判定
+						obj.focus();
+						range = document.selection.createRange();
+						clone = range.duplicate();
+						//テキストコピー
+						clone.moveToElementText(obj);
+						clone.setEndPoint('EndToEnd',range);
+						pos.start = clone.text.length - range.text.length;
+						pos.end = clone.text.length - range.text.length + range.text.length;
 					}
-					insertText(ta,pre_word,post_word,def_word,true);
-				})
+					else if(window.getSelection()) {
+						pos.start = obj.selectionStart;
+						pos.end = obj.selectionEnd;
+					}
+				return pos;
+			}
+			/**
+			 * 文字列置換
+			 * @param tar テキストエリア
+			 * @param pre 選択範囲前の挿入文字
+			 * @param pst 選択範囲後の挿入文字
+			 * @param def 選択なしの場合の文字
+			 */
+			function wrap(tar,pre,pst,def) {
+				var
+					pos = getAreaRange(tar),
+					val = tar.value,
+					sel_text = val.slice(pos.start,pos.end),
+					before_text = val.slice(0,pos.start),
+					after_text = val.slice(pos.end),
+					insert;
+				//選択なし
+				if(sel_text || pos.start != pos.end) {
+					insert  = pre + sel_text + pst;
+				}
+				else if(pos.start == pos.end) {
+					insert  = pre + def + pst;
+				}
+				tar.value = before_text+insert+after_text;
+			}
+			area.find(icon).on('mousedown','.wikibok_icon',function(){
+				var
+					target = area.find(text).get(0),
+					item = $(this),
+					pre_word = item.attr('pre') || '',
+					post_word = item.attr('post') || '',
+					def_word = item.attr('sample') || '',
+					namespace = item.attr('nsn') || '';
+				if(namespace !== '') {
+					alert('参考表示')
+				}
+				wrap(target,pre_word,post_word,def_word)
+			});
+
 		}
 	});
 //外部から参照されない関数はextendに記述しない
@@ -1353,19 +1368,23 @@ function editDescriptionDialog(title,desc) {
 		$.wikibok.wfMsg('wikibok-edittool','edit','title'),
 		$('#wikibok-description-edit'),
 		{
+			create : function() {
+				$(this).setTextEdit();
+			},
 			open : function() {
 				$(this).dialog('widget').setInterruptKeydown([
 					{class : 'wikibok-text', next : 'commit', prev : null}
 				]);
 				$(this).find('.title').val(title);
 				$(this).find('.wikibok-text').val(desc);
-				$(this).setTextEdit();
 			},
 			buttons : [{
 				text : $.wikibok.wfMsg('wikibok-edittool','button_commit','text'),
 				title: $.wikibok.wfMsg('wikibok-edittool','button_commit','title'),
 				class: $.wikibok.wfMsg('wikibok-edittool','button_commit','class'),
 				click: function() {
+					//記事作成
+					
 					$(this).dialog('close');
 				}
 			},{
@@ -1406,6 +1425,9 @@ function viewDescriptionDialog(title) {
 								}).join();
 							}).join();
 						editDescriptionDialog(title,edesc);
+					})
+					.fail(function(){
+						
 					})
 					.always(function() {
 						$(me).dialog('close');
