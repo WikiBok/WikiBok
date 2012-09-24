@@ -102,20 +102,14 @@
 					return [((d.y == undefined) ? 0 : d.y) , ((d.x == undefined) ? 0 : d.x)]
 				}),
 			//ノード
-			//nodes = tree.nodes(allData).reverse().filter(function(d){
-			nodes = tree.nodes(source).reverse().filter(function(d){
-				//depth=0は疑似TOPノードなので排除
-				return (d.depth > 0);
-			}),
+			nodes = tree.nodes(allData).reverse().filter(function(d){return (d.depth > 0);}),
 			//リンク(エッジ)
-			links = tree.links(nodes).filter(function(d) {
-				return (d.source.depth > 0);
-			}),
+			links = tree.links(nodes).filter(function(d) {return (d.source.depth > 0);}),
 			node,
 			link,
 			add;
 		//キャンパスサイズを再計算
-		setSize(getSize());
+		setSize();
 		//深さで横位置を決定
 		nodes.forEach(function(d) {
 			d.y = (d.depth - 1) * options.w + d.depth * 5;
@@ -216,6 +210,7 @@
 			d.x0 = d.x;
 			d.y0 = d.y;
 		});
+		return true;
 	}
 	/**
 	 * ノードを追加する
@@ -268,8 +263,7 @@
 		});
 		c.parent.children = del;
 		p.children = add;
-//		update(c);
-//		update(p);
+		update(p);
 	}
 	/**
 	 * ノードを削除する
@@ -322,25 +316,20 @@
 	 * キャンパスサイズを設定
 	 * @param s (配列[幅,高])
 	 */
-	function setSize(s) {
-		var
-			w = s[1],
-			h = s[0],
-			view = '0 0 '+w+' '+h;
-		tree.size(s);
-		svg.attr('width',w)
-			.attr('height',h)
-			.attr('viewBox',view);
-	}
-	/**
-	 * ノード数と階層より必要なキャンパスサイズを算出
-	 */
-	function getSize() {
+	function setSize() {
 		var
 			n = tree.nodes(allData),
-			hc = ($.unique($.map(n,function(d){return [d.x]})).length || 1) + 1,
-			wc = Math.max.apply({},$.map(n,function(d){return [d.depth]})) || 1;
-		return $.map([hc * options.h , wc * options.w],Math.ceil);
+			hc = allNode().length + 1,
+			wc = Math.max.apply({},$.map(n,function(d){return [d.depth]})) || 1,
+			s = $.map([hc * options.h , wc * options.w],Math.ceil);
+		w = (w < s[1]) ? s[1] : w;
+		h = (h < s[0]) ? s[0] : h;
+			view = '0 0 '+w+' '+h;
+		tree.size(s);
+		svg
+			.attr('width',w)
+			.attr('height',h)
+			.attr('viewBox',view);
 	}
 	/**
 	 * 描画用キャンパスの初期設定
@@ -454,6 +443,8 @@
 	}
 	var
 		i = 0,
+		w = 0,
+		h = 0,
 		tree,
 		svg,
 		vis,

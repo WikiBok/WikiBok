@@ -202,7 +202,12 @@ $messages['ja'] = array(
 					'text' => 'ノード作成',
 					'title' => '新しいBOKノードを作成します',
 					'class' => 'commit',
-				)
+				),
+				'button_create' => array(
+					'text' => 'ノード作成',
+					'title' => '新しいBOKノードを作成します',
+					'class' => 'commit',
+				),
 			),
 			'description' => array(
 				'headline' => '新規記事名称',
