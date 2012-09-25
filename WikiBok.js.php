@@ -479,9 +479,9 @@ class WikiBokJs {
 		$result = (count($links) > 0);
 		return json_encode(array('res'=>$result,'data'=>$links));
 	}
-	public static function representNodeRequest($rev,$user,$from,$to) {
+	public static function representNodeRequest($rev,$user,$rows) {
 		$db = self::getDB();
-		$db->serUser($user);
+		$db->setUser($user);
 		$data = $db->getEditData($rev);
 		if($data !== false) {
 			$boktree = $data["bok"];
@@ -492,6 +492,24 @@ class WikiBokJs {
 			$rev = 0;
 			$xml = new BokXml();
 		}
+		foreach($rows as $row) {
+			$xml->delNode($row['delete']);
+			$db->setRepresentData(array(
+				'source'=>$row['source'],
+				'target'=>$row['target']
+			));
+		}
+		$res = $db->setEditData($rev,$xml->saveXML());
+		$result['res'] = $res;
+		return json_encode($result);
+	}
+	public static function representLinktext($rev,$user,$desc) {
+		$text = array();
+		$rows = $db->getRepresentData($desc);
+		foreach($rows as $row) {
+			$text[] = $row['link'];
+		}
+		return json_encode($text);
 	}
 	/**
 	 * ノードを作成する

@@ -542,9 +542,8 @@
 							title: $.wikibok.wfMsg('common','button_edit','title'),
 							class: $.wikibok.wfMsg('common','button_edit','class'),
 							click: function() {
-								var
-									me = this;
 								$.wikibok.editDescriptionDialog(a);
+								$(this).dialog('close');
 							}
 						},
 						createbtn : {
@@ -618,27 +617,68 @@
 				});
 				return def.promise();
 			}
-			function create_page(a,b,c) {
+			/**
+			 * @param a 記事名称
+			 * @param b 記事内容
+			 * @param c EditTokenを含むその他オプション情報(ハッシュ)
+			 *		|	basetimestamp:page['starttimestamp'],
+			 *		|	token  : page['edittoken']
+			 */
+			function setWikiPage(a,b,c) {
 				var
+					def = $.Deferred(),
 					opt = (arguments.length < 3) ? {} : c,
 					_pdata = $.extend({},{
 						action : 'edit',
 						summary : 'edit',
 						title : getPageNamespace(a)+':'+getPageName(a),
 						text : b,
+						createonly : false,
 					},opt);
-				$.wikibok.requestAPI(
-					_pdata,
-					function(dat,stat,xhr) {
-/*
-						//記事の編集競合を検出する場合は以下のパラメータも必要...?
-						basetimestamp:page['starttimestamp'],
-						token  : page['edittoken']
-*/
-					},
-					function(xhr,stat,err) {
-					}
-				)
+				if(b == '' && opt.createonly == true) {
+					def.reject('作成時には、内容記述は必須です');
+				}
+				else {
+					$.wikibok.requestAPI(
+						_pdata,
+						function(dat,stat,xhr) {
+//							if(dat.error != undefined) {
+//								switch(dat.error.code) {
+//									case 'editconflict':
+										$.wikibok.getDescriptionEdit(a)
+										.done(function(dat){
+											var
+												page = dat.query.pages,
+												edesc = $.map(page,function(d){
+													return (d.revisions) ? $.map(d.revisions,function(d){return d['*'];}).join() : '';
+												}).join(),
+												token = $.map(page,function(d) {return d.edittoken}).join(),
+												timestamp = $.map(page,function(d) {return d.starttimestamp;}).join();
+											_diffString(b,edesc);
+										})
+										.always(function() {
+											
+										});
+//										break;
+//									default:
+//										break;
+//								}
+//							}
+//							else {
+//								//編集成功
+//								def.resolve(dat);
+//							}
+						},
+						function(xhr,stat,err) {
+							def.reject(err)
+						}
+					);
+				}
+				return def.promise();
+			}
+			function create_page(a,b,c) {
+				if(arguments.length < 2) {
+				}
 			}
 			/**
 			 * 記事編集ダイアログ
@@ -646,7 +686,7 @@
 			 * @param b 編集開始時の記事
 			 * @param c オプション
 			 */
-			function editDescriptionDialog(a,b,c) {
+			function editDescriptionDialog(a,b,c,d) {
 				var
 					def = $.Deferred(),
 					c = (arguments.length < 3) ? {} : c,
@@ -654,8 +694,9 @@
 						create: false,
 						title : '.title',
 						text  : '.wikibok-text'
-					},c);,
-				function _dialog(a,b,c,opt) {
+					},c),
+					diff_orig = (arguments.length < 4) ? false : d;
+				function _dialog(a,b,opt) {
 					$.wikibok.exDialog(
 						$.wikibok.wfMsg('wikibok-edittool','edit','title'),
 						$('#wikibok-description-edit'),
@@ -675,11 +716,17 @@
 								title: $.wikibok.wfMsg('wikibok-edittool','button_commit','title'),
 								class: $.wikibok.wfMsg('wikibok-edittool','button_commit','class'),
 								click: function() {
+									var
+										_title = $(this).find(opt.title).val(),
+										_body = $(this).find(opt.text).val();
 									if(opt.create) {
 										//記事作成
+										//create_page()
 									}
 									else {
 										//記事編集
+										setWikiPage(_title,_body,opt)
+										
 									}
 									$(this).dialog('close');
 									def.resolve();
@@ -701,11 +748,21 @@
 				$.wikibok.getDescriptionEdit(a)
 				.done(function(dat) {
 					var
-						edesc = $.map(dat.query.pages,function(d){
-							return $.map(d.revisions,function(d){return d['*'];}).join();
+						page = dat.query.pages,
+						edesc = $.map(page,function(d){
+							//データなしの場合がある
+							return (d.revisions) ? $.map(d.revisions,function(d){return d['*'];}).join() : '';
 						}).join(),
-						token = $.map(dat.query.pages,function(d){return d.edittoken;}).join();
-					_dialog(a,edesc,token,opt);
+						token = $.map(page,function(d) {return d.edittoken}).join(),
+						timestamp = $.map(page,function(d) {return d.starttimestamp;}).join(),
+						_opt = (diff_orig !== false) 
+								? $.extend({},opt,{
+									token : token,
+									basetimestamp : timestamp
+								}) : $.extend({},opt,{
+									token : token
+								});
+					_dialog(a,edesc,_opt);
 				})
 				.fail(function() {
 					def.reject();
@@ -1512,7 +1569,8 @@
 	 */
 	var
 	_unique = function(pre,len,rep) {
-			var count = 0,
+			var
+				count = 0,
 				maxLen = len || 5,
 				maxCount = rep || 10,
 				_id = '';
@@ -1536,12 +1594,85 @@
 			return ($(_id).length == 0) ? id : arguments.callee(pre,len+1,rep);
 		},
 	_selecter = function() {
-			var args = Array.prototype.slice.apply(arguments),
+			var
+				args = Array.prototype.slice.apply(arguments),
 				a = args.shift(),
 				b = args.shift() || '.';
 			return (a == undefined) ? false : ((a.indexOf(b) < 0) ? b+a : a);
 			
-		};
-		
+		},
+	_diffString = function(oDesc,nDesc) {
+			//比較結果文字列の作成
+			function out(o,n) {
+				function sep(s) {
+					var
+						o = new Object();
+					for(var i=0;i<s.length;i++) {
+						if(o[s[i]] == null) {
+							o[s[i]] = { rows : new Array(), diff : null };
+						}
+						o[s[i]].rows.push(i);
+					}
+					return o;
+				}
+				//両方の文字列を比較用に分割する
+				var
+					os = sep(o),
+					ns = sep(n);
+
+				for (var i in ns) {
+					if(ns[i].rows.length == 1 && typeof(os[i]) != 'undefined' && os[i].rows.length == 1) {
+						n[ns[i].rows[0]] = {text:n[ns[i].rows[0]],row:os[i].rows[0]};
+						o[os[i].rows[0]] = {text:o[os[i].rows[0]],row:ns[i].rows[0]};
+					}
+				}
+				//先頭から順に分割した位置の修正
+				for (var i=0;i<(n.length - 1);i++) {
+					if(n[i].text != null && n[i+1].text == null && (n[i].row + 1) < o.length 
+					  && o[ n[i].row+1 ].text == null
+					  && n[ i+1 ] == o[ n[i].row+1 ] ) {
+						n[i+1] = { text: n[i+1], row: n[i].row + 1 };
+						o[n[i].row+1] = { text: o[n[i].row+1], row: i + 1 };
+					}
+				}
+				//終端から順に分割した位置の修正
+				for ( var i = n.length - 1; i > 0; i-- ) {
+					if ( n[i].text != null && n[i-1].text == null && n[i].row > 0 
+					  && o[ n[i].row - 1 ].text == null 
+					  && n[i-1] == o[ n[i].row - 1 ] ) {
+						n[i-1] = { text: n[i-1], row: n[i].row - 1 };
+						o[n[i].row-1] = { text: o[n[i].row-1], row: i - 1 };
+					}
+				}
+				return { o: o, n: n };
+			}
+			//比較結果文字列のマークアップ
+			function markup(o,n,c) {
+				var
+					res = '',
+					item;
+				for(var i=0;i<o.length;i++) {
+					item = _escapeHTML(a[i].text) + b[i];
+					res += (a[i].text != null) ? item : '<span class="'+c+'"/>'+item+'</span>';
+				}
+				return res;
+			}
+			var
+				o = oDesc.replace(/\s+$/,''),
+				n = nDesc.replace(/\s+$/,''),
+				os = o.match(/\s+/g) || [],
+				ns = n.match(/\s+/g) || [],
+				out = out((o == '' ? [] : o.split(/\s+/)),(n == '' ? [] : n.split(/\s+/)));
+			os.push('\n');
+			ns.push('\n');
+			return { o : markup(out.o,os,'del') , n : markup(out.n,ns,'ins')};
+		},
+	_escapeHTML = function(a) {
+			return a.replace(/&/g,'&amp;')
+					.replace(/"/g,'&quot;') //"
+					.replace(/'/g,'&#039;') //'
+					.replace(/</g,'&lt;')
+					.replace(/>/g,'&gt;');
+		}
 })(jQuery);
 

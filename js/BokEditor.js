@@ -51,8 +51,10 @@ jQuery(function($) {
 	function textClick(d) {
 		var
 			tmp,
-			open = false,
-			tid = d.name;
+			_tmp,
+			open = false;
+		//対象ノードの名称を設定(ClickEventごとに変更の必要あり)
+		tid = d.name;
 		switch(mode) {
 			//後から選択した方が親
 			case 'parent':
@@ -74,12 +76,11 @@ jQuery(function($) {
 						description : pid,
 						smwlinkto : tid
 					}
+					represent(pid);
 				}
 				else {
 					//追加済み
-					
 				}
-				represent(pid);
 				break;
 			case 'normal':
 			default:
@@ -99,20 +100,26 @@ jQuery(function($) {
 						+ '<dd class="command bokeditor-rename">'+$.wikibok.wfMsg('wikibok-contextmenu','description','rename')+'</dd>'
 						+ '<dd class="command bokeditor-represent">'+$.wikibok.wfMsg('wikibok-contextmenu','description','represent')+'</dd>';
 				}
+				tmp = tmp+'</dl>';
 				open = true;
 				break;
 		}
-		tmp = tmp+'</dl>';
 		if(open) {
-			$.wikibok.exDialog(
+			var
+				d = $.wikibok.exDialog(
 				$.wikibok.wfMsg('wikibok-contextmenu','title'),
 				'',
 				{
-					open : function() {
-						var
-							dialog = this;
+					create : function() {
+						//ダイアログボックス内要素を別変数へ退避
+						var dialog = this;
+						//表示文字列の更新
 						$(dialog).html(tmp);
+						//各メニューのイベントを設定
 						$(dialog)
+							.on('click','.command',function(a,b) {
+								$(dialog).dialog('close');
+							})
 							.on('click','.description-view',function(a,b){
 								$.wikibok.viewDescriptionDialog(tid);
 							})
@@ -131,7 +138,7 @@ jQuery(function($) {
 								svg.delNode(tid,true);
 							})
 							.on('click','.bokeditor-edge-delete',function(a,b) {
-								alert('紐削除:'+tid);
+								svg.moveNode(tid,'');
 							})
 							.on('click','.bokeditor-node-create',function(a,b) {
 								createNewNode(tid);
@@ -143,11 +150,8 @@ jQuery(function($) {
 								pid = tid;
 								rid = {};
 								mode = 'represent';
+								represent(pid);
 							})
-							.on('click','.command',function(a,b) {
-								$(dialog).off('click');
-								$(dialog).dialog('close');
-							});
 					}
 				}
 			);
@@ -176,12 +180,20 @@ jQuery(function($) {
 						class: $.wikibok.wfMsg('wikibok-represent-node','button','class'),
 						title: $.wikibok.wfMsg('wikibok-represent-node','button','title'),
 						click: function(){
-							var dat = $(this).find('span.txt').map(function(i,e){
-									return a+"\0"+$(e).attr('data');
+							function pname(p) {
+								return $.wikibok.getPageNamespace(p)+':'+$.wikibok.getPageName(p);
+							}
+							var
+								_rows = $.map(rid,function(d,i) {
+									return {
+										delete : d.smwlinkto,
+										source : pname(d.description),
+										target : pname(d.smwlinkto),
+									};
 								});
 							$.wikibok.requestCGI(
 								'WikiBokJs::representNodeRequest',
-								[a,dat],
+								[_rows],
 								function(dat,stat,xhr) {
 								},
 								function(xhr,stat,err) {
@@ -209,8 +221,9 @@ jQuery(function($) {
 					e = d.smwlinkto,
 					_id = 'represent_chk_'+a+'_'+i;
 				return '<span class="del wikibok_icon" title="中止"/><span data="'+e+'" class="txt">'+e+'</span>';
-			});
-		$(dx).find('dd.data').html(itm.join("<br/>\n"));
+			}),
+			itm = (itm.length < 1) ? $.wikibok.wfMsg('wikibok-represent-node','caution') : itm.join('<br/>');
+		$(dx).find('dd.data').html(itm);
 		//追加キャンセルイベントの設定
 		$(dx).find('span.del').one('click',function(e,f) {
 			delete rid[$(e.target).next().attr('data')];

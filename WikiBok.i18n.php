@@ -242,6 +242,7 @@ $messages['ja'] = array(
 			'title' => '代表表現選択',
 			'headline1' => '代表ノード名称',
 			'headline2' => '従属ノード名称',
+			'caution' => '[従属ノードが選択されていません]',
 			'button' => array(
 				'text' => '実行',
 				'title' => 'ノード名称を変更します',

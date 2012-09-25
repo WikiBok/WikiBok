@@ -6,9 +6,12 @@ if(!defined("REVISION_DB")) {
 	define("BOK_TARGET_DB_USER","user_bok_tree");
 	define("BOK_TARGET_DB_SAVE","save_bok_tree");
 	define("BOK_TARGET_DB_MERGER","merger_class");
+	define("BOK_TARGET_DB_REPRESENT","represent_work");
 	define("BOK_TARGET_DB_CONFLICT","conflict_log");
 	define("BOK_COLUMN_SEP_IDS","\n");
 	define("BOK_COLUMN_SEP_PATH","\1");
+	define("BOK_LINKTYPE_REPRESENT","represent");
+	define("TABLE_POST_STRING","BOK_TARGET_DB_");
 }
 require_once("MergerBackup.class.php");
 
@@ -50,6 +53,8 @@ class RevisionDB {
 		$this->createMergerClassTable();
 		//編集競合ログテーブル作成
 		$this->createConflictLogTable();
+		//2012/09/25追加
+		$this->createRepresentTable();
 	}
 	/**
 	 * ユーザーIDを設定する
@@ -621,6 +626,60 @@ class RevisionDB {
 	 */
 	public function searchEditConflict($type) {
 	}
+	
+	/**
+	 * 代表表現データの登録
+	 */
+	public function setRepresentData($data) {
+		//ユーザIDを追加
+		$data += array('session_id'=>$this->session);
+		$data += array('user_id' => $this->user);
+		//ソート
+		ksort($data);
+		//項目名・データを抽出
+		$k = array_keys($data);
+		$param = array_values($data);
+		$v = array_fill(0,count($param),'?');
+
+		$sql  = 'INSERT INTO '.BOK_TARGET_DB_REPRESENT.' (';
+		$sql .= '`'.implode('`,`',$k).'`';
+		$sql .= ') VALUES ('.implode(',',$v).')';
+		$sth = $this->db->prepare($sql);
+		if($sth->execute($param) === FALSE) {
+			//データ登録ができない場合、テーブルを作成...
+			$this->createRepresentTable();
+			//再度データ登録を行う
+			return $sth->execute($param);
+		}
+		else {
+			return true;
+		}
+	}
+	public function getRepresentData($node) {
+		$param = array($this->session,$this->user);
+		//既存のテンポラリデータを削除
+		$sql  = "SELECT concat('*[[".BOK_LINKTYPE_REPRESENT."::',`target`,']]') link ";
+		$sql .= "FROM ".BOK_TARGET_DB_REPRESENT." ";
+		$sql .= " WHERE `session_id` = ? ";
+		$sql .= "   AND `user_id` = ?";
+		$sth = $this->db->prepare($sql);
+		$sth->execute($param);
+		$result = $sth->fetchAll(PDO::FETCH_ASSOC);
+		return array($sql,$result);
+	}
+	/**
+	 * 代表表現データの削除
+	 */
+	public function clearRepresentData() {
+		$param = array($this->session,$this->user);
+		//既存のテンポラリデータを削除
+		$del  = 'DELETE FROM '.BOK_TARGET_DB_REPRESENT.' ';
+		$del .= ' WHERE `session_id` = ? ';
+		$del .= '   AND `user_id` = ?';
+		$sth = $this->db->prepare($del);
+		$sth->execute($param);
+		return true;
+	}
 /*******************************************************************************
  * 以下、プライベートメソッド
  *******************************************************************************/
@@ -723,10 +782,9 @@ class RevisionDB {
 	 */
 	private function createUserTable() {
 		$ddl  = 'CREATE TABLE IF NOT EXISTS '.BOK_TARGET_DB_USER.' (';
-		$ddl .= '  session_id varchar(30) NOT NULL,';
+		$ddl .= '  session_id varchar(255) NOT NULL,';
 		$ddl .= '  rev        int(10) unsigned NOT NULL,';
 		$ddl .= '  bok        longtext,';
-		$ddl .= '  represent  longtext,';
 		$ddl .= '  user_id    int(10) NOT NULL,';
 		$ddl .= '  time       timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,';
 		$ddl .= '  PRIMARY KEY `user_edit` (session_id,user_id,rev),';
@@ -791,6 +849,21 @@ class RevisionDB {
 		$ddl .= ') ENGINE=InnoDB  DEFAULT CHARSET=utf8';
 		$this->db->exec($ddl);
 	}
-	
+	/**
+	 * 代表ノード選択処理のデータ保持用テーブルを作成
+	 */
+	public function createRepresentTable() {
+		$ddl  = 'CREATE TABLE IF NOT EXISTS '.BOK_TARGET_DB_REPRESENT.' (';
+		$ddl .= ' session_id varchar(255) NOT NULL,';
+		$ddl .= ' user_id int(10) NOT NULL, ';
+		$ddl .= ' `source` varchar(255) NOT NULL, ';
+		$ddl .= ' `target` varchar(255) NOT NULL, ';
+		$ddl .= ' time    timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, ';
+		$ddl .= ' PRIMARY KEY `primary` (user_id,`source`,`target`),';
+		$ddl .= ' KEY `rep_link`  (`source`,`target`),';
+		$ddl .= ' KEY `time` (time)';
+		$ddl .= ') ENGINE=InnoDB  DEFAULT CHARSET=utf8';
+		$this->db->exec($ddl);
+	}
 }
 ?>
