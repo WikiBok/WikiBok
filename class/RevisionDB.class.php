@@ -381,6 +381,8 @@ class RevisionDB {
 		$_rev = intval($head['rev']);
 		//不要な編集データをクリア(UNDO状態からの編集など)
 		$this->clearEditData($rev);
+		//2012/09/26追加
+		$this->clearRepresentData($rev);
 		if(!empty($rev)) {
 			$rev = intval($rev) + 1;
 			//データ登録
@@ -655,13 +657,18 @@ class RevisionDB {
 			return true;
 		}
 	}
-	public function getRepresentData($node) {
-		$param = array($this->session,$this->user);
-		//既存のテンポラリデータを削除
+	/**
+	 * 代表表現データの取得
+	 *   - 削除成功ノード名を指定して、書き込むSMW-LINK情報を取得
+	 */
+	public function getRepresentData($rev,$node) {
+		$param = array($this->session,$this->user,$rev);
+		//代表表現
 		$sql  = "SELECT concat('*[[".BOK_LINKTYPE_REPRESENT."::',`target`,']]') link ";
 		$sql .= "FROM ".BOK_TARGET_DB_REPRESENT." ";
 		$sql .= " WHERE `session_id` = ? ";
 		$sql .= "   AND `user_id` = ?";
+		$sql .= "   AND `rev` <= ?";
 		$sth = $this->db->prepare($sql);
 		$sth->execute($param);
 		$result = $sth->fetchAll(PDO::FETCH_ASSOC);
@@ -670,12 +677,17 @@ class RevisionDB {
 	/**
 	 * 代表表現データの削除
 	 */
-	public function clearRepresentData() {
+	public function clearRepresentData($rev="") {
 		$param = array($this->session,$this->user);
 		//既存のテンポラリデータを削除
 		$del  = 'DELETE FROM '.BOK_TARGET_DB_REPRESENT.' ';
 		$del .= ' WHERE `session_id` = ? ';
 		$del .= '   AND `user_id` = ?';
+		//UNDO/REDO対策(設定リビジョン番号以降のデータを削除)
+		if(!empty($rev)) {
+			array_push($param,$rev);
+			$del .= ' AND `rev` > ? ';
+		}
 		$sth = $this->db->prepare($del);
 		$sth->execute($param);
 		return true;
@@ -855,12 +867,13 @@ class RevisionDB {
 	public function createRepresentTable() {
 		$ddl  = 'CREATE TABLE IF NOT EXISTS '.BOK_TARGET_DB_REPRESENT.' (';
 		$ddl .= ' session_id varchar(255) NOT NULL,';
-		$ddl .= ' user_id int(10) NOT NULL, ';
-		$ddl .= ' `source` varchar(255) NOT NULL, ';
-		$ddl .= ' `target` varchar(255) NOT NULL, ';
-		$ddl .= ' time    timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, ';
-		$ddl .= ' PRIMARY KEY `primary` (user_id,`source`,`target`),';
-		$ddl .= ' KEY `rep_link`  (`source`,`target`),';
+		$ddl .= ' user_id    int(10)      NOT NULL,';
+		$ddl .= ' rev        int(10)      NOT NULL,';
+		$ddl .= ' `source`   varchar(255) NOT NULL,';
+		$ddl .= ' `target`   varchar(255) NOT NULL,';
+		$ddl .= ' time       timestamp    NOT NULL DEFAULT CURRENT_TIMESTAMP, ';
+		$ddl .= ' PRIMARY KEY `filter` (session_id,user_id,rev),';
+		$ddl .= ' KEY `source`  (`source`),';
 		$ddl .= ' KEY `time` (time)';
 		$ddl .= ') ENGINE=InnoDB  DEFAULT CHARSET=utf8';
 		$this->db->exec($ddl);

@@ -222,6 +222,9 @@ $messages['ja'] = array(
 				'already'=>'すでに同じ名前の記事があります'
 			),
 		),
+		'wikibok-move-node' => array(
+			'title' => '移動'
+		),
 		'wikibok-rename-node' => array(
 			'title' => 'ノード名称変更',
 			'headline1' => '変更前ノード名称',

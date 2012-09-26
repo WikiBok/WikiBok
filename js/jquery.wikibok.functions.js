@@ -551,7 +551,7 @@
 							title: $.wikibok.wfMsg('wikibok-new-element','bok','button_create','title'),
 							class: $.wikibok.wfMsg('wikibok-new-element','bok','button_create','class'),
 							click: function() {
-								$.wikibok.editDescriptionDialog(a);
+								//$.wikibok.editDescriptionDialog(a);
 								$(this).dialog('close');
 							}
 						},
@@ -861,6 +861,7 @@
 						$.data(me.get(0),'revision',dat);
 					}
 					$.data(me.get(0),'user',user);
+					_updateHTML();
 				}
 			}
 			/**
@@ -1400,9 +1401,9 @@
 			 */
 			function active(act) {
 				var
-					o = result.dat[act];
-				result.act = act;
-				obj.actNode(o);
+					o = this.dat[act];
+				this.act = act;
+				obj.actNode(o.name);
 				//スクロール...
 				$.scrollTo($('g[data="'+o.name+'"]'));
 				return ;
@@ -1428,18 +1429,18 @@
 				.on('click',opt.find,function() {
 					result = getData($(elem).find(opt.text).val());
 					//必ず検索結果先頭
-					active(0);
+					active.call(result,0);
 				})
 				.on('click',opt.next,function() {
 					var txt = $(elem).find(opt.text).val();
 					//検索文字列が同じ場合、次の要素
 					if(result.txt == txt) {
 						result.act = _next(result.act);
-						active(result.act);
+						active.call(result,result.act);
 					}
 					else {
 						result = getData(txt);
-						active(0);
+						active.call(result,0);
 					}
 				})
 				.on('click',opt.prev,function() {
@@ -1447,15 +1448,61 @@
 					//検索文字列が同じ場合、前の要素
 					if(result.txt == txt) {
 						result.act = _prev(result.act);
-						active(result.act);
+						active.call(result,result.act);
 					}
 					else {
 						result = getData(txt);
-						active(0);
+						active.call(result,0);
 					}
 				})
 				.on('click',opt.list,function() {
-					//未実装
+					var
+						txt = $(elem).find(opt.text).val() || '',
+						res = getData(txt),
+						dat = res.dat,
+						_focus = true;
+					$('#wikibok-searchresult').find('tbody.txt').html(
+						$.map(dat,function(d){
+							if(d.name != '') {
+								return '<tr class="data"><td>'+_escapeHTML(d.name)+'</td></tr>'
+							}
+						}).join()
+					);
+					$.wikibok.exDialog(
+							$.wikibok.wfMsg('wikibok-search','title'),
+							$('#wikibok-searchresult'),
+							{
+								create : function() {
+									var
+										dialog = $(this),
+										_color = dialog.find('.color'),
+										_colorPicker = dialog.find('.colorPicker'),
+										_colorSelect = dialog.find('.colorSelect'),
+										_colorDiv = dialog.find('.colorSelect').find('div'),
+										tmp;
+									_colorPicker.ColorPicker({
+										flat : true,
+										onSubmit:function(hsb,hex,rgb,elem) {
+											_colorDiv.css({backgroundColor : '#'+hex});
+											_colorPicker.stop().animate({height:0},500);
+											_color.val(hex);
+											_colorSelect.trigger('click');
+										}
+									});
+									_colorSelect.toggle(
+										function() {_colorPicker.stop.animate({height:173},500);},
+										function() {_colorPicker.stop.animate({height:  0},500);}
+									);
+								},
+								focus : function() {
+									if(_focus) {
+										$(this).html($('#wikibok-searchresult').html());
+									}
+								}
+							},
+							txt
+						);
+					
 				})
 			//入力補完機能の設定
 			$(this).find(opt.text).autocomplete({

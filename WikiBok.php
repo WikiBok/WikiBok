@@ -306,7 +306,7 @@ function efWikiBokSearchResult($id="wikibok-searchresult") {
 	$txt .= '<div class="wikibok-color">color';
 	$txt .= '<div class="colorSelect"><div></div></div>';
 	$txt .= '<div class="colorPicker"></div>';
-	$txt .= '<input type="text" readonly="readonly" class="color" style="display:none">';
+	$txt .= '<input type="hidden" readonly="readonly" class="color" style="display:none">';
 	$txt .= '</div>';
 	$txt .= '<div class="clear"></div>';
 	//ページャー

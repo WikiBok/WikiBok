@@ -42,21 +42,6 @@
 			return mpos.join(' ');
 	}
 	/**
-	 * ノード検索
-	 */
-	function serarchNode(a,b) {
-		var
-			_target,
-			inp = a.replace(/\W/g,'\\$&'),
-			reg = new RegExp((arguments.length < 2 || b == false) ? ('^'+inp+'$') : inp);
-
-		if(allData == null) return false;
-		_target = tree.nodes(allData).filter(function(d) {
-			return (d.name.match(reg))
-		});
-		return (_target.length < 1) ? false : _target;
-	}
-	/**
 	 * BOK-XMLからD3ライブラリで利用するデータ形式に変換
 	 *   - XMLデータをthisとして渡すこと(callメソッドを利用)
 	 */
@@ -107,7 +92,8 @@
 			links = tree.links(nodes).filter(function(d) {return (d.source.depth > 0);}),
 			node,
 			link,
-			add;
+			add,
+			tran;
 		//キャンパスサイズを再計算
 		setSize();
 		//深さで横位置を決定
@@ -157,23 +143,21 @@
 			.on('click.add', options.textClick)
 			.on('click.orig', function(d){});
 		//ノード要素
-		node
-			.classed(options.node.class,options.node.func)
-			.transition()
+		tran = node.classed(options.node.class,options.node.func).transition()
 			.duration(options.duration)
 			.attr('transform',function(d) {
 				return 'translate('+_pos(d.y,d.x)+')';
-			})
-		//記事名称の書き換えを即時展開
-		.selectAll('text').transition()
-			.text(function(d){return d.name;})
+			});
 		//アイコンのみを限定選択
-		.selectAll('polygon')
+		tran.selectAll('polygon')
 			.attr('points',function(d){
 				var r = d.r || 4.5;
 				//折畳/展開の状態によって表示形状を変える
 				return (d.children ? rect(r) : ((d._children) ? triangel(r) : rect(r)));
 			});
+		//記事名称の書き換えを即時展開
+		tran.selectAll('text')
+			.text(function(d){return d.name;});
 		//ノードの消去時
 		node.exit().transition()
 			.duration(options.duration)
@@ -250,8 +234,8 @@
 	 */
 	function moveNode(a,b) {
 		var
-			c = serarchNode(a),
-			p = serarchNode(b),
+			c = searchNode(a),
+			p = searchNode(b) || allData,
 			add = p.children || p._children || [],
 			//元ノードを削除するため...
 			del = c.parent.children || c.parent._children || false;
@@ -274,9 +258,8 @@
 		var
 			c = searchNode(a),
 			p = c.parent || false,
-			del = p.children || p._children || false,
 			cc = c.children || c._children || false,
-			move = (arguments.length < 2 || b == undefined) ? true : b,
+			move = (arguments.length < 2 || b == undefined) ? true : !b,
 			i;
 			
 		//自身の子ノードを上位ノードに移動する必要がある場合
@@ -284,10 +267,13 @@
 			//子ノード毎に移動処理を実施
 			i = cc.length;
 			while(--i >= 0) {
-				moveNode(cc[i],p);
+				moveNode(cc[i].name,p.name);
 			}
 		}
-		p.children = $.map(del,function(d) {
+		if(p.children == null) {
+			p.children = p._children;
+		}
+		p.children = $.map(p.children,function(d) {
 			if(d !== c) {
 				return d;
 			}
@@ -344,12 +330,15 @@
 	 * 対象ノードを検索
 	 * @param a 対象ノード名称
 	 */
-	function searchNode(a) {
+	function searchNode(a,b) {
 		var
 			target = (arguments.length < 1 || a == '')
 				? []
 				: $.map(allNode(),function(d){
-					if(d.name == a) {
+					var
+						inp = a.replace(/\W/g,'\\$&'),
+						reg = new RegExp((arguments.length < 2 || b == false) ? ('^'+inp+'$') : inp);
+					if(d.name.match(reg)) {
 						return d;
 					}
 				});
@@ -360,7 +349,7 @@
 	 * @param a 対象ノード名称
 	 */
 	function actNode(a) {
-		openTree(a)
+		openTree(a);
 		clearClassed('active');
 		classed(a,'active');
 	}
@@ -376,7 +365,7 @@
 				}
 			});
 		//対象ノードまでを展開
-		(function() {
+		$.each(target,function() {
 			var p = this.parent || false;
 			if(p === false) {
 				return;
@@ -390,7 +379,7 @@
 				}
 				arguments.callee.call(p);
 			}
-		}).call(target);
+		});;
 	}
 	/**
 	 * 対象の[svg:g]ノードにCSS-Classを追加/削除する
@@ -480,6 +469,7 @@
 			actNode : actNode,
 			allNode : allNode,
 			delNode : delNode,
+			moveNode: moveNode,
 			renameNode : renameNode,
 			classed : classed,
 			clearClassed : clearClassed,

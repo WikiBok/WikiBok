@@ -471,13 +471,47 @@ class WikiBokJs {
 	}
 	/**
 	 * SMWLinkの取得
-	 * @param $desc	記事名称
-	 * @param $type	関係名称(省略可)
+	 * @param $desc		記事名称
+	 * @param $lname	関係名称(省略可)
 	 */
 	public static function getSMWLinks($desc,$lname="") {
 		$links = self::getSMWLink($desc,$lname);
 		$result = (count($links) > 0);
 		return json_encode(array('res'=>$result,'data'=>$links));
+	}
+	public static function getSMWLinkTarget($name,$linkname) {
+		$dbr = wfGetDB(DB_SLAVE);
+		//SMWテーブル名称取得
+		$smw_rels2 = $dbr->tableName('smw_rels2');
+		$smw_ids = $dbr->tableName('smw_ids');
+		//SMWリンクを出力
+		$query ='SELECT s_id.smw_title s,'.
+				'       p_id.smw_title p,'.
+				'       o_id.smw_title o '.
+				'  FROM '.$smw_ids.' s_id '.
+				'  JOIN '.$smw_rels2.' s_rel ON s_id.smw_id = s_rel.s_id '.
+				'  JOIN '.$smw_ids.' o_id ON s_rel.o_id = o_id.smw_id '.
+				'  JOIN '.$smw_ids.' p_id ON s_rel.p_id = p_id.smw_id'.
+				' WHERE o_id.smw_title = '.$dbr->addQuotes($name).
+				'   AND s_id.smw_namespace = '.NS_SPECIAL_DESCRIPTION.
+				'   AND o_id.smw_namespace = '.NS_SPECIAL_DESCRIPTION;
+				'   AND p_id.smw_title = '.$dbr->addQuotes($linkname);
+		$links = array();
+		$rows = $dbr->query($query);
+		if($dbr->numRows($rows) > 0) {
+			while($row = $dbr->fetchObject($rows)) {
+/*
+				$links[] = array(
+					'source' => "{$row->s}",
+					'target' => "{$row->o}",
+					'type' => "smw",
+					'linkName' => "{$row->p}"
+				);
+*/
+			}
+		}
+		$dbr->freeResult($rows);
+		return $links;
 	}
 	public static function representNodeRequest($rev,$user,$rows) {
 		$db = self::getDB();
@@ -492,19 +526,29 @@ class WikiBokJs {
 			$rev = 0;
 			$xml = new BokXml();
 		}
+		//BOK-XMLデータの変更
 		foreach($rows as $row) {
 			$xml->delNode($row['delete']);
+		}
+		$res = $db->setEditData($rev,$xml->saveXML());
+		//代表表現情報の書き込み
+		foreach($rows as $row) {
 			$db->setRepresentData(array(
+				'rev' => $res,
 				'source'=>$row['source'],
 				'target'=>$row['target']
 			));
 		}
-		$res = $db->setEditData($rev,$xml->saveXML());
 		$result['res'] = $res;
 		return json_encode($result);
 	}
+	/**
+	 * 代表表現設定用SMW-LINK文字列取得
+	 */
 	public static function representLinktext($rev,$user,$desc) {
 		$text = array();
+		$db = self::getDB();
+		$db->setUser($user);
 		$rows = $db->getRepresentData($desc);
 		foreach($rows as $row) {
 			$text[] = $row['link'];

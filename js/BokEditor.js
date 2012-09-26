@@ -5,6 +5,7 @@ jQuery(function($) {
 		tid,
 		pid,
 		rid,
+		depth,
 		mode = 'normal',
 		mode_mes,
 		svg = $('#result').bok({
@@ -17,7 +18,15 @@ jQuery(function($) {
 			},
 			textClick : textClick,
 			pathClick : function(d) {
-				alert(d.source.name);
+				var
+					tmp = '<dl class="content">'
+						  + '<dt>'+$.wikibok.wfMsg('wikibok-contextmenu','itemgroup','edit')+'</dt>'
+						  + '<dd class="command bokeditor-edge-delete">'+$.wikibok.wfMsg('wikibok-contextmenu','bok','edge-delete')+'</dd>'
+						  + '</dl>';
+				tid = d.target.name;
+				if(wgLogin && wgEdit && wgAction != 'load') {
+					context_dialog(tmp);
+				}
 			},
 			node : {
 				class : 'empty',
@@ -26,27 +35,127 @@ jQuery(function($) {
 				}
 			}
 		});
-	function moveNode(a,b) {
+	function context_dialog(tmp) {
+		var
+			_open = true;
+		$.wikibok.exDialog(
+			$.wikibok.wfMsg('wikibok-contextmenu','title'),
+			'',
+			{
+				create : function() {
+					var dialog = this;
+					//各メニューのイベントを設定
+					$(this)
+						.on('click','.command',function(a,b) {
+							$(dialog).dialog('close');
+						})
+						.on('click','.description-view',function(a,b){
+							$.wikibok.viewDescriptionDialog(tid);
+						})
+						.on('click','.bokeditor-find-parent',function(a,b) {
+							pid = tid;
+							mode = 'parent';
+						})
+						.on('click','.bokeditor-find-childs' ,function(a,b) {
+							pid = tid;
+							mode = 'childs';
+						})
+						.on('click','.bokeditor-only-delete',function(a,b) {
+							svg.delNode(tid,false);
+						})
+						.on('click','.bokeditor-node-delete',function(a,b) {
+							svg.delNode(tid,true);
+						})
+						.on('click','.bokeditor-edge-delete',function(a,b) {
+							delEdge(tid);
+						})
+						.on('click','.bokeditor-node-create',function(a,b) {
+							createNewNode(tid);
+						})
+						.on('click','.bokeditor-rename',function(a,b) {
+							renameNode(tid);
+						})
+						.on('click','.bokeditor-represent',function(a,b) {
+							pid = {name : tid,depth : depth};
+							rid = {};
+							mode = 'represent';
+							represent(pid.name);
+						});
+				},
+				focus : function() {
+					if(_open) {
+						_open = false;
+						$(this).html(tmp);
+					}
+				}
+			}
+		);
+	}
+	function delEdge(a) {
+		var
+			error = '';
 		$.wikibok.requestCGI(
-			'WikiBokJs::moveNodeRequest',
-			[a,b],
+			'WikiBokJs::deleteEdgeRequest',
+			[a],
 			function(dat,stat,xhr) {
-				return true;
+				if(dat.res == false) {
+					error = dat.b;
+				}
+				return (dat.res != false);
 			},
 			function(xhr,stat,err) {
+				error = ''
 				return false;
 			}
 		)
 		.done(function(dat) {
-			if(dat.res == false) {
-				//失敗
-			}
-			else {
-				svg.moveNode();
-			}
+			svg.moveNode(a,'');
+			$.revision.setRev(dat.res);
 		})
-			
-			
+		.fail(function() {
+			$.wikibok.exDialog(
+				$.wikibok.wfMsg('wikibok-move-node','title')+' '+$.wikibok.wfMsg('common','error'),
+				'',
+				{
+					focus : function(){
+						$(this).html(error);
+					}
+				}
+			);
+		});
+	}
+	function moveNode(a,b) {
+		var
+			error = '';
+		$.wikibok.requestCGI(
+			'WikiBokJs::moveNodeRequest',
+			[a,b],
+			function(dat,stat,xhr) {
+				if(dat.res == false) {
+					error = dat.b;
+				}
+				return (dat.res != false);
+			},
+			function(xhr,stat,err) {
+				error = ''
+				return false;
+			}
+		)
+		.done(function(dat) {
+			svg.moveNode(a,b);
+			$.revision.setRev(dat.res);
+		})
+		.fail(function() {
+			$.wikibok.exDialog(
+				$.wikibok.wfMsg('wikibok-move-node','title')+' '+$.wikibok.wfMsg('common','error'),
+				'',
+				{
+					focus : function(){
+						$(this).html(error);
+					}
+				}
+			);
+		});
 	}
 	function textClick(d) {
 		var
@@ -55,28 +164,32 @@ jQuery(function($) {
 			open = false;
 		//対象ノードの名称を設定(ClickEventごとに変更の必要あり)
 		tid = d.name;
+		depth = d.depth;
 		switch(mode) {
 			//後から選択した方が親
 			case 'parent':
-				
-				alert("親:"+tid+"\n子:"+pid);
+				moveNode(pid,tid);
 				mode = 'normal';
 				break;
 			//後から選択した方が子
 			case 'childs':
-				alert("親:"+pid+"\n子:"+tid);
+				moveNode(tid,pid);
 				mode = 'normal';
 				break;
 			//BOK上に表示しないノードを複数選択
 			case 'represent':
-				var disp;
 				//除外
-				if(rid.tid == undefined && tid != pid) {
-					rid[tid] = {
-						description : pid,
-						smwlinkto : tid
+				if(rid.tid == undefined && tid != pid.name) {
+					if(depth == pid.depth) {
+						rid[tid] = {
+							description : pid.name,
+							smwlinkto : tid
+						}
+						represent(pid.name);
 					}
-					represent(pid);
+					else {
+						alert('階層が違う');
+					}
 				}
 				else {
 					//追加済み
@@ -105,56 +218,7 @@ jQuery(function($) {
 				break;
 		}
 		if(open) {
-			var
-				d = $.wikibok.exDialog(
-				$.wikibok.wfMsg('wikibok-contextmenu','title'),
-				'',
-				{
-					create : function() {
-						//ダイアログボックス内要素を別変数へ退避
-						var dialog = this;
-						//表示文字列の更新
-						$(dialog).html(tmp);
-						//各メニューのイベントを設定
-						$(dialog)
-							.on('click','.command',function(a,b) {
-								$(dialog).dialog('close');
-							})
-							.on('click','.description-view',function(a,b){
-								$.wikibok.viewDescriptionDialog(tid);
-							})
-							.on('click','.bokeditor-find-parent',function(a,b) {
-								pid = tid;
-								mode = 'parent';
-							})
-							.on('click','.bokeditor-find-childs' ,function(a,b) {
-								pid = tid;
-								mode = 'childs';
-							})
-							.on('click','.bokeditor-only-delete',function(a,b) {
-								svg.delNode(tid,false);
-							})
-							.on('click','.bokeditor-node-delete',function(a,b) {
-								svg.delNode(tid,true);
-							})
-							.on('click','.bokeditor-edge-delete',function(a,b) {
-								svg.moveNode(tid,'');
-							})
-							.on('click','.bokeditor-node-create',function(a,b) {
-								createNewNode(tid);
-							})
-							.on('click','.bokeditor-rename',function(a,b) {
-								renameNode(tid);
-							})
-							.on('click','.bokeditor-represent',function(a,b) {
-								pid = tid;
-								rid = {};
-								mode = 'represent';
-								represent(pid);
-							})
-					}
-				}
-			);
+			context_dialog(tmp);
 		}
 	}
 	function represent(a) {
@@ -235,15 +299,12 @@ jQuery(function($) {
 	 */
 	function renameNode(a) {
 		var
-			_id = $.wikibok.uniqueID('dialog',$.wikibok.wfMsg('wikibok-rename-node','title')),
+			_open = true,
 			tmp = '<dl>'
 					+ '<dt>'+$.wikibok.wfMsg('wikibok-rename-node','headline1')+'</dt><dd>'+a+'</dd>'
 					+ '<dt>'+$.wikibok.wfMsg('wikibok-rename-node','headline2')+'</dt>'
 					+ '<dd class="rename_new_node"><input type="text" class="name"/></dd>'
 					+ '</dl>';
-		if($('#'+_id).dialog('isOpen')) {
-			$('#'+_id).dialog('close');
-		}
 		$.wikibok.exDialog(
 			$.wikibok.wfMsg('wikibok-rename-node','title'),
 			'',
@@ -251,12 +312,17 @@ jQuery(function($) {
 				create : function() {
 				},
 				open : function() {
-					$(this).html(tmp);
 					$(this).dialog('widget').setInterruptKeydown([{
 						class : 'name',
 						next : $.wikibok.wfMsg('wikibok-rename-node','button','class'),
 						prev : $.wikibok.wfMsg('common','button_close','class')
 					}]);
+				},
+				focus : function() {
+					if(_open) {
+						$(this).html(tmp);
+						_open = false;
+					}
 				},
 				buttons : [{
 					text : $.wikibok.wfMsg('wikibok-rename-node','button','text'),
