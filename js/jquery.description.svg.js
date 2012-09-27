@@ -106,7 +106,7 @@
 			//テキスト要素の表示/非表示切り替え(Mouseoverによるトグル動作)
 			.on('mouseover.orig',function(d){
 				if(d.vis == undefined) {
-					d.vis = true;
+					d.vis = false;
 				}
 				$('g[data="'+d.name+'"]').find('g').toggle(d.vis);
 			})
@@ -119,9 +119,7 @@
 				force.stop();
 				event.preventDefault();
 				return false;
-			})
-			//初期状態を非表示にする
-			.style('display','none');
+			});
 		_desc.append('svg:text')
 			.attr('x',8)
 			.attr('y','.31em')
@@ -313,6 +311,7 @@
 		classed(a,'active');
 	}
 	var
+		//ドラッグ設定
 		advDrag = d3.behavior.drag()
 			.on('dragstart',function(d,i) {
 				force.stop();

@@ -219,7 +219,8 @@ $messages['ja'] = array(
 			),
 			'error' => array(
 				'empty'=>'作成するノードの名称が入力されていません',
-				'already'=>'すでに同じ名前の記事があります'
+				'already'=>'すでに同じ名前の記事があります',
+				'nobody'=>nl2br("記事の内容が書かれていません。\n新規作成では必須入力です"),
 			),
 		),
 		'wikibok-move-node' => array(
@@ -246,6 +247,10 @@ $messages['ja'] = array(
 			'headline1' => '代表ノード名称',
 			'headline2' => '従属ノード名称',
 			'caution' => '[従属ノードが選択されていません]',
+			'error' => array(
+				'depth'=>'同じ階層にないノードは選択できません',
+				'already'=>'すでに選択されています',
+			),
 			'button' => array(
 				'text' => '実行',
 				'title' => 'ノード名称を変更します',

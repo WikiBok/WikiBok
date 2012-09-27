@@ -10,7 +10,7 @@ if(!defined("REVISION_DB")) {
 	define("BOK_TARGET_DB_CONFLICT","conflict_log");
 	define("BOK_COLUMN_SEP_IDS","\n");
 	define("BOK_COLUMN_SEP_PATH","\1");
-	define("BOK_LINKTYPE_REPRESENT","represent");
+	define("BOK_LINKTYPE_REPRESENT","reps");
 	define("TABLE_POST_STRING","BOK_TARGET_DB_");
 }
 require_once("MergerBackup.class.php");

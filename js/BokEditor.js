@@ -188,11 +188,21 @@ jQuery(function($) {
 						represent(pid.name);
 					}
 					else {
-						alert('階層が違う');
+						//5秒経過すると自動で閉じる
+						$.wikibok.timePopup(
+							$.wikibok.wfMsg('wikibok-represent-node','title'),
+							$.wikibok.wfMsg('wikibok-represent-node','error','depth'),
+							5000
+						);
 					}
 				}
 				else {
-					//追加済み
+					//5秒経過すると自動で閉じる
+					$.wikibok.timePopup(
+						$.wikibok.wfMsg('wikibok-represent-node','title'),
+						$.wikibok.wfMsg('wikibok-represent-node','error','already'),
+						5000
+					);
 				}
 				break;
 			case 'normal':
@@ -389,6 +399,7 @@ jQuery(function($) {
 		.done(function(cDat) {
 			svg.addNode(a,b);
 			$.revision.setRev(cDat.res);
+			svg.actNode(a);
 		});
 	}
 	/**
@@ -455,15 +466,14 @@ jQuery(function($) {
 							_status = $.wikibok.wfMsg('wikibok-new-element','error','already');
 						}
 						if(_status === true) {
-							$(dialog).dialog('close');
 							$.wikibok.viewDescriptionDialog(newName,{mode : 'create'})
 							.done(function() {
-								//BOK-XMLデータ編集
-								createNodeRequest(newName,addTo);
+							})
+							.fail(function() {
 							});
+							$(dialog).dialog('close');
 						}
 						else {
-							$.wikibok.viewDescriptionDialog(newName)
 							$.wikibok.exDialog(
 								$.wikibok.wfMsg('wikibok-new-element','title')+' '+$.wikibok.wfMsg('common','error'),
 								_status,

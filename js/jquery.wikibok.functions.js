@@ -536,25 +536,36 @@
 						mode : 'view',
 						title: 'dd.title',
 						text : 'dd.wikibok-text',
-						//編集ボタン
+						//記事の編集を開始する
 						editbtn : {
 							text : $.wikibok.wfMsg('common','button_edit','text'),
 							title: $.wikibok.wfMsg('common','button_edit','title'),
 							class: $.wikibok.wfMsg('common','button_edit','class'),
 							click: function() {
-								$.wikibok.editDescriptionDialog(a);
 								$(this).dialog('close');
+								//編集結果をAPIで反映してから,BOK-XMLへ反映する/しない
+								$.wikibok.editDescriptionDialog(a)
+								.done(function(){})
+								.fail(function(){})
+								.always(function(){});
 							}
 						},
+						//記事そのままでノードへ追加する
 						createbtn : {
 							text : $.wikibok.wfMsg('wikibok-new-element','bok','button_create','text'),
 							title: $.wikibok.wfMsg('wikibok-new-element','bok','button_create','title'),
 							class: $.wikibok.wfMsg('wikibok-new-element','bok','button_create','class'),
 							click: function() {
 								//$.wikibok.editDescriptionDialog(a);
+								//BOK-XMLデータ編集
+								//戻り値を設定して、戻り先でノード作成とか...
+								//
+								def.resolve(true);
+								//  × createNodeRequest(newName,addTo);
 								$(this).dialog('close');
 							}
 						},
+						//ダイアログを閉じる
 						cancelbtn : {
 							text : $.wikibok.wfMsg('common','button_cancel','text'),
 							title: $.wikibok.wfMsg('common','button_cancel','title'),
@@ -606,8 +617,9 @@
 				})
 				.fail(function(dat) {
 					if(opt.mode == 'create') {
-						$.wikibok.editDescriptionDialog(a,'',{create:true})
+						$.wikibok.editDescriptionDialog(a,'',{createonly:true})
 						.done(function() {
+							//戻り値を設定して、戻り先でノード作成とか...
 							def.resolve();
 						})
 						.fail(function(){
@@ -636,15 +648,19 @@
 						createonly : false,
 					},opt);
 				if(b == '' && opt.createonly == true) {
-					def.reject('作成時には、内容記述は必須です');
+					$.wikibok.timePopup(
+						$.wikibok.wfMsg('wikibok-new-element','title')+' '+$.wikibok.wfMsg('common','error'),
+						$.wikibok.wfMsg('wikibok-new-element','error','nobody'),
+						5000);
+					def.reject();
 				}
 				else {
 					$.wikibok.requestAPI(
 						_pdata,
 						function(dat,stat,xhr) {
-//							if(dat.error != undefined) {
-//								switch(dat.error.code) {
-//									case 'editconflict':
+							if(dat.error != undefined) {
+								switch(dat.error.code) {
+									case 'editconflict':
 										$.wikibok.getDescriptionEdit(a)
 										.done(function(dat){
 											var
@@ -653,21 +669,22 @@
 													return (d.revisions) ? $.map(d.revisions,function(d){return d['*'];}).join() : '';
 												}).join(),
 												token = $.map(page,function(d) {return d.edittoken}).join(),
-												timestamp = $.map(page,function(d) {return d.starttimestamp;}).join();
-											_diffString(b,edesc);
-										})
-										.always(function() {
-											
+												timestamp = $.map(page,function(d) {return d.starttimestamp;}).join(),
+												diff = _diffString(b,edesc);
+											//DIFF差分を表示して編集ダイアログを再表示
+											alert('編集競合発生');
 										});
-//										break;
-//									default:
-//										break;
-//								}
-//							}
-//							else {
-//								//編集成功
-//								def.resolve(dat);
-//							}
+										break;
+									default:
+										//その他エラー
+										break;
+								}
+								def.reject();
+							}
+							else {
+								//編集成功
+								def.resolve(dat);
+							}
 						},
 						function(xhr,stat,err) {
 							def.reject(err)
@@ -675,10 +692,6 @@
 					);
 				}
 				return def.promise();
-			}
-			function create_page(a,b,c) {
-				if(arguments.length < 2) {
-				}
 			}
 			/**
 			 * 記事編集ダイアログ
@@ -691,7 +704,7 @@
 					def = $.Deferred(),
 					c = (arguments.length < 3) ? {} : c,
 					opt = $.extend({},{
-						create: false,
+						createonly: false,
 						title : '.title',
 						text  : '.wikibok-text'
 					},c),
@@ -719,17 +732,13 @@
 									var
 										_title = $(this).find(opt.title).val(),
 										_body = $(this).find(opt.text).val();
-									if(opt.create) {
-										//記事作成
-										//create_page()
-									}
-									else {
-										//記事編集
-										setWikiPage(_title,_body,opt)
-										
-									}
+									setWikiPage(_title,_body,opt)
+									.done(function() {})
+									.fail(function() {})
+									.always(function() {});
 									$(this).dialog('close');
-									def.resolve();
+									//上記[setWikiPage]の戻り値でresolve/rejectを切り替え...
+									//def.resolve();
 								}
 							},{
 								text : $.wikibok.wfMsg('common','button_close','text'),
@@ -769,9 +778,34 @@
 				});
 				return def.promise();
 			}
-
-
-
+			/**
+			 * 警告を一定時間のみ表示(自動で閉じる)
+			 * @param a ダイアログタイトル
+			 * @param b ダイアログ表示文字列
+			 * @param c 表示している時間[マイクロ秒]
+			 */
+			function timePopup(a,b,c) {
+				$.wikibok.exDialog(
+					a,
+					b,{
+					open : function() {
+						var
+							me = this,
+							t = setTimeout(function() {
+								$(me).dialog('close');
+							},c);
+						$(me).html(b);
+						$.data($(me).get(0),'timer',t);
+					},
+					close : function() {
+						var
+							t = $.data($(this).get(0),'timer');
+						if(t != null) {
+							clearTimeout(t);
+						}
+					}
+				});
+			}
 			return {
 				array_unique : array_unique,
 				wfMsg : wfMsg,
@@ -790,6 +824,7 @@
 				getUrlVars : getUrlVars,
 				viewDescriptionDialog : viewDescriptionDialog,
 				editDescriptionDialog : editDescriptionDialog,
+				timePopup : timePopup,
 			};
 		},
 		/**
@@ -1380,12 +1415,14 @@
 				};
 			/**
 			 * 検索結果データの取得
-			 * @param text 検索用文字列(部分一致)
+			 * @param text 検索用文字列
+			 * @param item 部分一致[True:あり/Fsalse:なし]
 			 */
-			function getData(text) {
+			function getData(text,item) {
 				var
 					txt = text.replace(/\W/g,'\\$&'),
-					reg = new RegExp(txt,'igm'),
+					flg = (arguments.length < 2 || item == undefined) ? true : false,
+					reg = new RegExp(((flg) ? txt : '^'+txt+'$'),'igm'),
 					nodes = obj.allNode(),
 					node = (text == '') ? nodes : nodes.filter(function(d) {
 						return d.name.match(reg);
@@ -1502,8 +1539,7 @@
 							},
 							txt
 						);
-					
-				})
+				});
 			//入力補完機能の設定
 			$(this).find(opt.text).autocomplete({
 				position : {
@@ -1511,9 +1547,9 @@
 						at : 'left top'
 				},
 				select : function(a,b) {
-					result = getData(b.item.value);
-					//必ず検索結果先頭
-					active(0);
+					//必ず選択した単語が検索結果となるようにする...
+					result = getData(b.item.value,false);
+					active.call(result,0);
 					$(this).trigger('blur');
 				},
 				source : function(req,res) {
@@ -1696,11 +1732,14 @@
 			//比較結果文字列のマークアップ
 			function markup(o,n,c) {
 				var
-					res = '',
-					item;
+					res = '';
 				for(var i=0;i<o.length;i++) {
-					item = _escapeHTML(a[i].text) + b[i];
-					res += (a[i].text != null) ? item : '<span class="'+c+'"/>'+item+'</span>';
+					if(o[i].text != null) {
+						res += _escapeHTML(o[i].text)+n[i];
+					}
+					else {
+						res += '<span class="'+c+'">'+_escapeHTML(o[i])+n[i]+'</span>';
+					}
 				}
 				return res;
 			}
@@ -1712,7 +1751,7 @@
 				out = out((o == '' ? [] : o.split(/\s+/)),(n == '' ? [] : n.split(/\s+/)));
 			os.push('\n');
 			ns.push('\n');
-			return { o : markup(out.o,os,'del') , n : markup(out.n,ns,'ins')};
+			return { o : markup(out.o,os,'ins') , n : markup(out.n,ns,'del')};
 		},
 	_escapeHTML = function(a) {
 			return a.replace(/&/g,'&amp;')
