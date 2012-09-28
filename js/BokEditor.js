@@ -50,7 +50,21 @@ jQuery(function($) {
 							$(dialog).dialog('close');
 						})
 						.on('click','.description-view',function(a,b){
-							$.wikibok.viewDescriptionDialog(tid);
+							var
+								_title = tid;
+							$.wikibok.getDescriptionPage(_title,['links'])
+							.done(function(dat) {
+								var
+									page = dat.parse,
+									ptxt = $(page.text['*']),
+									desc = (ptxt.html() == null) ? $('<div>'+$.wikibok.wfMsg('wikibok-description','empty')+'</div>') : ptxt;
+									//リンクを別タブ(ウィンドウ)で開く
+									desc.find('a').attr({target:'_blank'});
+								$.wikibok.viewDescriptionDialog(_title,desc);
+							})
+							.fail(function() {
+								alert('記事がない...');
+							});
 						})
 						.on('click','.bokeditor-find-parent',function(a,b) {
 							pid = tid;
@@ -407,7 +421,6 @@ jQuery(function($) {
 	 */
 	function createNewNode(a) {
 		var
-			_id = $.wikibok.uniqueID('dialog',$.wikibok.wfMsg('wikibok-new-element','title')),
 			inp = '<dt>'+$.wikibok.wfMsg('wikibok-new-element','bok','headline2')+'</dt>'
 					+ '<dd class="create_new_node"><input type="text" class="name"/></dd>',
 			tmp = '<dl>'
@@ -418,35 +431,33 @@ jQuery(function($) {
 					+ '<dt>'+$.wikibok.wfMsg('wikibok-new-element','bok','headline3')+'</dt>'
 					+ '<dd class="create_new_node description">loading...</dd>'
 					+ '</dl>',
-			addTo =(arguments.length < 1) ? '' : a;
-		if($('#'+_id).dialog('isOpen')) {
-			$('#'+_id).dialog('close');
-		}
+			addTo =(arguments.length < 1) ? '' : a,
+			open = true;
 		$.wikibok.exDialog(
 			$.wikibok.wfMsg('wikibok-new-element','title'),
-			'',
+			tmp,
 			{
-				width : $.wikibok.wfMsg('wikibok-new-element','width'),
-				height : $.wikibok.wfMsg('wikibok-new-element','height'),
-				create : function() {
-				},
-				open : function() {
-					//表示更新
-					$(this).html(tmp);
-					//イベント定義
-					$(this).dialog('widget').setInterruptKeydown([{
-						class : 'name',
-						next : $.wikibok.wfMsg('wikibok-new-element','bok','button','class'),
-						prev : $.wikibok.wfMsg('common','button_close','class')
-					}]);
-					$(this).find('input.name').setCompleteDescription({
-						position : {
-							my : 'left bottom',
-							at : 'right bottom',
-						},
-					},{},{
-						view : $(this).find('dd.description')
-					});
+				height : '+300',
+				focus : function() {
+					if(open) {
+						//表示更新
+						$(this).html(tmp);
+						//イベント定義
+						$(this).dialog('widget').setInterruptKeydown([{
+							class : 'name',
+							next : $.wikibok.wfMsg('wikibok-new-element','bok','button','class'),
+							prev : $.wikibok.wfMsg('common','button_close','class')
+						}]);
+						$(this).find('input.name').setCompleteDescription({
+							position : {
+								my : 'left bottom',
+								at : 'right bottom',
+							},
+						},{},{
+							view : $(this).find('dd.description')
+						});
+					}
+					open = false;
 				},
 				buttons : [{
 					//ノード作成ボタン
@@ -466,11 +477,34 @@ jQuery(function($) {
 							_status = $.wikibok.wfMsg('wikibok-new-element','error','already');
 						}
 						if(_status === true) {
-							$.wikibok.viewDescriptionDialog(newName,{mode : 'create'})
-							.done(function() {
+							$.wikibok.getDescriptionPage(newName,['links'])
+							.done(function(dat) {
+								var
+									page = dat.parse,
+									ptxt = $(page.text['*']),
+									desc = (ptxt.html() == null) ? $('<div>'+$.wikibok.wfMsg('wikibok-description','empty')+'</div>') : ptxt;
+									//リンクを別タブ(ウィンドウ)で開く
+									desc.find('a').attr({target:'_blank'});
+								$.wikibok.viewDescriptionDialog(newName,desc,'create');
 							})
 							.fail(function() {
-							});
+								//記事がないので直接編集画面を開く
+								$.wikibok.getDescriptionEdit(newName)
+								.done(function(dat) {
+									var
+										page = dat.query.pages,
+										token = $.map(page,function(d) {return d.edittoken;}).join(),
+										timestamp = $.map(page,function(d) {return d.starttimestamp;}).join();
+									//編集結果をAPIで反映してから,BOK-XMLへ反映する/しない
+									$.wikibok.editDescriptionDialog(newName,'',{
+										title : $.wikibok.getPageNamespace(newName)+':'+$.wikibok.getPageName(newName),
+										token : token,
+										basetimestamp : timestamp,
+										createonly : true,
+									});
+									//SVGへの要素追加処理が抜けてる...
+								});
+						});
 							$(dialog).dialog('close');
 						}
 						else {
