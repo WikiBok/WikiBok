@@ -244,7 +244,7 @@
 					argPlus = (arguments.length < 5) ? true : args.shift();
 				//最新リビジョン+ユーザIDを自動付加する
 				if(argPlus) {
-					rsargs = $.merge([0,wgUserName],rsargs);
+					rsargs = $.merge([$.revision.getRev(),wgUserName],rsargs);
 				}
 				//Deferredオブジェクトを返却
 				return $.Deferred(function(def) {
@@ -541,6 +541,7 @@
 			 */
 			function viewDescriptionDialog(a,b,c) {
 				var
+					myDef = $.Deferred(),
 					_open = true,
 					_btn = [],
 					_mode = (arguments.length < 3 || c == undefined) ? 'view' : c,
@@ -568,6 +569,9 @@
 									token : token,
 									basetimestamp : timestamp,
 								})
+								.done(function(res) {
+									myDef.resolve(res);
+								});
 							});
 						}
 					},
@@ -577,7 +581,7 @@
 						class: $.wikibok.wfMsg('wikibok-new-element','bok','button_create','class'),
 						click: function() {
 							$(this).dialog('close');
-							alert('ノード追加');
+							myDef.resolve(true);
 						}
 					},
 					_close = {
@@ -615,6 +619,59 @@
 					},
 					a
 				);
+				return myDef.promise();
+			}
+			/**
+			 * Wiki記事を強制で上書きする
+			 */
+			function overwritePage(a,b,c) {
+				var
+					_title = getPageNamespace(a)+':'+getPageName(a),
+					_body = b,
+					_add = (arguments.length < 3 || c == undefined) ? false : c,
+					all_def = $.Deferred(),
+					end = false,
+					one_request = function(title,body,add) {
+						var
+							one_def = this;
+						getDescriptionEdit(title)
+						.done(function(dat) {
+							var
+								page = dat.query.pages,
+								edesc = (add) ? $.map(page,function(d) {
+									return (d.revisions) ? $.map(d.revisions,function(d) {
+										return d['*'];
+									}).join() : '';
+								}).join() + body : body,
+								token = $.map(page,function(d) {return d.edittoken;}).join(),
+								timestamp = $.map(page,function(d) {return d.starttimestamp;}).join();
+							$.wikibok.requestAPI(
+								{
+									action : 'edit',
+									summary: 'edit',
+									title : title,
+									text : edesc,
+									token : token,
+									basetimestamp : timestamp,
+								},
+								function(dat,stat,xhr) {
+									return (dat.error == undefined);
+								},
+								function(xhr,stat,err) {
+									return false;
+								}
+							)
+							.done(function(){
+								one_def.resolve();
+							})
+							.fail(function() {
+								one_request.call(one_def,title,body,add);
+							});
+						});
+						return one_def.promise();
+					};
+				one_request.call(all_def,_title,_body,_add);
+				return all_def.promise();
 			}
 			/**
 			 * @param a 記事名称
@@ -631,35 +688,57 @@
 						title : _title,
 						text : _body,
 					},c),
-					def = $.Deferred();
+					def = $.Deferred(),
+					mes = '';
 				$.wikibok.requestAPI(
 					_pdata,
 					function(dat,stat,xhr) {
 						if(dat.error != undefined) {
-							if(dat.error.code == 'editconflict') {
-								//編集競合発生
-								$.wikibok.getDescriptionEdit(_title)
-								.done(function(dat) {
-									var
-										page = dat.query.pages,
-										edesc = $.map(page,function(d) {
-											return (d.revisions) ? $.map(d.revisions,function(d) {
-												return d['*'];
-											}).join() : '';
-										}).join(),
-										token = $.map(page,function(d) {return d.edittoken;}).join(),
-										timestamp = $.map(page,function(d) {return d.starttimestamp;}).join();
-									//編集画面を再表示
-									$.wikibok.editDescriptionDialog(a,edesc,{
-										title : _title,
-										token : token,
-										basetimestamp : timestamp,
-									},_diffString(_body,edesc));
-									def.resolve(false);
-								})
-							}
-							else {
-								def.reject();
+							switch(dat.error.code) {
+								case 'articleexists':
+									//作成済み=>記事内容の表示
+									$.wikibok.getDescriptionPage(a,['links'])
+									.done(function(dat) {
+										var
+											page = dat.parse,
+											ptxt = $(page.text['*']),
+											desc = (ptxt.html() == null) ? $('<div>'+$.wikibok.wfMsg('wikibok-description','empty')+'</div>') : ptxt;
+											//リンクを別タブ(ウィンドウ)で開く
+											desc.find('a').attr({target:'_blank'});
+										$.wikibok.viewDescriptionDialog(a,desc,'create');
+									})
+									.always(function() {
+										def.resolve(false);
+									});
+									break;
+								case 'editconflict':
+									//編集競合発生
+									$.wikibok.getDescriptionEdit(_title)
+									.done(function(dat) {
+										var
+											page = dat.query.pages,
+											edesc = $.map(page,function(d) {
+												return (d.revisions) ? $.map(d.revisions,function(d) {
+													return d['*'];
+												}).join() : '';
+											}).join(),
+											token = $.map(page,function(d) {return d.edittoken;}).join(),
+											timestamp = $.map(page,function(d) {return d.starttimestamp;}).join();
+										//編集画面を再表示
+										$.wikibok.editDescriptionDialog(a,edesc,{
+											title : _title,
+											token : token,
+											basetimestamp : timestamp,
+										},_diffString(_body,edesc))
+										.always(function() {
+											def.resolve(false);
+										});
+									});
+									break;
+								default:
+									mes = $.wikibok.wfMsg('wikibok-edit-description','error',dat.error.code);
+									def.reject(mes);
+									break;
 							}
 						}
 						else {
@@ -736,9 +815,17 @@
 									//正常終了時の引数判定で後続処理を記述する(EditConflictはFALSE扱い...)
 									myDef.resolve(dat);
 								})
-								.fail(function(dat,diff) {
+								.fail(function(dat) {
 									//登録失敗
-									myDef.resolve(false);
+									if(arguments.length < 1 || dat == undefined) {
+									}
+									else {
+										$.wikibok.timePopup(
+											$.wikibok.wfMsg('wikibok-new-element','title')+' '+$.wikibok.wfMsg('common','error'),
+											dat,
+											5000
+										);
+									}
 								});
 							}
 						},{
@@ -747,7 +834,7 @@
 							class: $.wikibok.wfMsg('common','button_close','class'),
 							click: function() {
 								$(this).dialog('close');
-								def.reject();
+								myDef.reject();
 							}
 							
 						}]
@@ -803,6 +890,7 @@
 				viewDescriptionDialog : viewDescriptionDialog,
 				editDescriptionDialog : editDescriptionDialog,
 				timePopup : timePopup,
+				overwritePage : overwritePage,
 			};
 		},
 		/**
@@ -846,11 +934,13 @@
 							'WikiBokJs::getBokRevision',
 							[wgUserName],
 							function(dat,stat,xhr) {
+								var
+									myRev = _get('user');
 								//DOMデータに格納
 								$.data(me.get(0),'revision',dat);
-								$.data(me.get(0),'base',dat.base);
-								$.data(me.get(0),'head',dat.head);
-								_setRev(dat.user);
+								if(myRev != undefined || myRev != 0) {
+									_setRev(myRev);
+								}
 								_editTree(dat.edit);
 							},
 							function(xhr,stat,err) {},
@@ -865,15 +955,13 @@
 			 * @param user リビジョン番号[省略時:前回リクエストUserリビジョン]
 			 */
 			function _setRev() {
-				var user = _getRev();
+				var
+					dat = _get();
 				if(isReady) {
 					if(arguments.length > 0) {
-						user = arguments[0];
-						dat = _get();
-						dat.user = user;
-						$.data(me.get(0),'revision',dat);
+						dat.user = arguments[0];
 					}
-					$.data(me.get(0),'user',user);
+					$.data(me.get(0),'revision',dat);
 					_updateHTML();
 				}
 			}
@@ -882,7 +970,7 @@
 			 */
 			function _getRev() {
 				//DOM要素に設定済みのUserリビジョン[Or 0]を取得
-				return (isReady) ? $.data(me.get(0),'user') || 0 : 0;
+				return (isReady) ? parseInt(_get('user')) || 0 : 0;
 			}
 			/**
 			 * ツリー構造への編集有無を設定/取得
@@ -891,12 +979,15 @@
 			 *             [省略時]現在設定値の取得のみ
 			 */
 			function _editTree() {
-				var res = false;
+				var
+					res = false,
+					dat = _get();
 				if(isReady) {
 					if(arguments.length > 0) {
-						$.data(me.get(0),'edit',arguments[0]);
+						dat.edit = arguments[0];
+						$.data(me.get(0),'revision',dat);
 					}
-					res = $.data(me.get(0),'edit');
+					res = dat.edit;
 				}
 				return res;
 			}
@@ -941,6 +1032,7 @@
 				request : _request,
 				setRev : _setRev,
 				getRev : _getRev,
+				getData : _get,
 				editTree : _editTree,
 				updateHTML : _updateHTML,
 				sync : _sync

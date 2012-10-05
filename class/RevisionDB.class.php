@@ -661,18 +661,24 @@ class RevisionDB {
 	 * 代表表現データの取得
 	 *   - 削除成功ノード名を指定して、書き込むSMW-LINK情報を取得
 	 */
-	public function getRepresentData($rev,$node) {
-		$param = array($this->session,$this->user,$rev);
+	public function getRepresentData($rev) {
 		//代表表現
-		$sql  = "SELECT concat('*[[".BOK_LINKTYPE_REPRESENT."::',`target`,']]') link ";
+		$sql  = "SELECT `source`,`target`,concat('*[[".BOK_LINKTYPE_REPRESENT."::',`target`,']]') link ";
 		$sql .= "FROM ".BOK_TARGET_DB_REPRESENT." ";
 		$sql .= " WHERE `session_id` = ? ";
 		$sql .= "   AND `user_id` = ?";
-		$sql .= "   AND `rev` <= ?";
+		if(empty($rev)) {
+			$param = array($this->session,$this->user);
+		}
+		else {
+			$sql .= "   AND `rev` <= ?";
+			$param = array($this->session,$this->user,$rev);
+		}
+		$sql .= " ORDER BY `source`,`target`";
 		$sth = $this->db->prepare($sql);
 		$sth->execute($param);
 		$result = $sth->fetchAll(PDO::FETCH_ASSOC);
-		return array($sql,$result);
+		return $result;
 	}
 	/**
 	 * 代表表現データの削除
@@ -866,13 +872,15 @@ class RevisionDB {
 	 */
 	public function createRepresentTable() {
 		$ddl  = 'CREATE TABLE IF NOT EXISTS '.BOK_TARGET_DB_REPRESENT.' (';
+		$ddl .= ' id     bigint unsigned NOT NULL AUTO_INCREMENT,';
 		$ddl .= ' session_id varchar(255) NOT NULL,';
 		$ddl .= ' user_id    int(10)      NOT NULL,';
 		$ddl .= ' rev        int(10)      NOT NULL,';
 		$ddl .= ' `source`   varchar(255) NOT NULL,';
 		$ddl .= ' `target`   varchar(255) NOT NULL,';
 		$ddl .= ' time       timestamp    NOT NULL DEFAULT CURRENT_TIMESTAMP, ';
-		$ddl .= ' PRIMARY KEY `filter` (session_id,user_id,rev),';
+		$ddl .= ' PRIMARY KEY `id` (id),';
+		$ddl .= ' KEY `filter` (session_id,user_id,rev),';
 		$ddl .= ' KEY `source`  (`source`),';
 		$ddl .= ' KEY `time` (time)';
 		$ddl .= ') ENGINE=InnoDB  DEFAULT CHARSET=utf8';

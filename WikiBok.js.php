@@ -479,7 +479,12 @@ class WikiBokJs {
 		$result = (count($links) > 0);
 		return json_encode(array('res'=>$result,'data'=>$links));
 	}
-	public static function getSMWLinkTarget($name,$linkname) {
+	/**
+	 * SMWリンクの対象になっているかチェックする
+	 * @param $name		記事名称
+	 * @param $linkname	関係名称
+	 */
+	public static function checkSMWLinkTarget($name,$linkname) {
 		$dbr = wfGetDB(DB_SLAVE);
 		//SMWテーブル名称取得
 		$smw_rels2 = $dbr->tableName('smw_rels2');
@@ -498,21 +503,16 @@ class WikiBokJs {
 				'   AND p_id.smw_title = '.$dbr->addQuotes($linkname);
 		$links = array();
 		$rows = $dbr->query($query);
-		if($dbr->numRows($rows) > 0) {
-			while($row = $dbr->fetchObject($rows)) {
-/*
-				$links[] = array(
-					'source' => "{$row->s}",
-					'target' => "{$row->o}",
-					'type' => "smw",
-					'linkName' => "{$row->p}"
-				);
-*/
-			}
-		}
+		$res = ($dbr->numRows($rows) > 0);
 		$dbr->freeResult($rows);
-		return $links;
+		return json_encode($res);
 	}
+	/**
+	 * 代表表現編集データに仮登録 + 対象ノード削除
+	 * @param $rev	編集元リビジョン番号
+	 * @param $user	ユーザID
+	 * @param $rows	代表表現対象データ(配列)
+	 */
 	public static function representNodeRequest($rev,$user,$rows) {
 		$db = self::getDB();
 		$db->setUser($user);
@@ -528,35 +528,64 @@ class WikiBokJs {
 		}
 		//BOK-XMLデータの変更
 		foreach($rows as $row) {
-			$xml->delNode($row['delete']);
+			//代表表現の従属ノードのデータを、とりあえず移動
+			$xml->moveNode($row['child'],$row['parent']);
+			//設定により従属ノード配下のデータの扱いを変更する
+			if(defined(BOKXML_REPRESENT_CHILD_DELETE)) {
+				if(BOKXML_REPRESENT_CHILD_DELETE) {
+					//配下も含めて削除
+					$xml->delNode($row['child']);
+				}
+				else {
+					//自分のみ削除(配下は代表ノードの下へ移動)
+					$xml->delNodeOnly($row['child']);
+				}
+			}
+			else {
+				//自分のみ削除(配下は代表ノードの下へ移動)
+				$xml->delNodeOnly($row['child']);
+			}
 		}
+		//XMLデータを設定
 		$res = $db->setEditData($rev,$xml->saveXML());
 		//代表表現情報の書き込み
+		$res_row = array();
 		foreach($rows as $row) {
 			$db->setRepresentData(array(
 				'rev' => $res,
 				'source'=>$row['source'],
 				'target'=>$row['target']
 			));
+			$res_row[] = array(
+				'rev' => $res,
+				'source'=>$row['source'],
+				'target'=>$row['target']
+			);
 		}
 		$result['res'] = $res;
 		return json_encode($result);
 	}
 	/**
 	 * 代表表現設定用SMW-LINK文字列取得
+	 * @param $rev	コミット時のリビジョン番号
+	 * @param $user	ユーザID
+	 * @param $desc	記事名称
 	 */
-	public static function representLinktext($rev,$user,$desc) {
-		$text = array();
+	public static function representLinkData($rev,$user) {
 		$db = self::getDB();
 		$db->setUser($user);
-		$rows = $db->getRepresentData($desc);
-		foreach($rows as $row) {
-			$text[] = $row['link'];
-		}
-		return json_encode($text);
+		$rows = $db->getRepresentData($rev);
+		$res = array(
+			'res' => (count($rows) > 0),
+			'data' => $rows
+		);
+		//必要なデータは取得したので、クリア
+		$db->clearRepresentData();
+		return json_encode($res);
 	}
 	/**
 	 * ノードを作成する
+	 
 	 * @param	$rev	編集対象リビジョン
 	 * @param	$user	編集ユーザ
 	 * @param	$name	ノード名称
@@ -877,7 +906,7 @@ class WikiBokJs {
 	 * ユーザーの編集データを消去する
 	 * @param	$user	ユーザーID
 	 */
-	public static function clearEditHistory($user) {
+	public static function clearEditHistory($rev,$user) {
 		//BOKデータベースへ接続
 		$db = self::getDB();
 		$db->setUser($user);

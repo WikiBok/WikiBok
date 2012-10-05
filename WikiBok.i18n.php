@@ -223,6 +223,11 @@ $messages['ja'] = array(
 				'nobody'=>nl2br("記事の内容が書かれていません。\n新規作成では必須入力です"),
 			),
 		),
+		'wikibok-edit-description' => array(
+			'error' => array(
+				'emptypage' => '新規記事の場合、記事内容は必須入力です'
+			),
+		),
 		'wikibok-move-node' => array(
 			'title' => '移動'
 		),
@@ -250,6 +255,8 @@ $messages['ja'] = array(
 			'error' => array(
 				'depth'=>'同じ階層にないノードは選択できません',
 				'already'=>'すでに選択されています',
+				'equal'=>'代表ノードとして選択済みです',
+				'noselect'=>nl2br("従属ノードが選択されていません\n処理を中止します"),
 			),
 			'button' => array(
 				'text' => '実行',

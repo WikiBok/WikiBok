@@ -239,14 +239,19 @@
 			add = p.children || p._children || [],
 			//元ノードを削除するため...
 			del = c.parent.children || c.parent._children || false;
-		add.push(c);
-		del = $.map(del,function(d) {
-			if(d !== c) {
-				return d;
-			}
-		});
-		c.parent.children = del;
-		p.children = add;
+		//移動先が一緒の場合、処理を省略...
+		if(p == c.parent) {
+		}
+		else {
+			add.push(c);
+			del = $.map(del,function(d) {
+				if(d !== c) {
+					return d;
+				}
+			});
+			c.parent.children = del;
+			p.children = add;
+		}
 		update(p);
 	}
 	/**

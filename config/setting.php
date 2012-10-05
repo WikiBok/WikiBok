@@ -26,6 +26,8 @@ define('BOKXML_SEPARATE_CHAR',"\0");
 define('BOKXML_DELNODE_FULL',TRUE);	#DS算出で自身のノードを含める/含めない
 # IS算出で自身のノードを含める/含めない(ロジックの関係上,変更不可/上記の反対を採用とする)
 define('BOKXML_INSNODE_FULL',!BOKXML_DELNODE_FULL);
+# 代表表現選択時に代表表現以外に選択したノード配下のノードを削除する/しない
+define('BOKXML_REPRESENT_CHILD_DELETE',FALSE);
 ########################################
 #   Mergerの設定
 ########################################

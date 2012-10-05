@@ -128,6 +128,8 @@ function efWikiBokAjaxRequest() {
 	$wgAjaxExportList[] = "WikiBokJs::viewData";
 	$wgAjaxExportList[] = "WikiBokJs::createNodeFromLinks";
 	$wgAjaxExportList[] = "WikiBokJs::representNodeRequest";
+	$wgAjaxExportList[] = "WikiBokJs::checkSMWLinkTarget";
+	$wgAjaxExportList[] = "WikiBokJs::representLinkData";
 	return;
 }
 /**
@@ -181,7 +183,8 @@ function efWikiBokInsertScript(OutputPage $out) {
 		//ページ番号(名前空間と連動する)
 		 '   wgDebug = '.$wgTitle->getNamespace().','."\n".
 		 '   wgNsBok = '.NS_SPECIAL_BOK.','."\n".
-		 '   wgNsDesc = '.NS_SPECIAL_DESCRIPTION.';'
+		 '   wgNsDesc = '.NS_SPECIAL_DESCRIPTION.','."\n".
+		 '   wgRepsDel = '.json_encode(BOKXML_REPRESENT_CHILD_DELETE).';'
 	);
 	//スタイルシートの追加
 	$out->addStyle("{$wgScriptPath}/extensions/WikiBok/css/WikiBok.css");
