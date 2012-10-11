@@ -148,6 +148,27 @@ class BokXml{
 		return $node;
 	}
 	/**
+	 * ノード名称を変更
+	 * @param $from	変更元ノード名称
+	 * @param $to	変更後ノード名称
+	 */
+	public function renameNode($from,$to) {
+		$res = false;
+		$toNode = $this->searchNameNode($to);
+		//リネーム先ノードが存在しないことを確認
+		if($toNode === false) {
+			//名称のみ変更
+			$target = $this->searchNameNode($from)->parentNode;
+			//NAME要素のみ削除
+			$del = $target->getElementsByTagName('name')->item(0);
+			$target->removeChild($del);
+			//新しい名前でName要素を追加
+			$target->appendChild($this->dom->createElement('name',$to));
+			$res = true;
+		}
+		return $res;
+	}
+	/**
 	 * 名称を指定してノードを削除する
 	 *   - 対象ノード以下をすべて削除対象とする
 	 * @param	$t	削除対象ノードの名称

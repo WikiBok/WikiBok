@@ -290,32 +290,30 @@
 					sfunc = args.shift() || function(){return true;},
 					efunc = args.shift() || function(){};
 
-				//同期通信の場合ajaxStart/ajaxStopイベントが発生しないため...
-				if(async == false) {
-					$(me).trigger('ajaxStart');
-				}
 				//再帰呼出しが多いため、Deferredオブジェクトを返さない
 				// -> 再帰呼出しごとに終了関数が呼ばれてしまうため予期した動きになり難い
-				return $.ajax({
-					type : 'POST',
-					dataType : 'JSON',
-					url : wgServer+wgScriptPath+'/api.php',
-					data : postData,
-					success : function(dat,stat,xhr) {
-						sfunc.apply(me,arguments);
-						if(async == false) {
-							$(me).trigger('ajaxStop');
-						}
-					},
-					error : function(xhr,stat,et) {
-						efunc.apply(me,arguments);
-						if(async == false) {
-							$(me).trigger('ajaxStop');
-						}
-					},
-					async : async,
-					cache : false,
-				});
+				return $.Deferred(function(def) {
+					$.ajax({
+						type : 'POST',
+						dataType : 'JSON',
+						url : wgServer+wgScriptPath+'/api.php',
+						data : postData,
+						success : function(dat,stat,xhr) {
+							if(sfunc.apply(me,arguments)) {
+								def.resolve.apply({},arguments);
+							}
+							else {
+								def.reject.apply({},arguments);
+							}
+						},
+						error : function(xhr,stat,et) {
+							efunc.apply(me,arguments);
+							def.reject.apply({},arguments);
+						},
+						async : async,
+						cache : false,
+					});
+				}).promise();
 			}
 			/**
 			 * 記事一覧を取得する
@@ -422,7 +420,7 @@
 						intoken: 'edit',
 						prop : prop.join('|'),
 						rvprop : rvprop.join('|'),
-						titles : getPageNamespace(_page)+':'+getPageName(_page),
+						titles : ($.isArray(_page) ? _page.join('|') : _page),
 					};
 				$.wikibok.requestAPI(
 					_pdata,
@@ -545,16 +543,16 @@
 					_open = true,
 					_btn = [],
 					_mode = (arguments.length < 3 || c == undefined) ? 'view' : c,
+					_title = getPageNamespace(a)+':'+getPageName(a),
 					_edit = {
 						text : $.wikibok.wfMsg('common','button_edit','text'),
 						title: $.wikibok.wfMsg('common','button_edit','title'),
 						class: $.wikibok.wfMsg('common','button_edit','class'),
 						click: function() {
 							$(this).dialog('close');
-							$.wikibok.getDescriptionEdit(a)
+							$.wikibok.getDescriptionEdit(_title)
 							.done(function(dat) {
 								var
-									_title = getPageNamespace(a)+':'+getPageName(a),
 									page = dat.query.pages,
 									edesc = $.map(page,function(d) {
 										return (d.revisions) ? $.map(d.revisions,function(d) {
@@ -564,7 +562,7 @@
 									token = $.map(page,function(d) {return d.edittoken;}).join(),
 									timestamp = $.map(page,function(d) {return d.starttimestamp;}).join();
 								//編集結果をAPIで反映してから,BOK-XMLへ反映する/しない
-								$.wikibok.editDescriptionDialog(a,edesc,{
+								$.wikibok.editDescriptionDialog(_title,edesc,{
 									title : _title,
 									token : token,
 									basetimestamp : timestamp,
@@ -622,63 +620,198 @@
 				return myDef.promise();
 			}
 			/**
-			 * Wiki記事を強制で上書きする
+			 * Description名称の変更
 			 */
-			function overwritePage(a,b,c) {
+			function renamePage(a,b) {
 				var
-					_title = getPageNamespace(a)+':'+getPageName(a),
-					_body = b,
-					_add = (arguments.length < 3 || c == undefined) ? false : c,
-					all_def = $.Deferred(),
-					end = false,
-					one_request = function(title,body,add) {
+					fTitle = getPageNamespace(a)+':'+getPageName(a),
+					tTitle = getPageNamespace(b)+':'+getPageName(b),
+					myDef = $.Deferred(),
+					edit_request = function(title,body,edit,timestamp) {
 						var
-							one_def = this;
-						getDescriptionEdit(title)
-						.done(function(dat) {
-							var
-								page = dat.query.pages,
-								edesc = (add) ? $.map(page,function(d) {
-									return (d.revisions) ? $.map(d.revisions,function(d) {
-										return d['*'];
-									}).join() : '';
-								}).join() + body : body,
-								token = $.map(page,function(d) {return d.edittoken;}).join(),
-								timestamp = $.map(page,function(d) {return d.starttimestamp;}).join();
-							$.wikibok.requestAPI(
-								{
-									action : 'edit',
-									summary: 'edit',
-									title : title,
-									text : edesc,
-									token : token,
-									basetimestamp : timestamp,
-								},
-								function(dat,stat,xhr) {
-									return (dat.error == undefined);
-								},
-								function(xhr,stat,err) {
-									return false;
+							one_def = $.Deferred();
+							pdata = (arguments.length < 4 || timestamp == undefined) ? {
+								//タイムスタンプなし(新規作成)
+								action : 'edit',
+								summary: 'edit',
+								title : title,
+								text : body,
+								token : edit,
+								createonly : true,
+							} : {
+								//タイムスタンプあり(既存編集)
+								action : 'edit',
+								summary: 'edit',
+								title : title,
+								text : body,
+								token : edit,
+								basetimestamp : timestamp,
+							}
+						$.wikibok.requestAPI(
+							pdata,
+							function(dat,stat,xhr) {
+								if(dat.error == undefined) {
+									one_def.resolve();
 								}
-							)
-							.done(function(){
-								one_def.resolve();
-							})
-							.fail(function() {
-								one_request.call(one_def,title,body,add);
-							});
-						});
+								else {
+									one_def.reject();
+								}
+							},
+							function(xhr,stat,err) {
+								one_def.reject();
+							}
+						);
 						return one_def.promise();
 					};
-				one_request.call(all_def,_title,_body,_add);
-				return all_def.promise();
+				//2つのDescriptionのEditTokenを取得
+				getDescriptionEdit([fTitle,tTitle])
+				.done(function(dat) {
+					var
+						page = dat.query.pages,
+						rdata = $.map(page,function(a,b){
+							return {
+								name : a.title,
+								desc : (a.revisions) ? $.map(a.revisions,function(d) {return d['*'];}).join() : '' ,
+								token: a.edittoken,
+								to   : (b==-1),
+								from : (b!=-1),
+								time : a.starttimestamp || 0,
+							}
+						}),
+						fPage = rdata.filter(function(d){return d.from;}),
+						tPage = rdata.filter(function(d){return d.to;}),
+						fpage,
+						tpage;
+					//変更元が存在する・変更先が存在しない
+					if(fPage.length == 1 && tPage.length == 1) {
+						fpage = fPage[0];
+						tpage = tPage[0];
+						//コピー新規
+						edit_request(tpage.name,fpage.desc,tpage.token)
+						.done(function() {
+							//コピー元データの白紙化
+							edit_request(fpage.name,'',fpage.token,fpage.time)
+							.done(function() {
+								//正常終了
+								myDef.resolve();
+							})
+							.fail(function() {
+								//コピー元データの削除に失敗・コピー新規を白紙化(Rollbackできない...)
+								edit_request(tpage.name,'',tpage.token);
+								myDef.reject();
+							})
+						})
+						.fail(function() {
+							myDef.reject();
+						})
+					}
+					else {
+						myDef.reject('エラー');
+					}
+				});
+				return myDef.promise();
+			}
+			/**
+			 * 記事作成
+			 * @param a 記事名称
+			 * @param b 記事内容
+			 */
+			function createWikiPage(a,b) {
+				var
+					myDef = $.Deferred(),
+					_title = $.wikibok.getPageNamespace(a)+':'+$.wikibok.getPageName(a),
+					_body = (arguments.length < 2 || b == undefined || b.length < 1) ? $.wikibok.wfMsg('wikibok-empty-article') : b;
+
+				getDescriptionEdit(_title)
+				.done(function(dat) {
+					var
+						_pages = dat.query.pages,
+						_token= $.map(_pages,function(d) {return d.edittoken || '';}).join(),
+						_time = $.map(_pages,function(d) {return d.starttimestamp || '';}).join();
+					$.wikibok.requestAPI(
+						{
+							action : 'edit',
+							summary: 'Created by WikiBokSystem',
+							title : _title,
+							text : _body,
+							token : _token,
+							createonly : true
+						},
+						function(dat) {
+							if('error' in dat) {
+								myDef.reject(dat.error);
+							}
+							else {
+								myDef.resolve();
+							}
+						},
+						function(dat) {
+							myDef.reject();
+						}
+					);
+				})
+				.fail(function(){
+					myDef.reject();
+				});
+				return myDef.promise();
+			}
+			/**
+			 * 
+			 * @param a ページ名称[名前空間含む]
+			 * @param b ページ内容[追記内容のみ]
+			 * @param c 編集競合を確認する/しない
+			 */
+			function addWikiPage(a,b,c) {
+				var
+					myDef = $.Deferred(),
+					_title = $.wikibok.getPageNamespace(a)+':'+$.wikibok.getPageName(a),
+					_body = (arguments.length < 2 || b == undefined) ? '' : b,
+					_force= (arguments.length < 3 || c == undefined) ? false : c;
+
+				getDescriptionEdit(_title)
+				.done(function(dat) {
+					var
+						_pages = dat.query.pages,
+						_desc = $.map(_pages,function(d) {
+							return (d.revisions) ? $.map(d.revisions,function(d) {return d['*'];}).join() : '';
+						}).join(),
+						_token= $.map(_pages,function(d) {return d.edittoken || '';}).join(),
+						_time = $.map(_pages,function(d) {return d.starttimestamp || '';}).join(),
+						_base = {
+							action : 'edit',
+							summary: '[Add Data] Updated by WikiBokSystem',
+							title : _title,
+							text : _desc+_body,
+							token : _token,
+						},
+						_post = (_force) ? $.extend({},_base,{basetimestamp : _time}) : _base;
+
+					$.wikibok.requestAPI(
+						_post,
+						function(dat) {
+							if('error' in dat) {
+								myDef.reject(dat.error);
+							}
+							else {
+								myDef.resolve();
+							}
+						},
+						function(dat) {
+							myDef.reject();
+						}
+					);
+				})
+				.fail(function(){
+					myDef.reject();
+				});
+				return myDef.promise();
 			}
 			/**
 			 * @param a 記事名称
 			 * @param b 記事内容
 			 * @param c EditTokenを含むその他オプション情報(ハッシュ)
 			 */
-			function setWikiPage(a,b,c) {
+			function postEditData(a,b,c) {
 				var
 					_title = getPageNamespace(a)+':'+getPageName(a),
 					_body = b,
@@ -725,7 +858,7 @@
 											token = $.map(page,function(d) {return d.edittoken;}).join(),
 											timestamp = $.map(page,function(d) {return d.starttimestamp;}).join();
 										//編集画面を再表示
-										$.wikibok.editDescriptionDialog(a,edesc,{
+										$.wikibok.editDescriptionDialog(_title,edesc,{
 											title : _title,
 											token : token,
 											basetimestamp : timestamp,
@@ -756,6 +889,7 @@
 			 * @param a 編集対象記事名称
 			 * @param b 編集開始時の記事
 			 * @param c API呼び出しオプション
+			 * @param d 編集競合発生時のDIFF-Object
 			 */
 			function editDescriptionDialog(a,b,c,d) {
 				var
@@ -806,7 +940,7 @@
 									me = this,
 									_inTitle = $(this).find('.title').val(),
 									_inBody = $(this).find('.wikibok-text').val();
-								setWikiPage(_inTitle,_inBody,_pst)
+								postEditData(_inTitle,_inBody,_pst)
 								.done(function(dat) {
 									if(dat) {
 										//登録成功
@@ -890,153 +1024,141 @@
 				viewDescriptionDialog : viewDescriptionDialog,
 				editDescriptionDialog : editDescriptionDialog,
 				timePopup : timePopup,
-				overwritePage : overwritePage,
+				createWikiPage : createWikiPage,
+				addWikiPage : addWikiPage,
+				renamePage : renamePage,
 			};
 		},
 		/**
 		 * リビジョン番号関連オブジェクト
 		 */
 		revision : (function(){
-			var me = {},
+			var
+				me,
+				allData,
 				isReady = false,
 				isRequest = false;
 			/**
-			 * 格納済みデータから対象項目を取得
-			 * @param 対象項目[省略時:リビジョンデータ全体を取得]
+			 * リビジョン番号の管理オブジェクト初期設定
+			 * @param a オブジェクトID[省略可:呼出しオブジェクト]
 			 */
-			function _get(a) {
-				var dat = {
-						base : 0,
-						head : 0,
-						user : 0
-					},
-					read = null;
-				//DOM要素の準備完了
-				if(isReady) {
-					read = $.data(me.get(0),'revision');
-					if(read !== undefined) {
-						dat = read;
-					}
-				}
-				return (arguments.length < 1 || a == undefined) ? dat : dat[a];
+			function construct(a) {
+				//HTML表示更新対象Objectの設定
+				me = (arguments.length < 1 || a == undefined) ? $(this) : $(a);
+				//サーバリクエスト開始[HTML更新は別に実施]
+				request().done(function() {isReady = true;});
 			}
 			/**
-			 * サーバからリビジョンデータを取得
-			 *   - レスポンスデータは常に最新情報を取得する前提
+			 * サーバリクエスト処理
 			 */
-			function _request() {
-				//DOM要素の準備完了
-				if(isReady) {
-					//二重リクエスト制御
-					if(isRequest === false) {
-						isRequest = true;
-						$.wikibok.requestCGI(
-							'WikiBokJs::getBokRevision',
-							[wgUserName],
-							function(dat,stat,xhr) {
-								var
-									myRev = _get('user');
-								//DOMデータに格納
-								$.data(me.get(0),'revision',dat);
-								if(myRev != undefined || myRev != 0) {
-									_setRev(myRev);
-								}
-								_editTree(dat.edit);
-							},
-							function(xhr,stat,err) {},
-							false
-						)
-						.always(function() {isRequest = false;});
-					}
-				}
-			}
-			/**
-			 * 編集中リビジョン番号の設定
-			 * @param user リビジョン番号[省略時:前回リクエストUserリビジョン]
-			 */
-			function _setRev() {
+			function request() {
 				var
-					dat = _get();
-				if(isReady) {
-					if(arguments.length > 0) {
-						dat.user = arguments[0];
-					}
-					$.data(me.get(0),'revision',dat);
-					_updateHTML();
-				}
-			}
-			/**
-			 * 編集中リビジョン番号の取得
-			 */
-			function _getRev() {
-				//DOM要素に設定済みのUserリビジョン[Or 0]を取得
-				return (isReady) ? parseInt(_get('user')) || 0 : 0;
-			}
-			/**
-			 * ツリー構造への編集有無を設定/取得
-			 *   - 編集[UNDO/REDO]及びツリー折畳などでツリー表示の自動更新を停止するために使用
-			 * @param edit 編集状況[True:あり/False:なし]
-			 *             [省略時]現在設定値の取得のみ
-			 */
-			function _editTree() {
-				var
-					res = false,
-					dat = _get();
-				if(isReady) {
-					if(arguments.length > 0) {
-						dat.edit = arguments[0];
-						$.data(me.get(0),'revision',dat);
-					}
-					res = dat.edit;
-				}
-				return res;
-			}
-			/**
-			 * リビジョン番号の表示更新
-			 */
-			function _updateHTML() {
-				var dat = _get(),
-					_user = parseInt(dat.user) - parseInt(dat.base);
-				if(isReady) {
-					me.find('.base').html(dat.base);
-					me.find('.head').html(dat.head);
-					me.find('.edit').html(_user);
-				}
-			}
-			/**
-			 * オブジェクトの初期処理
-			 */
-			function construct() {
-				//DOMオブジェクトの設定
-				if(arguments.length > 0) {
-					me = $(arguments[0]);
-					isReady = true;
+					myDef = $.Deferred();
+				//二重実行の阻止
+				if(!isRequest) {
+					isRequest = true;
+					//リビジョン番号取得
+					$.wikibok.requestCGI(
+						'WikiBokJs::getBokRevision',
+						[wgUserName],
+						function(dat,stat,xhr) {
+							//最新情報の取得
+							allData = $.extend({},allData,dat);
+							return true;
+						},
+						function(xhr,stat,err) {
+							return false;
+						},
+						false
+					)
+					.done(function(dat) {
+						myDef.resolve();
+					})
+					.fail(function() {
+						myDef.reject();
+					})
+					.always(function() {
+						isRequest = false;
+					})
 				}
 				else {
-					me = $(this);
-					isReady = (me.length > 0);
+					myDef.reject();
 				}
-				//サーバリクエスト+HTML更新
-				_sync();
+				return myDef.promise();
 			}
 			/**
-			 * サーバリクエストを行いその結果をHTMLへ出力
+			 * サーバリクエスト+表示更新(Timerによる定期実施)
 			 */
-			function _sync() {
-				_request();
-				me.one('ajaxStop', _updateHTML);
+			function sync() {
+				request()
+				.done(function() {
+					updateView();
+				});
 			}
-			//オブジェクトで利用するメソッド定義
+			/**
+			 * サーバリクエスト+リビジョン番号最新設定+表示更新
+			 */
+			function allsync() {
+				request()
+				.done(function() {
+					setRev();
+				});
+			}
+			/**
+			 * HTML表示の更新
+			 */
+			function updateView() {
+				var
+					dat = getData(),
+					_edit = (dat === false) ? 0 : (parseInt(dat.active) - parseInt(dat.base));
+				if(isReady && dat !== false) {
+					me.find('.base').html(dat.base);
+					me.find('.head').html(dat.head);
+					me.find('.edit').html(_edit);
+				}
+			}
+			/**
+			 * リビジョン番号+表示更新
+			 * @param a リビジョン番号[省略時:ユーザ最新リビジョン]
+			 */
+			function setRev(a) {
+				if(isReady) {
+					allData.active = (arguments.length < 1 || a == undefined) ? allData.user : a;
+					updateView();
+				}
+			}
+			/**
+			 * 現在使用中のリビジョン番号
+			 */
+			function getRev() {
+				return parseInt(getData('active'));
+			}
+			/**
+			 * リビジョンデータ取得
+			 * @param a 取得するデータの名称[省略時:Object形式ですべて取得]
+			 */
+			function getData(a) {
+				if(allData == undefined) {
+					return 0;
+				}
+				else {
+					if(arguments.length < 1 || a == undefined || allData[a] == undefined) {
+						return (allData || false);
+					}
+					else {
+						return allData[a];
+					}
+				}
+			}
 			return {
 				construct : construct,
-				request : _request,
-				setRev : _setRev,
-				getRev : _getRev,
-				getData : _get,
-				editTree : _editTree,
-				updateHTML : _updateHTML,
-				sync : _sync
-			}
+				request : request,
+				sync : sync,
+				allsync: allsync,
+				setRev : setRev,
+				getRev : getRev,
+				getData : getData,
+			};
 		}()),
 		/**
 		 * タイマ関連オブジェクト
@@ -1567,48 +1689,73 @@
 						txt = $(elem).find(opt.text).val() || '',
 						res = getData(txt),
 						dat = res.dat,
-						_focus = true;
-					$('#wikibok-searchresult').find('tbody.txt').html(
-						$.map(dat,function(d){
-							if(d.name != '') {
-								return '<tr class="data"><td>'+_escapeHTML(d.name)+'</td></tr>'
-							}
-						}).join()
-					);
-					$.wikibok.exDialog(
-							$.wikibok.wfMsg('wikibok-search','title'),
-							$('#wikibok-searchresult'),
-							{
-								create : function() {
-									var
-										dialog = $(this),
-										_color = dialog.find('.color'),
-										_colorPicker = dialog.find('.colorPicker'),
-										_colorSelect = dialog.find('.colorSelect'),
-										_colorDiv = dialog.find('.colorSelect').find('div'),
-										tmp;
-									_colorPicker.ColorPicker({
-										flat : true,
-										onSubmit:function(hsb,hex,rgb,elem) {
-											_colorDiv.css({backgroundColor : '#'+hex});
-											_colorPicker.stop().animate({height:0},500);
-											_color.val(hex);
-											_colorSelect.trigger('click');
-										}
-									});
-									_colorSelect.toggle(
-										function() {_colorPicker.stop.animate({height:173},500);},
-										function() {_colorPicker.stop.animate({height:  0},500);}
-									);
-								},
-								focus : function() {
-									if(_focus) {
-										$(this).html($('#wikibok-searchresult').html());
-									}
+						dx;
+					if(dat.length < 1) {
+					}
+					else {
+						$('#wikibok-searchresult').find('table').find('tbody.txt').html(
+							$.map(dat,function(d,i){
+								if(d.name != '') {
+									return '<tr class="data" num="'+i+'"><td>'+_escapeHTML(d.name)+'</td></tr>'
 								}
-							},
-							txt
+							}).join()
 						);
+						$.wikibok.exDialog(
+								$.wikibok.wfMsg('wikibok-search','title'),
+								$('#wikibok-searchresult'),
+								{
+									create : function() {
+										var
+											dialog = $(this),
+											_colorPicker = dialog.find('.colorPicker'),
+											_colorSelect = dialog.find('.colorSelect'),
+											_colorDiv = _colorSelect.find('div'),
+											_table = dialog.find('table'),
+											_pager = dialog.find('.pager'),
+											_tbody = _table.find('tbody.txt');
+										dx = dialog;
+										//Picker
+										_colorPicker.ColorPicker({
+											color : _colorDiv.getHexColor(),
+											flat : true,
+											onSubmit : function(hsb,hex,rgb,elem) {
+												_colorDiv.css({backgroundColor : '#'+hex});
+												_colorSelect.trigger('click');
+											}
+										});
+										_colorSelect.toggle(
+											function() {_colorPicker.stop().animate({height:173},500);},
+											function() {_colorPicker.stop().animate({height:  0},500);}
+										);
+										//Clickイベント
+										_tbody.on('click','tr.data',function(e) {
+											var
+												item = this,
+												num = parseInt($(item).attr('num')) || 0,
+												tName = $(item).html();
+											_tbody.find('tr').removeClass('act');
+											$(item).addClass('act');
+											active.call(res,num);
+											setTimeout(function(){
+												dx.dialog('option','position','center').dialog('moveToTop');
+											},1000);
+										});
+
+										//Sorter
+										_table.tablesorter({
+											widthFixed : true,
+											widgets : ['zebra'],
+											sortList : [[0,0]]
+										})
+										.tablesorterPager({
+											container : _pager,
+											positionFixed : false
+										});
+									}
+								},
+								txt
+							);
+						}
 				});
 			//入力補完機能の設定
 			$(this).find(opt.text).autocomplete({
@@ -1714,6 +1861,18 @@
 				wrap(target,pre_word,post_word,def_word)
 			});
 
+		},
+		getHexColor : function(a) {
+			var
+				css = (arguments.length < 1 || a == undefined) ? 'backgroundColor' : a;
+			function rgb2hex(rgb) {
+				rgb = rgb.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*(\d+))?\)$/);
+				function hex(x) {
+					return ("0" + parseInt(x).toString(16)).slice(-2);
+				}
+				return hex(rgb[1]) + hex(rgb[2]) + hex(rgb[3]);
+			}
+			return rgb2hex($(this).css(css));
 		}
 	});
 //外部から参照されない関数はextendに記述しない

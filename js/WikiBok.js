@@ -1,5 +1,5 @@
 jQuery(function($) {
-	//ログイン処逅・
+	//ログイン処理
 	function wikiLogin(param,sfunc,nfocus) {
 		var me = this,
 				_param = $.extend({},{
@@ -96,12 +96,22 @@ jQuery(function($) {
 	//Ajax処理によるローディング表示
 	$('#wikibok-loading')
 		.setPosition({position : 'lt'})
-		.on('ajaxStart', function(){
+		.on('ajaxSend', function(){
 			$(this).show();
 		})
 		.on('ajaxStop', function(){
 			$(this).hide();
 		});
+	//ajax通信の共通設定
+	var
+		//[ベーシック認証]
+		baseUser,
+		basePass;
+	$.ajaxSetup({
+		username : baseUser || null,
+		password : basePass || null,
+	});
+
 	//ページ破棄前にすべてのajax通信を停止
 	$('body').on('ajaxSend',function(c,xhr) {
 		$(window).one('beforeunload',function(){
@@ -486,6 +496,5 @@ jQuery(function($) {
 	$('.hide').hide();
 	//タイマ定義
 	$.timer.setIntervalTime(1*60*1000);
-	$.timer.add($.revision.sync);
 	$.timer.start();
 });

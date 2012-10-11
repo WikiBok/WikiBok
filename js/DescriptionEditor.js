@@ -18,6 +18,8 @@ jQuery(function($) {
 			'WikiBokJs::getDescriptionJson',
 			[],
 			function(dat,stat,xhr) {
+					$.timer.add($.revision.allsync,true);
+					$.timer.start();
 				return true;
 			},
 			function(xhr,stat,err) {

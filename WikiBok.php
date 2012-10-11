@@ -130,6 +130,8 @@ function efWikiBokAjaxRequest() {
 	$wgAjaxExportList[] = "WikiBokJs::representNodeRequest";
 	$wgAjaxExportList[] = "WikiBokJs::checkSMWLinkTarget";
 	$wgAjaxExportList[] = "WikiBokJs::representLinkData";
+
+	$wgAjaxExportList[] = "WikiBokJs::renameNodeRequest";
 	return;
 }
 /**

@@ -53,16 +53,21 @@ dl.context dd {
 	border : 1px solid #F00;
 	background-color : #FCC;
 }
+
 #wikibok-past {
 	position : absolute;
 	height : 32px;
 	white-space: nowrap;
 	z-index: 999;
 }
-.wikibok-searchresult td.data {
+#wikibok-searchresult .colorSelect > div {
+	background-color : #00FF00;
+}
+
+.wikibok-searchresult tr.data > td {
 	padding-left : 16px; 
 }
-.wikibok-searchresult td.act {
+.wikibok-searchresult tr.act > td {
 	background-repeat: no-repeat;
 	background-image : url("images/act.png");
 	width  : 16px;

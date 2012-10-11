@@ -507,6 +507,30 @@ class WikiBokJs {
 		$dbr->freeResult($rows);
 		return json_encode($res);
 	}
+	public static function renameNodeRequest($rev,$user,$from,$to) {
+		$res = array();
+		$db = self::getDB();
+		$db->setUser($user);
+		$data = $db->getEditData($rev);
+		if($data !== false) {
+			$boktree = $data["bok"];
+			$rev = $data["rev"];
+			$xml = new BokXml($boktree);
+		}
+		else {
+			$rev = 0;
+			$xml = new BokXml();
+		}
+		if($xml->renameNode($from,$to)) {
+			$new_bok = $xml->saveXML();
+			$res['act'] = $db->setEditData($rev,$new_bok);
+			$res['res'] = true;
+		}
+		else {
+			$res['res'] = false;
+		}
+		return json_encode($res);
+	}
 	/**
 	 * 代表表現編集データに仮登録 + 対象ノード削除
 	 * @param $rev	編集元リビジョン番号
