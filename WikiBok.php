@@ -323,18 +323,12 @@ function efWikiBokSearchResult($id="wikibok-searchresult") {
 	$txt .= '<span onclick="" class="icon16 next">'.wfMsg('wikibok-pager-next').'</span>';
 	$txt .= '<span onclick="" class="icon16 last">'.wfMsg('wikibok-pager-last').'</span>';
 	$txt .= '<select class="pagesize">';
-	for($i=0;;$i++) {
-		if($i == 0) {
-			$page = WIKIBOK_SEARCH_PAGE_MIN;
-		}
-		else {
-			$page = WIKIBOK_SEARCH_PAGE_PLUS * $i;
-		}
-		if($page > WIKIBOK_SEARCH_PAGE_MAX) {
-			break;
-		}
+	for($page=WIKIBOK_SEARCH_PAGE_MIN;$page <= WIKIBOK_SEARCH_PAGE_MAX;$page+=WIKIBOK_SEARCH_PAGE_PLUS) {
 		$txt .= '<option value="'.$page.'">'.$page.'</option>';
-		
+		$maxpage = $page;
+	}
+	if($maxpage < WIKIBOK_SEARCH_PAGE_MAX) {
+		$txt .= '<option value="'.WIKIBOK_SEARCH_PAGE_MAX.'">'.WIKIBOK_SEARCH_PAGE_MAX.'</option>';
 	}
 	$txt .= '</select>';
 	$txt .= '</div>';

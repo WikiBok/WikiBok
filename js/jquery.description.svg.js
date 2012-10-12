@@ -306,9 +306,11 @@
 			}
 		});
 	}
-	function actNode(a) {
-		clearClassed('active');
-		classed(a,'active');
+	function actNode(a,b) {
+		var
+			_class = (arguments.length < 2 || b == undefined) ? 'active' : b;
+		clearClassed(_class);
+		classed(a,_class);
 	}
 	var
 		//ドラッグ設定

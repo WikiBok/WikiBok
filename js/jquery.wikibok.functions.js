@@ -1630,11 +1630,21 @@
 			 */
 			function active(act) {
 				var
-					o = this.dat[act];
-				this.act = act;
-				obj.actNode(o.name);
-				//スクロール...
-				$.scrollTo($('g[data="'+o.name+'"]'));
+					o = this.dat[act],
+					add = (arguments.length < 2 || b == undefined) ? false:b;
+				if(o != undefined) {
+					this.act = act;
+					obj.actNode(o.name);
+					//スクロール...
+					$.scrollTo($('g[data="'+o.name+'"]'));
+				}
+				else {
+					$.wikibok.timePopup(
+						$.wikibok.wfMsg('wikibok-search','title')+' '+$.wikibok.wfMsg('common','error'),
+						$.wikibok.wfMsg('wikibok-search','error','nodata'),
+						5000
+					);
+				}
 				return ;
 			}
 			/**
@@ -1689,17 +1699,10 @@
 						txt = $(elem).find(opt.text).val() || '',
 						res = getData(txt),
 						dat = res.dat,
-						dx;
-					if(dat.length < 1) {
-					}
-					else {
-						$('#wikibok-searchresult').find('table').find('tbody.txt').html(
-							$.map(dat,function(d,i){
-								if(d.name != '') {
-									return '<tr class="data" num="'+i+'"><td>'+_escapeHTML(d.name)+'</td></tr>'
-								}
-							}).join()
-						);
+						toggle = false,
+						open = true;
+					if(dat.length > 0) {
+						//検索結果一覧表の表示
 						$.wikibok.exDialog(
 								$.wikibok.wfMsg('wikibok-search','title'),
 								$('#wikibok-searchresult'),
@@ -1709,12 +1712,8 @@
 											dialog = $(this),
 											_colorPicker = dialog.find('.colorPicker'),
 											_colorSelect = dialog.find('.colorSelect'),
-											_colorDiv = _colorSelect.find('div'),
-											_table = dialog.find('table'),
-											_pager = dialog.find('.pager'),
-											_tbody = _table.find('tbody.txt');
-										dx = dialog;
-										//Picker
+											_colorDiv = _colorSelect.find('div');
+										//ColorPicker
 										_colorPicker.ColorPicker({
 											color : _colorDiv.getHexColor(),
 											flat : true,
@@ -1723,37 +1722,117 @@
 												_colorSelect.trigger('click');
 											}
 										});
+										//ColorPickerの表示・非表示切り替え
 										_colorSelect.toggle(
 											function() {_colorPicker.stop().animate({height:173},500);},
 											function() {_colorPicker.stop().animate({height:  0},500);}
 										);
-										//Clickイベント
-										_tbody.on('click','tr.data',function(e) {
-											var
-												item = this,
-												num = parseInt($(item).attr('num')) || 0,
-												tName = $(item).html();
-											_tbody.find('tr').removeClass('act');
-											$(item).addClass('act');
-											active.call(res,num);
-											setTimeout(function(){
-												dx.dialog('option','position','center').dialog('moveToTop');
-											},1000);
-										});
+									},
+									focus : function() {
+										var
+											dialog = $(this),
+											_table = dialog.find('table'),
+											_pager = dialog.find('div.pager'),
+											_tbody = _table.find('tbody.txt');
+										if(open) {
+											//ダイアログ表示に検索文字列を設定
+											dialog.dialog('widget').find('.ui-dialog-titlebar > span').html(function(d,e){
+												return e+' ['+((res.txt == '') ? $.wikibok.wfMsg('wikibok-search','noinput'):res.txt)+']';
+											});
+											//データ更新
+											_tbody.html(
+												$.map(dat,function(d,i){
+													if(d.name != '') {
+														return '<tr class="data" num="'+i+'"><td>'+_escapeHTML(d.name)+'</td></tr>'
+													}
+												}).join()
+											);
+											//DOMに検索結果一覧との紐付データを設定
+											$.each(dat,function(i,d){
+												if(d.name != '') {
+													$('g[data="'+d.name+'"]').attr(dialog.get(0).id,true);
+												}
+											});
+											//Clickイベント
+											_tbody
+											.off('click','tr.data')
+											.on('click','tr.data',function(e) {
+												var
+													item = this,
+													num = parseInt($(item).attr('num')) || 0,
+													tName = $(item).html();
+												dialog.find('tr').removeClass('act');
+												$(item).addClass('act');
+												active.call(res,num);
+												//ダイアログを画面内に移動
+												setTimeout(function(){
+													dialog.dialog('option','position','center').dialog('moveToTop');
+												},1);
+											});
+											//Sorter
+											//イベント(その他)の2重登録対策
+											_table.find('colgroup').remove();
+											_table.find('thead th.header')
+												.off('click')
+												.off('mousedown')
+												.off('selectstart');
+											_pager.find('.wikibok_icon')
+												.off('click');
 
-										//Sorter
-										_table.tablesorter({
-											widthFixed : true,
-											widgets : ['zebra'],
-											sortList : [[0,0]]
-										})
-										.tablesorterPager({
-											container : _pager,
-											positionFixed : false
-										});
-									}
+											//データ一覧が表示状態でないと色分けが動かないのでここで初期化
+											_table.tablesorter({
+												widthFixed : true,
+												widgets : ['zebra'],
+												sortList : [[0,0]],
+											})
+											.tablesorterPager({
+												container : _pager,
+												positionFixed : false,
+												size : _pager.find('select.pagesize').val()
+											});
+											open = false;
+										}
+									},
+									close : function() {
+										var
+											nodes = $('g['+this.id+']');
+										//DOMに検索結果一覧との紐付データを削除
+										nodes.removeAttr(this.id);
+										//強調表示の解除
+										nodes.find('polygon,text,circle').css({fill:''});
+										obj.classed(dat[res.act],'active',false);
+									},
+									buttons : [{
+										//指定の色で検索結果を色づけ
+										text : $.wikibok.wfMsg('wikibok-search','button_changecolor','text'),
+										title: $.wikibok.wfMsg('wikibok-search','button_changecolor','title'),
+										class: $.wikibok.wfMsg('wikibok-search','button_changecolor','class'),
+										click: function(a,b) {
+											//トグル設定
+											$('g['+this.id+']').find('polygon,text,circle').css({
+												fill:(toggle) ? '' : $(this).find('.colorSelect').find('div').getHexColor()
+											});
+											toggle = !toggle;
+										}
+									},{
+										//閉じるボタン
+										text : $.wikibok.wfMsg('common','button_close','text'),
+										class: $.wikibok.wfMsg('common','button_close','class'),
+										title: $.wikibok.wfMsg('common','button_close','title'),
+										click:function() {
+											$(this).dialog("close");
+										}
+									}]
 								},
 								txt
+							);
+						}
+						else {
+							//ノードなし
+							$.wikibok.timePopup(
+								$.wikibok.wfMsg('wikibok-search','title')+' '+$.wikibok.wfMsg('common','error'),
+								$.wikibok.wfMsg('wikibok-search','error','nodata'),
+								5000
 							);
 						}
 				});
@@ -1793,6 +1872,11 @@
 				return this;
 			});
 		},
+		/**
+		 * テキスト編集エリア設定
+		 * @param a 編集用テキストエリアのクラス名
+		 * @param b 編集用アイコンのクラス名
+		 */
 		setTextEdit : function(a,b) {
 			var
 				area = $(this),
@@ -1800,6 +1884,7 @@
 				icon = (arguments.length < 2) ? '.wikibok-descriptioneditor-tooltip' : _selecter(b);
 			/**
 			 * テキストエリア内の選択範囲取得
+			 * @param obj 対象テキストエリア
 			 */
 			function getAreaRange(obj) {
 				var
@@ -1847,6 +1932,7 @@
 				}
 				tar.value = before_text+insert+after_text;
 			}
+			//クリックイベントがないため、mousedownへ設定
 			area.find(icon).on('mousedown','.wikibok_icon',function(){
 				var
 					target = area.find(text).get(0),
@@ -1855,13 +1941,115 @@
 					post_word = item.attr('post') || '',
 					def_word = item.attr('sample') || '',
 					namespace = item.attr('nsn') || '';
+				//ファイル選択ダイアログを表示
 				if(namespace !== '') {
-					alert('参考表示')
+					_allImages().done(function(d) {
+						var
+							open = true,
+							_page = '<div class="pager">'
+									+ '<span class="icon16 first"></span>'
+									+ '<span class="icon16 prev"></span>'
+									+ '<input type="text" readonly="readonly" class="pagedisplay"/>'
+									+ '<select class="pagesize">'
+									+ '<option value="5">5</option>'
+									+ '<option value="10">10</option>'
+									+ '</select>'
+									+ '<span class="icon16 next"></span>'
+									+ '<span class="icon16 last"></span>'
+									+ '</div>',
+							tmp = '<div>'
+									+ '<table class="imagefileslist">'
+									+ '<thead><tr><th>'
+									+$.wikibok.wfMsg('wikibok-edittool','fileselect','link')+'</th><th>'
+									+$.wikibok.wfMsg('wikibok-edittool','fileselect','info')+'</th><th>'
+									+$.wikibok.wfMsg('wikibok-edittool','fileselect','name')+'</th></tr></thead>'
+									+ '<tbody class="txt"></tbody>'
+									+ '</table>'
+									+ _page
+									+ '</div>';
+						if(d.length > 0) {
+							$.wikibok.exDialog(
+								$.wikibok.wfMsg('wikibok-edittool','fileselect','title'),
+								tmp,
+								{
+									create : function() {
+										$(this).find('.icon16').lineicon({width:'16px',height:'16px'});
+									},
+									focus : function() {
+										var
+											dialog = $(this),
+											_table = dialog.find('table'),
+											_pager = dialog.find('div.pager'),
+											_tbody = dialog.find('tbody.txt')
+										if(open) {
+											open = false;
+											_tbody.html(
+												$.map(d,function(d) {
+													return '<tr>' + 
+														'<td><a href="'+d.dlink+'" target="_blank">'+$.wikibok.wfMsg('wikibok-edittool','fileselect','mark')+'</a></td>' +
+														'<td><a href="'+d.plink+'" target="_blank">'+$.wikibok.wfMsg('wikibok-edittool','fileselect','mark')+'</a></td>' +
+														'<td class="data">'+_escapeHTML(d.name)+'</td>'+
+														'</tr>';
+												}).join()
+											);
+											//Clickイベント
+											_tbody
+												.off('click','td.data')
+												.on('click','td.data',function(e) {
+													//ファイル名称をクリックでリンクを挿入し、閉じる
+													wrap(target,pre_word,post_word,namespace+':'+$(this).html());
+													dialog.dialog('close');
+												});
+											//Sorter
+											//イベント(その他)の2重登録対策
+											_table.find('colgroup').remove();
+											_table.find('thead th.header')
+												.off('click')
+												.off('mousedown')
+												.off('selectstart');
+											_pager.find('span').off('click');
+											//データ一覧が表示状態でないと色分けが動かないのでここで初期化
+											_table.tablesorter({
+												widthFixed : true,
+												widgets : ['zebra'],
+												sortList : [[2,0]],
+												headers : {
+													0 : {sorter:false},
+													1 : {sorter:false},
+													2 : {sorter:'text'},
+												}
+											})
+											.tablesorterPager({
+												container : _pager,
+												positionFixed : false,
+												pagesize : 10
+											});
+										}
+									}
+								}
+							);
+						}
+						else {
+							//ノードなし
+							$.wikibok.timePopup(
+								$.wikibok.wfMsg('wikibok-edittool','fileselect','title')+' '+$.wikibok.wfMsg('common','error'),
+								$.wikibok.wfMsg('wikibok-edittool','fileselect','error','nofile'),
+								5000
+							);
+						}
+					});
 				}
-				wrap(target,pre_word,post_word,def_word)
+				else {
+					//通常のテキスト挿入のみ
+					wrap(target,pre_word,post_word,def_word);
+				}
 			});
 
 		},
+		/**
+		 * 対象要素の色をHEX形式で取得
+		 * @param a 取得する色の種別(CSS名称)[省略時:背景色]
+		 */
 		getHexColor : function(a) {
 			var
 				css = (arguments.length < 1 || a == undefined) ? 'backgroundColor' : a;
@@ -1880,7 +2068,7 @@
 	 * ランダム文字列の作成
 	 */
 	var
-	_unique = function(pre,len,rep) {
+		_unique = function(pre,len,rep) {
 			var
 				count = 0,
 				maxLen = len || 5,
@@ -1905,15 +2093,22 @@
 			//取得できない場合、条件変更(文字数を+1)して再試行
 			return ($(_id).length == 0) ? id : arguments.callee(pre,len+1,rep);
 		},
-	_selecter = function() {
+		/**
+		 * クラスセレクター文字列の補完
+		 */
+		_selecter = function() {
 			var
 				args = Array.prototype.slice.apply(arguments),
 				a = args.shift(),
 				b = args.shift() || '.';
 			return (a == undefined) ? false : ((a.indexOf(b) < 0) ? b+a : a);
-			
 		},
-	_diffString = function(oDesc,nDesc) {
+		/**
+		 * 2Way-Merge編集競合の内容をHTML化
+		 * @param oDesc 旧記事内容
+		 * @param nDesc 新記事内容
+		 */
+		_diffString = function(oDesc,nDesc) {
 			//比較結果文字列の作成
 			function out(o,n) {
 				function sep(s) {
@@ -1982,12 +2177,76 @@
 			ns.push('\n');
 			return { o : markup(out.o,os,'ins') , n : markup(out.n,ns,'del')};
 		},
-	_escapeHTML = function(a) {
+		/**
+		 * HTML特殊文字のエスケープ
+		 */
+		_escapeHTML = function(a) {
 			return a.replace(/&/g,'&amp;')
 					.replace(/"/g,'&quot;') //"
 					.replace(/'/g,'&#039;') //'
 					.replace(/</g,'&lt;')
 					.replace(/>/g,'&gt;');
+		},
+		/**
+		 * イメージファイルリストの取得
+		 */
+		_allImages = function () {
+			var
+				def = $.Deferred(),
+				allimage = {};
+			_func_image.call(def);
+			return def.promise();
+
+			/**
+			 * 再帰呼出し用
+			 */
+			function _func_image(a) {
+				var
+					def = this,
+					_pdata = $.extend({},{
+						action : 'query',
+						list : 'allimages',
+						ainamespace : 6,
+						aiprop : 'url',
+						ailimit : 500
+					},a);
+				//リクエスト
+				$.wikibok.requestAPI(
+					_pdata,
+					function(dat,stat,xhr) {
+						if(dat['query'] != undefined && dat['query']['allimages'] != undefined) {
+							var
+								_name,
+								_image,
+								_images = dat['query']['allimages'];
+							for(var k in _images) {
+								_image = _images[k];
+								_name = _image.name;
+								if(_name != '' && allimage[_name] == undefined) {
+									allimage[_name] = {
+										name : _name,
+										dlink: _image.url,
+										plink: _image.descriptionurl,
+									}
+								}
+							}
+						}
+						if(dat['query-continue'] == undefined) {
+							//続きがないので終了
+							def.resolve($.map(allimage,function(d){return d}));
+						}
+						else {
+							//続きがあるので再帰呼出し
+							_func_image.call(def,{aifrom:dat['query-continue']['allimages']['aifrom']});
+						}
+					},
+					function(xhr,stat,err) {
+						def.reject();
+					}
+				);
+			}
 		}
+
+
 })(jQuery);
 

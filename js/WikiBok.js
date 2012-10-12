@@ -287,6 +287,16 @@ jQuery(function($) {
 			}
 			
 		});
+//検索ツール
+	$('#wikibok-search')
+		.on('click','.in_window',function() {
+			//exDialogに付加しているクラスの内で表示中のもののみ対象
+			$('.wikibok-exdialog:visible').each(function(i,d) {
+				//左上に選択順に重ねて
+				$(this).dialog('option','position',[i*36,i*36]);
+			})
+		});
+
 //イベント定義
 	$(document)
 		.on('click','.remine',function(e) {

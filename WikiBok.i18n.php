@@ -290,6 +290,7 @@ $messages['ja'] = array(
 		),
 		'wikibok-search' => array(
 			'title' => '検索結果',
+			'noinput'=>'条件なし',
 			'error' => array(
 				'nodata' => 'ノードが見つかりません。',
 				'width' => 300,
@@ -341,11 +342,12 @@ $messages['ja'] = array(
 			'fileselect'=>array(
 				'title' => 'アップロード済みファイル一覧',
 				'name' => 'ファイル名称',
-				'link' => '確認用リンク',
+				'link' => '確認',
 				'info' => '情報',
-				'direct' => '開く',
-				'height' => 200,
-				'width' => 300
+				'mark' => '○',
+				'error'=>array(
+					'nofile' => 'アップロード済みのファイルがありません'
+				),
 			),
 			'button_commit' => array(
 				'text' => '保存',

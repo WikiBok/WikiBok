@@ -353,10 +353,12 @@
 	 * 対象ノードを選択表示
 	 * @param a 対象ノード名称
 	 */
-	function actNode(a) {
+	function actNode(a,b) {
+		var
+			_class = (arguments.length < 2 || b == undefined) ? 'active' : b;
 		openTree(a);
-		clearClassed('active');
-		classed(a,'active');
+		clearClassed(_class);
+		classed(a,_class);
 	}
 	/**
 	 * 対象ノードまでを展開
