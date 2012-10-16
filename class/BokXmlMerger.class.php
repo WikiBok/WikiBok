@@ -464,8 +464,9 @@ class BokXmlMerger {
 	/**
 	 * マージを実施する
 	 * @param	$type	編集競合種別(checkMergeの戻り値)
+	 * @param	$link	代表表現リンク先として指定されている(後発追加不可)
 	 */
-	public function doMerge($type) {
+	public function doMerge($type,$link="") {
 		//編集用変数の初期化
 		$before_add = $before_del = array();
 		$after_add = $after_del = array();
@@ -514,28 +515,44 @@ class BokXmlMerger {
 				//BOK全体を主張する => 削除不可
 				case $this->getConfig('BOKMERGE_EDITAREA_ALL'):
 					foreach($after['add'] as $node => $path) {
-						//優先で追加/削除している、または自身の編集で変更編集の場合、追加不可
-						if (!array_key_exists($node,$before_add) ||
-							!array_key_exists($node,$before_del) ||
-							!array_key_exists($node,$after['del'])) {
-							$after_add[$node] = $path;
+						//代表表現先を排除
+						if(defined('BOK_REPRESENT_EDIT') && BOK_REPRESENT_EDIT) {
+							if(is_array($link) && array_key_exists($node,$link)) {
+								$exist_key[] = $node;
+							}
 						}
 						else {
-							$exist_key[] = $node;
+							//優先で追加/削除している、または自身の編集で変更編集の場合、追加不可
+							if (!array_key_exists($node,$before_add) ||
+								!array_key_exists($node,$before_del) ||
+								!array_key_exists($node,$after['del'])) {
+								$after_add[$node] = $path;
+							}
+							else {
+								$exist_key[] = $node;
+							}
 						}
 					}
 					break;
 				//MBT範囲内では削除不可
 				case $this->getConfig('BOKMERGE_EDITAREA_MBT'):
 					foreach($after['add'] as $node => $path) {
-						if (!array_key_exists($node,$before_add) ||
-							!array_key_exists($node,$before_del) ||
-							!array_key_exists($node,$after['del'])) {
-						//優先で追加/削除している、または自身の編集で変更編集の場合、追加不可
-							$after_add[$node] = $path;
+						//代表表現先を排除
+						if(defined('BOK_REPRESENT_EDIT') && BOK_REPRESENT_EDIT) {
+							if(is_array($link) && array_key_exists($node,$link)) {
+								$exist_key[] = $node;
+							}
 						}
 						else {
-							$exist_key[] = $node;
+							if (!array_key_exists($node,$before_add) ||
+								!array_key_exists($node,$before_del) ||
+								!array_key_exists($node,$after['del'])) {
+							//優先で追加/削除している、または自身の編集で変更編集の場合、追加不可
+								$after_add[$node] = $path;
+							}
+							else {
+								$exist_key[] = $node;
+							}
 						}
 					}
 					$base_tree = $this->base->splitBokTree();
@@ -558,12 +575,20 @@ class BokXmlMerger {
 				case $this->getConfig('BOKMERGE_EDITAREA_EDITSPOT'):
 				default:
 					foreach($after['add'] as $node => $path) {
-						if (!array_key_exists($node,$before_add) &&
-							!array_key_exists($node,$before_del)) {
-							$after_add[$node] = $path;
+						//代表表現先を排除
+						if(defined('BOK_REPRESENT_EDIT') && BOK_REPRESENT_EDIT) {
+							if(is_array($link) && array_key_exists($node,$link)) {
+								$exist_key[] = $node;
+							}
 						}
 						else {
-							$exist_key[] = $node;
+							if (!array_key_exists($node,$before_add) &&
+								!array_key_exists($node,$before_del)) {
+								$after_add[$node] = $path;
+							}
+							else {
+								$exist_key[] = $node;
+							}
 						}
 					}
 					foreach($after['del'] as $node => $path) {
@@ -632,6 +657,8 @@ class BokXmlMerger {
 		}
 		//ノードの追加操作
 		if(is_array($iSet)) {
+			//代表表現の従属ノードを追加させない...
+			// - 未実装
 			foreach($iSet as $node => $path) {
 				$tNode = array($node => $path);
 				//削除編集後に存在する追加対象(親)ノードを取得

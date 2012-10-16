@@ -34,7 +34,7 @@ jQuery(function($) {
 			svg.xmlconvert(descjson.basexml,{nclass:'prebok',eclass:'prebok',linkName:''});
 			svg.linkconvert(descjson.smwlink,{nclass:'desc',eclass:'smw'});
 			desc = $.each($.wikibok.allDescriptionPage(),function(d,k){
-				svg.addDescription(k,'desc');
+				svg.addDescription(d,'desc');
 			});
 			svg.load();
 			//定期更新の予約(記事情報取得)
@@ -93,13 +93,49 @@ jQuery(function($) {
 					$(dialog).html(tmp);
 					$(dialog)
 						.on('click','.description-view',function(a,b){
-							alert(tid);
+							var
+								_title = tid;
+							$.wikibok.getDescriptionPage(_title)
+							.done(function(dat) {
+								var
+									page = dat.parse,
+									ptxt = $(page.text['*']),
+									desc = (ptxt.html() == null) ? $('<div>'+$.wikibok.wfMsg('wikibok-description','empty')+'</div>') : ptxt;
+									//リンクを別タブ(ウィンドウ)で開く
+									desc.find('a').attr({target:'_blank'});
+								$.wikibok.viewDescriptionDialog(_title,desc)
+								.done(function(){
+									//最新のSMWリンク情報を取得(BOK-XML情報を取得していない...)
+									$.wikibok.requestCGI(
+										'WikiBokJs::getSMWLinks',
+										[_title],
+										function(dat,stat,xhr) {
+											return (dat.res);
+										},
+										function(xhr,stat,err) {
+										},
+										false
+									)
+									.done(function(dat,stat,xhr) {
+										//リンクの本数が変更にならないと表示更新がうまくいかないので、削除・作成でそれぞれ更新する
+										$.each(svg.links({node:_title}),function(i,d) {
+											//リンクデータの削除
+											svg.deleteLink(d.source,d.target,d.linkName);
+										});
+										svg.update();
+										//リンクデータの作成(nclassの値をBOK-XMLと同期させる?)
+										svg.linkconvert(dat.data,{nclass:'desc',eclass:'smw'});
+										svg.update();
+									});
+								});
+							})
+							.fail(function() {
+								alert('記事がない...');
+							});
 						})
 						.on('click','.description-create',function(a,b) {
-							
 						})
 						.on('click','.description-delete',function(a,b) {
-							
 						})
 						.on('click','.command',function(a,b) {
 							$(dialog).off('click');

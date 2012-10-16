@@ -68,6 +68,7 @@
 	function update() {
 		var
 			addDesc,addPath,
+			tranPath,
 			_desc;
 	//データ定義
 		descs = vis
@@ -91,7 +92,13 @@
 		addPath
 			.append('svg:text')
 			.text(function(d){return d.linkName;});
-		path.transition();
+		tranPath = path.transition();
+		tranPath
+			.selectAll('path')
+			.attr('marker-end',function(d){return 'url(#'+d.type+')';});
+		tranPath
+			.selectAll('text')
+			.text(function(d){return d.linkName;});
 		path.exit().remove();
 	//記事要素
 		//新規
@@ -130,7 +137,9 @@
 			.attr('y','.31em')
 			.text(function(d){return d.name;});
 		//変更
-		descs.transition();
+		descs.transition()
+			.selectAll('text')
+			.text(function(d){return d.name;});
 		//削除
 		descs.exit().remove();
 		//ドラッグイベントの追加
@@ -209,6 +218,10 @@
 	}
 	/**
 	 * 関係付けデータ追加
+	 * @param a リンク元ノード(名称ではない)
+	 * @param b リンク先ノード(名称ではない)
+	 * @param c リンクタイプ(SMWなど)
+	 * @param d リンク名称
 	 */
 	function addLink(a,b,c,d) {
 		var
@@ -218,12 +231,25 @@
 				type : (arguments.length < 3) ? '' : c || '',
 				linkName : (arguments.length < 4) ? '' : d || '',
 			};
+		//まったく同じリンクがある場合は追加しない...
 		if(a.name != '' && b.name != '' && linkcount(_link) < 1) {
 			links.push(_link);
 		}
 	}
 	/**
+	 * 関連付け情報排他チェック
+	 * @param a 関連付け情報
+	 */
+	function linkcount(a) {
+		return (links.filter(function(d) {
+			return (d.source == a.source && d.target == a.target && d.linkName == a.linkName);
+		}).length)
+	}
+	/**
 	 * 関連付けデータ削除
+	 * @param a リンク元ノード(名称ではない)
+	 * @param b リンク先ノード(名称ではない)
+	 * @param c リンク名称
 	 */
 	function deleteLink(a,b,c) {
 		var
@@ -264,7 +290,7 @@
 						res = (filtOpt.node.filter(function(e){return ((e == d.source.name) || (e == d.target.name));}).length > 0);
 					}
 					else {
-						res = (e == d.source.name || e == d.target.name);
+						res = (filtOpt.node == d.source.name || filtOpt.node == d.target.name);
 					}
 				}
 				if(filtOpt.type != null) {
@@ -279,14 +305,8 @@
 			});
 	}
 	/**
-	 * 関連付け情報排他チェック
-	 * @param a 関連付け情報
+	 * キャンパスサイズ設定
 	 */
-	function linkcount(a) {
-		return (links.filter(function(d) {
-			return (d.source == a.source && d.target == a.target && d.linkName == a.linkName);
-		}).length)
-	}
 	function setSize() {
 		var
 			_min = 1440,
@@ -299,6 +319,9 @@
 			.attr('viewBox','0 0 '+parseInt(_size)+' '+parseInt(_size));
 		force.size([_size,_size]);
 	}
+	/**
+	 * 全ノードデータの取得
+	 */
 	function allNode() {
 		return $.map(nodes,function(d){
 			if(typeof d.name =='string' && d.name.length > 0) {
@@ -306,6 +329,11 @@
 			}
 		});
 	}
+	/**
+	 * 対象ノードを強調
+	 * @param a 対象ノード名称
+	 * @param b 強調設定用クラス名称
+	 */
 	function actNode(a,b) {
 		var
 			_class = (arguments.length < 2 || b == undefined) ? 'active' : b;
@@ -393,7 +421,14 @@
 				update();
 				force.start();
 			},
-			update : update,
+			update : function(){
+				//描画更新なので、DOM要素の更新と
+				update();
+				//描画位置の再計算を行う
+				force.start();
+				force.tick();
+				force.stop();
+			},
 			classed : classed,
 			clearClassed : clearClassed,
 			xmlconvert : xmlconvert,
@@ -402,6 +437,7 @@
 			links : _links,
 			actNode : actNode,
 			allNode : allNode,
+			deleteLink : deleteLink,
 		};
 	$.fn.extend({
 		description : DescriptionEditor.init,

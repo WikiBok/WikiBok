@@ -499,7 +499,7 @@ class WikiBokJs {
 				'  JOIN '.$smw_ids.' p_id ON s_rel.p_id = p_id.smw_id'.
 				' WHERE o_id.smw_title = '.$dbr->addQuotes($name).
 				'   AND s_id.smw_namespace = '.NS_SPECIAL_DESCRIPTION.
-				'   AND o_id.smw_namespace = '.NS_SPECIAL_DESCRIPTION;
+				'   AND o_id.smw_namespace = '.NS_SPECIAL_DESCRIPTION.
 				'   AND p_id.smw_title = '.$dbr->addQuotes($linkname);
 		$links = array();
 		$rows = $dbr->query($query);
@@ -507,27 +507,82 @@ class WikiBokJs {
 		$dbr->freeResult($rows);
 		return json_encode($res);
 	}
+	/**
+	 * 代表表現先として設定されているノード情報を取得(一括)
+	 */
+	private function getRepresentTarget() {
+		$links = array();
+		if(defined('BOK_REPRESENT_EDIT') && BOK_REPRESENT_EDIT) {
+			$dbr = wfGetDB(DB_SLAVE);
+			//SMWテーブル名称取得
+			$smw_rels2 = $dbr->tableName('smw_rels2');
+			$smw_ids = $dbr->tableName('smw_ids');
+			//SMWリンクを出力
+			$query ='SELECT DISTINCT o_id.smw_title o '.
+					'  FROM '.$smw_ids.' s_id '.
+					'  JOIN '.$smw_rels2.' s_rel ON s_id.smw_id = s_rel.s_id '.
+					'  JOIN '.$smw_ids.' o_id ON s_rel.o_id = o_id.smw_id '.
+					'  JOIN '.$smw_ids.' p_id ON s_rel.p_id = p_id.smw_id'.
+					' WHERE s_id.smw_namespace = '.NS_SPECIAL_DESCRIPTION.
+					'   AND o_id.smw_namespace = '.NS_SPECIAL_DESCRIPTION;
+			if(defined('BOK_LINKTYPE_REPRESENT')) {
+				$query .= ' AND p_id.smw_title = '.$dbr->addQuotes(BOK_LINKTYPE_REPRESENT);
+			}
+			$rows = $dbr->query($query);
+			if($dbr->numRows($rows) > 0) {
+				while($row = $dbr->fetchObject($rows)) {
+					$link = $row->o;
+					$links[$link] = $link;
+				}
+			}
+			$dbr->freeResult($rows);
+		}
+		return $links;
+	}
+
+
+	/**
+	 * BOK-XMLのノード名称を変更
+	 * @param $rev	変更元リビジョン番号
+	 * @param $user	変更ユーザID
+	 * @param $from	変更前のノード名
+	 * @param $to	変更後のノード名
+	 */
 	public static function renameNodeRequest($rev,$user,$from,$to) {
+		$represent = true;
 		$res = array();
-		$db = self::getDB();
-		$db->setUser($user);
-		$data = $db->getEditData($rev);
-		if($data !== false) {
-			$boktree = $data["bok"];
-			$rev = $data["rev"];
-			$xml = new BokXml($boktree);
+		//変更後のノード名称が代表表現の従属に使用されている場合、リネーム不可
+		if(defined('BOK_REPRESENT_EDIT') && (BOK_REPRESENT_EDIT)) {
+			if(self::checkSMWLinkTarget($to,BOK_LINKTYPE_REPRESENT)) {
+				$represent = false;
+			}
 		}
-		else {
-			$rev = 0;
-			$xml = new BokXml();
-		}
-		if($xml->renameNode($from,$to)) {
-			$new_bok = $xml->saveXML();
-			$res['act'] = $db->setEditData($rev,$new_bok);
-			$res['res'] = true;
-		}
-		else {
+		if(!$represent) {
 			$res['res'] = false;
+			$res['message'] = '代表表現の従属ノードとして使用されています';
+		}
+		else {
+			$db = self::getDB();
+			$db->setUser($user);
+			$data = $db->getEditData($rev);
+			if($data !== false) {
+				$boktree = $data["bok"];
+				$rev = $data["rev"];
+				$xml = new BokXml($boktree);
+			}
+			else {
+				$rev = 0;
+				$xml = new BokXml();
+			}
+			if($xml->renameNode($from,$to)) {
+				$new_bok = $xml->saveXML();
+				$res['act'] = $db->setEditData($rev,$new_bok);
+				$res['res'] = true;
+			}
+			else {
+				$res['res'] = false;
+				$res['message'] = 'XML操作失敗';
+			}
 		}
 		return json_encode($res);
 	}
@@ -866,7 +921,8 @@ class WikiBokJs {
 					$ret['res'] = 'no edit';
 				}
 				else {
-					list($_xml,$eSet) = $merger->doMerge($type);
+					$link = self::getRepresentTarget();
+					list($_xml,$eSet) = $merger->doMerge($type,$link);
 					////テスト用データ登録をスキップするため...
 					//$ret['res'] = 'no permision';
 					//競合発生の記録を保管
@@ -919,7 +975,7 @@ class WikiBokJs {
 		}
 		else {
 			//登録成功
-			$result['res'] = 'merge complate';
+			$result['res'] = 'merge complete';
 			//USER編集情報クリア
 			$db->clearEditData();
 			$result['eSet'] = $eSet;

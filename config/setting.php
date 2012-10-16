@@ -1,9 +1,9 @@
 <?php
 # BOK-XMLデータ格納先Databaseへのアクセス情報
-define('BOK_DATABASE_HOST','');
-define('BOK_DATABASE_DB','');
-define('BOK_DATABASE_USER','');
-define('BOK_DATABASE_PASS','');
+define('BOK_DATABASE_HOST','localhost');
+define('BOK_DATABASE_DB','treewiki');
+define('BOK_DATABASE_USER','root');
+define('BOK_DATABASE_PASS','ssaptoor');
 # INSTALL環境によって変更あり
 define('PHPCOM','php');
 define('SVGCONVERT_CMD','rsvg-convert');
@@ -26,14 +26,21 @@ define('BOKXML_SEPARATE_CHAR',"\0");
 define('BOKXML_DELNODE_FULL',TRUE);	#DS算出で自身のノードを含める/含めない
 # IS算出で自身のノードを含める/含めない(ロジックの関係上,変更不可/上記の反対を採用とする)
 define('BOKXML_INSNODE_FULL',!BOKXML_DELNODE_FULL);
+########################################
+#   代表表現関連設定[追加@2012/10]
+########################################
+# 代表表現編集をする/しない
+define('BOK_REPRESENT_EDIT',TRUE);
 # 代表表現選択時に代表表現以外に選択したノード配下のノードを削除する/しない
 define('BOKXML_REPRESENT_CHILD_DELETE',FALSE);
+# 代表表現を表すリンク名称として使用する文字列定義(一度定義した後は変更しないでください)
+define('BOK_LINKTYPE_REPRESENT','reps');
 ########################################
 #   Mergerの設定
 ########################################
 #競合解消に使用するリビジョン番号
 define('BOKMERGE_ACTIVE_REV',1);
 # PAGER
-define('WIKIBOK_SEARCH_PAGE_MIN',20);
-define('WIKIBOK_SEARCH_PAGE_MAX',1600);
-define('WIKIBOK_SEARCH_PAGE_PLUS',50);
+define('WIKIBOK_SEARCH_PAGE_MIN',10);
+define('WIKIBOK_SEARCH_PAGE_MAX',300);
+define('WIKIBOK_SEARCH_PAGE_PLUS',100);

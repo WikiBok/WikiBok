@@ -177,16 +177,18 @@ function efWikiBokInsertScript(OutputPage $out) {
 	$out->addLink(array('rel'=>'apple-touch-icon','href'=>"{$wgScriptPath}/extensions/WikiBok/image/icon_wikibok.png"));
 	//javascript用メッセージを設定
 	$out->addInlineScript(
-		'var meta_message = '.json_encode(unserialize(wfMsg('wikibok-message'))).','."\n".
-		 '   wgLogin = '.json_encode($wgUser->isLoggedIn()).','."\n".
-		 '   wgEdit = '.json_encode($wgUser->isAllowed('edit')).','."\n".
+		'var wgLogin = '.json_encode($wgUser->isLoggedIn()).','.
+		 'wgEdit = '.json_encode($wgUser->isAllowed('edit')).','.
 		//名前空間を設定
-		 '   wgExtraNamespace = '.json_encode($wgExtraNamespaces).','."\n".
+		 'wgExtraNamespace = '.json_encode($wgExtraNamespaces).','.
 		//ページ番号(名前空間と連動する)
-		 '   wgDebug = '.$wgTitle->getNamespace().','."\n".
-		 '   wgNsBok = '.NS_SPECIAL_BOK.','."\n".
-		 '   wgNsDesc = '.NS_SPECIAL_DESCRIPTION.','."\n".
-		 '   wgRepsDel = '.json_encode(BOKXML_REPRESENT_CHILD_DELETE).';'
+		 'wgDebug = '.$wgTitle->getNamespace().','.
+		 'wgNsBok = '.NS_SPECIAL_BOK.','.
+		 'wgNsDesc = '.NS_SPECIAL_DESCRIPTION.','.
+		 ' wgRepsFlg = '.json_encode((defined('BOK_REPRESENT_EDIT') && BOK_REPRESENT_EDIT) ? BOK_REPRESENT_EDIT : FALSE).','.
+		 (defined('BOK_LINKTYPE_REPRESENT') ? ' wgReps = '.json_encode(BOK_LINKTYPE_REPRESENT).',' : '').
+		 (defined('BOKXML_REPRESENT_CHILD_DELETE') ? ' wgRepsDel='.json_encode(BOKXML_REPRESENT_CHILD_DELETE).',' : '').
+		 'meta_message = '.json_encode(unserialize(wfMsg('wikibok-message'))).';'
 	);
 	//スタイルシートの追加
 	$out->addStyle("{$wgScriptPath}/extensions/WikiBok/css/WikiBok.css");
@@ -374,7 +376,7 @@ function efWikiBokDescriptionEdit($id="wikibok-description-edit") {
 	$txt .= '</div>';
 	$txt .= '<dl>';
 	$txt .= '<dt>'.wfMsg('wikibok-article-title').'</dt>';
-	$txt .= '<dd><input type="text" class="title"></dd>';
+	$txt .= '<dd><input type="text" class="title" readonly="readonly"/></dd>';
 	$txt .= '<dt>'.wfMsg('wikibok-article-summary').'</dt>';
 	//編集用ツールチップ
 	$txt .= '<dd class="wikibok-descriptioneditor-tooltip">';
