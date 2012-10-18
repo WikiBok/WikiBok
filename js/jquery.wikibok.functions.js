@@ -1230,7 +1230,7 @@
 					}
 					if(!isAdded) {
 						tList.push({func : f,_tm : false});
-						if(arguments.length > 1|| first) {
+						if(arguments.length > 1 && first) {
 							run(i);
 						}
 					}
@@ -1782,7 +1782,7 @@
 													if(d.name != '') {
 														return '<tr class="data" num="'+i+'"><td>'+_escapeHTML(d.name)+'</td></tr>'
 													}
-												}).join()
+												}).join('')
 											);
 											//DOMに検索結果一覧との紐付データを設定
 											$.each(dat,function(i,d){
@@ -2027,7 +2027,7 @@
 														'<td><a href="'+d.plink+'" target="_blank">'+$.wikibok.wfMsg('wikibok-edittool','fileselect','mark')+'</a></td>' +
 														'<td class="data">'+_escapeHTML(d.name)+'</td>'+
 														'</tr>';
-												}).join()
+												}).join('')
 											);
 											//Clickイベント
 											_tbody

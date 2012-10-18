@@ -141,8 +141,6 @@ $messages['ja'] = array(
 				"サーバへ登録したい場合には、保存ボタンを押してください。\n".
 				"このまま、画面を遷移してよろしいですか？"
 			),
-			'height' => 150,
-			'width' => 400,
 		),
 		'wikibok-popupLogout' => array(
 			'title' => 'ログアウト',
@@ -192,8 +190,6 @@ $messages['ja'] = array(
 		),
 		'wikibok-new-element' => array(
 			'title'=>'新規作成',
-			'width' => 500,
-			'height' => 300,
 			'bok'=>array(
 				'headline1'=>'追加対象ノード名称',
 				'headline2'=>'新規ノード名称',
@@ -293,8 +289,6 @@ $messages['ja'] = array(
 			'noinput'=>'条件なし',
 			'error' => array(
 				'nodata' => 'ノードが見つかりません。',
-				'width' => 300,
-				'height' => 200,
 			),
 			'button_changecolor' => array(
 				'text' => '強調',
@@ -305,13 +299,9 @@ $messages['ja'] = array(
 		'wikibok-edittool' => array(
 			'view' => array(
 				'title' => '記事参照',
-				'height' => 500,
-				'width' => 500
 			),
 			'edit' => array(
 				'title' => '記事編集',
-				'height' => 500,
-				'width' => 500
 			),
 			'save_as' => array(
 				'body' => array(
@@ -329,10 +319,10 @@ $messages['ja'] = array(
 				),
 				'success' => nl2br("サーバに登録しました。\n参照URL:"),
 				'error' => array(
+					'notitle' => '登録名称が入力されていません',
+					'nocomment' => '登録理由／コメントが入力されていません',
 					'duplication' => nl2br("登録名称が重複しています。\n別の名称を付けてください。"),
 				),
-				'width' => 400,
-				'height' => 300,
 				'title' => 'BOKデータ登録',
 			),
 			'search' => array(

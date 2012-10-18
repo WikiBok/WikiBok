@@ -7,6 +7,9 @@ jQuery(function($) {
 			gravity : 0.1,
 			linkDistance : 60,
 			charge : -300,
+			ndoeFunc : function(d) {
+				return true;
+			},
 			emptyFunc : function(d) {
 				return (($.wikibok.findDescriptionPage(d.name,false,true)).length < 1)
 			},
@@ -19,7 +22,6 @@ jQuery(function($) {
 			[],
 			function(dat,stat,xhr) {
 					$.timer.add($.revision.allsync,true);
-					$.timer.start();
 				return true;
 			},
 			function(xhr,stat,err) {
@@ -30,16 +32,23 @@ jQuery(function($) {
 	.done(function(func1,func2) {
 		var
 			descjson = func2[0];
-			svg.xmlconvert(descjson.userxml,{nclass:'bok',eclass:'bok',linkName:''});
-			svg.xmlconvert(descjson.basexml,{nclass:'prebok',eclass:'prebok',linkName:''});
+			svg.xmlconvert(descjson.basexml,{nclass:'bok',eclass:'bok',linkName:''});
+			svg.xmlconvert(descjson.userxml,{nclass:'prebok',eclass:'prebok',linkName:''});
 			svg.linkconvert(descjson.smwlink,{nclass:'desc',eclass:'smw'});
 			desc = $.each($.wikibok.allDescriptionPage(),function(d,k){
 				svg.addDescription(d,'desc');
 			});
-			svg.load();
+			$.wikibok.loadDescriptionPages()
+			.done(function() {
+				svg.load();
+			});
 			//定期更新の予約(記事情報取得)
-			$.timer.add(svg.update,true);
-			$.timer.add($.wikibok.loadDescriptionPages);
+			$.timer.add(function() {
+				$.wikibok.loadDescriptionPages()
+				.done(function(){
+					svg.update();
+				});
+			},false);
 			//ハッシュタグまたはデフォルト値を強調
 			var h = $.wikibok.getUrlVars('#') || $.wikibok.wfMsg('defaultFocus');
 			if(h != undefined && h != '') {
@@ -110,6 +119,13 @@ jQuery(function($) {
 										'WikiBokJs::getSMWLinks',
 										[_title],
 										function(dat,stat,xhr) {
+											//リンクデータの削除は共通で実施
+											$.each(svg.links({node:_title,type:'smw'}),function(i,d) {
+												//リンクデータの削除
+												svg.deleteLink(d.source,d.target,d.linkName);
+											});
+											//削除状態で一度データ更新
+											svg.update();
 											return (dat.res);
 										},
 										function(xhr,stat,err) {
@@ -117,13 +133,7 @@ jQuery(function($) {
 										false
 									)
 									.done(function(dat,stat,xhr) {
-										//リンクの本数が変更にならないと表示更新がうまくいかないので、削除・作成でそれぞれ更新する
-										$.each(svg.links({node:_title}),function(i,d) {
-											//リンクデータの削除
-											svg.deleteLink(d.source,d.target,d.linkName);
-										});
-										svg.update();
-										//リンクデータの作成(nclassの値をBOK-XMLと同期させる?)
+										//新しいリンクデータを作成(nclassの値をBOK-XMLと同期させる?)
 										svg.linkconvert(dat.data,{nclass:'desc',eclass:'smw'});
 										svg.update();
 									});

@@ -771,7 +771,7 @@ jQuery(function($) {
 							def.reject.apply({},[message]);
 						}
 					})
-				});
+				}).promise();
 			}
 			function insertMergeXml(rev,eSet) {
 				return $.Deferred(function(def) {
@@ -794,7 +794,7 @@ jQuery(function($) {
 							def.reject.apply({},[]);
 						}
 					})
-				});
+				}).promise();
 			}
 			function resultDialog(title,data) {
 				$.wikibok.exDialog(
@@ -881,10 +881,11 @@ jQuery(function($) {
 						_target = _recs[i].target;
 						_name = $.wikibok.getPageName(_target);
 						if(_allNode.filter(function(d) {return d.name == _name}).length < 1) {
-							$.wikibok.addWikiPage('\n'+_recs[i].source,_recs[i].link,false);
+							$.wikibok.addWikiPage(_recs[i].source,'\n'+_recs[i].link,false);
 						}
 					}
-				});
+				})
+				.promise();
 			}
 			function eSetSeplate(a1,a2) {
 				var
@@ -1083,7 +1084,89 @@ jQuery(function($) {
 		})
 		//XMLデータ保存
 		.on('click','.save_as',function(ev) {
-			
+			var
+				tmp = '<dl><dt>'+$.wikibok.wfMsg('wikibok-edittool','save_as','body','title')+'</dt>'
+						+ '<dd title="'+$.wikibok.wfMsg('wikibok-edittool','save_as','input','title')+'"><input type="text" class="name"/></dd>'
+						+ '<dt>'+$.wikibok.wfMsg('wikibok-edittool','save_as','body','comment')+'</dt>'
+						+ '<dd title="'+$.wikibok.wfMsg('wikibok-edittool','save_as','body','comment')+'"><textarea class="comment" rows="10"/></dd>'
+						+ '</dl>',
+				_open = true;
+			$.wikibok.exDialog(
+				$.wikibok.wfMsg('wikibok-edittool','save_as','title'),
+				tmp,
+				{
+					create : function() {
+						$(this).dialog('widget').setInterruptKeydown([
+							{class : 'name',next : 'comment',prev : 'commit'},
+							{class : 'comment',next : 'commit',prev : null}
+						]);
+					},
+					focus : function() {
+						if(_open) {
+							_open = false;
+							$(this).find('input.comment').val('');
+							$(this).find('textarea.name').focus().val('');
+						}
+					},
+					buttons : [{
+						text : $.wikibok.wfMsg('wikibok-edittool','save_as','button_commit','text'),
+						title: $.wikibok.wfMsg('wikibok-edittool','save_as','button_commit','title'),
+						class: $.wikibok.wfMsg('wikibok-edittool','save_as','button_commit','class'),
+						click : function() {
+							var
+								dialog = $(this),
+								_message = true,
+								_title = dialog.find('input.title').val(),
+								_comment = dialog.find('textarea.comment').val();
+							if(_title == '') {
+								_message = 'notitle'
+							}
+							if(_comment == '') {
+								_message = 'nocomment'
+							}
+							if(_message == true) {
+								$.wikibok.requestCGI(
+									'WikiBokJs::saveBokSvgData',
+									[_title,_comment],
+									function(dat,stat,xhr) {
+										return (dat == false);
+									},
+									function(xhr,stat,err) {
+										return false;
+									}
+								)
+								.done(function(dat,stat,xhr) {
+									alert('URL');
+								})
+								.fail(function(dat) {
+									$.wikibok.timePopup(
+										$.wikibok.wfMsg('wikibok-edittool','save_as','title')+' '+$.wikibok.wfMsg('common','error'),
+										$.wikibok.wfMsg('wikibok-edittool','save_as','error','duplication'),
+										5000
+									);
+								})
+								.always(function() {
+									$(this).dialog('close');
+								});
+							}
+							else {
+								$.wikibok.timePopup(
+									$.wikibok.wfMsg('wikibok-edittool','save_as','title')+' '+$.wikibok.wfMsg('common','error'),
+									$.wikibok.wfMsg('wikibok-edittool','save_as','error',_message),
+									5000
+								);
+							}
+						}
+					},{
+						text : $.wikibok.wfMsg('common','button_close','text'),
+						title: $.wikibok.wfMsg('common','button_close','title'),
+						class: $.wikibok.wfMsg('common','button_close','class'),
+						click : function() {
+							$(this).dialog('close');
+						}
+					}]
+				}
+			);
 		})
 		//編集操作を戻す
 		.on('click','.undo',function(ev) {

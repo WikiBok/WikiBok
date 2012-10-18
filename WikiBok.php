@@ -239,9 +239,9 @@ function efCheckPageTitle($title,$pages="") {
 function efWikiBokPopupLogin($id="wikibok-popupLogin") {
 	$txt  = '<dl class="hide popup" id="'.$id.'">';
 	$txt .= '<dt>'.wfMsg('wikibok-popupLogin-user').'</dt>';
-	$txt .= '<dd><input type="text" name="" class="user"></dd>';
+	$txt .= '<dd><input type="text" name="" class="user" /></dd>';
 	$txt .= '<dt>'.wfMsg('wikibok-popupLogin-pass').'</dt>';
-	$txt .= '<dd><input type="password" name="" class="pass"></dd>';
+	$txt .= '<dd><input type="password" name="" class="pass" /></dd>';
 	$txt .= '<dt class="adduser">'.wfMsg('wikibok-popupLogin-newuser').'</dt>';
 	$txt .= '<dd class="adduser">'.wfMsg('wikibok-popupLogin-here')   .'</dd>';
 	$txt .= '<dt class="remine">' .wfMsg('wikibok-popupLogin-remine') .'</dt>';
@@ -255,13 +255,13 @@ function efWikiBokPopupLogin($id="wikibok-popupLogin") {
 function efWikiBokChangepass($id="wikibok-changepass") {
 	$txt  = '<dl class="hide popup" id="'.$id.'">';
 	$txt .= '<dt>'.wfMsg('wikibok-popupLogin-user').'</dt>';
-	$txt .= '<dd><input type="text" name="" class="user"></dd>';
+	$txt .= '<dd><input type="text" name="" class="user"/></dd>';
 	$txt .= '<dt>'.wfMsg('wikibok-popupLogin-pass').'</dt>';
-	$txt .= '<dd><input type="password" name="" class="oldpass"></dd>';
+	$txt .= '<dd><input type="password" name="" class="oldpass"/></dd>';
 	$txt .= '<dt>'.wfMsg('wikibok-popupLogin-new-pass').'</dt>';
-	$txt .= '<dd><input type="password" name="" class="pass"></dd>';
+	$txt .= '<dd><input type="password" name="" class="pass"/></dd>';
 	$txt .= '<dt>'.wfMsg('wikibok-popupLogin-repass').'</dt>';
-	$txt .= '<dd><input type="password" name="" class="repass"></dd>';
+	$txt .= '<dd><input type="password" name="" class="repass"/></dd>';
 	$txt .= '</dl>';
 	return "{$txt}\n";
 }
@@ -271,15 +271,15 @@ function efWikiBokChangepass($id="wikibok-changepass") {
 function efWikiBokCreateAccount($id="wikibok-createaccount") {
 	$txt  = '<dl class="hide popup" id="'.$id.'">';
 	$txt .= '<dt>'.wfMsg('wikibok-popupLogin-user').'</dt>';
-	$txt .= '<dd><input type="text" name="" class="user"></dd>';
+	$txt .= '<dd><input type="text" name="" class="user" /></dd>';
 	$txt .= '<dt>'.wfMsg('wikibok-popupLogin-pass').'</dt>';
-	$txt .= '<dd><input type="password" name="" class="pass"></dd>';
+	$txt .= '<dd><input type="password" name="" class="pass" /></dd>';
 	$txt .= '<dt>'.wfMsg('wikibok-popupLogin-repass').'</dt>';
-	$txt .= '<dd><input type="password" name="" class="repass"></dd>';
+	$txt .= '<dd><input type="password" name="" class="repass" /></dd>';
 	$txt .= '<dt>'.wfMsg('wikibok-popupLogin-mail').'</dt>';
-	$txt .= '<dd><input type="text" name="" class="email"></dd>';
+	$txt .= '<dd><input type="text" name="" class="email" /></dd>';
 	$txt .= '<dt>'.wfMsg('wikibok-popupLogin-realname').'</dt>';
-	$txt .= '<dd><input type="text" name="" class="realname"></dd>';
+	$txt .= '<dd><input type="text" name="" class="realname" /></dd>';
 	$txt .= '</dl>';
 	return "{$txt}\n";
 }
@@ -294,7 +294,7 @@ function efWikiBokSearch($id="wikibok-search") {
 	$txt .= '<span class="icon32 down">'.wfMsg('wikibok-search-next').'</span>';
 	$txt .= '</div>';
 	$txt .= '<div>';
-	$txt .= '<input type="text" value="" class="text" title="'.wfMsg('wikibok-search-text').'">';
+	$txt .= '<input type="text" value="" class="text" title="'.wfMsg('wikibok-search-text').'" />';
 	$txt .= '</div>';
 	$txt .= '<div>';
 	$txt .= '<span class="icon32 list">'.wfMsg('wikibok-search-list').'</span>';
@@ -313,14 +313,14 @@ function efWikiBokSearchResult($id="wikibok-searchresult") {
 	$txt .= '<div class="wikibok-color">color';
 	$txt .= '<div class="colorSelect"><div></div></div>';
 	$txt .= '<div class="colorPicker"></div>';
-	$txt .= '<input type="hidden" readonly="readonly" class="color" style="display:none">';
+	$txt .= '<input type="hidden" readonly="readonly" class="color" style="display:none" />';
 	$txt .= '</div>';
 	$txt .= '<div class="clear"></div>';
 	//ページャー
 	$txt .= '<div class="pager">';
 	$txt .= '<span onclick="" class="icon16 first">'.wfMsg('wikibok-pager-first').'</span>';
 	$txt .= '<span onclick="" class="icon16 prev">'.wfMsg('wikibok-pager-prev').'</span>';
-	$txt .= '<input type="text" readonly="readonly" class="pagedisplay" title="'.wfMsg('wikibok-pager-view').'"/>';
+	$txt .= '<input type="text" readonly="readonly" class="pagedisplay" title="'.wfMsg('wikibok-pager-view').'" />';
 	$txt .= '<span class=""></span>';
 	$txt .= '<span onclick="" class="icon16 next">'.wfMsg('wikibok-pager-next').'</span>';
 	$txt .= '<span onclick="" class="icon16 last">'.wfMsg('wikibok-pager-last').'</span>';
@@ -372,11 +372,11 @@ function efWikiBokDescriptionEdit($id="wikibok-description-edit") {
 	$txt .= '<dd class="txt"></dd></dl>';
 	$txt .= '<dl class="work"><dt>'.wfMsg('wikibok-conflict-work').'</dt>';
 	$txt .= '<dd class="txt"></dd></dl>';
-	$txt .= '<hr class="clear">';
+	$txt .= '<hr class="clear" />';
 	$txt .= '</div>';
 	$txt .= '<dl>';
 	$txt .= '<dt>'.wfMsg('wikibok-article-title').'</dt>';
-	$txt .= '<dd><input type="text" class="title" readonly="readonly"/></dd>';
+	$txt .= '<dd><input type="text" class="title" readonly="readonly" /></dd>';
 	$txt .= '<dt>'.wfMsg('wikibok-article-summary').'</dt>';
 	//編集用ツールチップ
 	$txt .= '<dd class="wikibok-descriptioneditor-tooltip">';
@@ -389,9 +389,9 @@ function efWikiBokDescriptionEdit($id="wikibok-description-edit") {
 	$txt .= '<span class="inIcon media popup" pre="[[" post="]]" nsn="'.$wgContLang->getNsText(NS_MEDIA).'" ns="'.NS_MEDIA.'" sample="'.wfMsg('media_sample').'">'.wfMsg('media_tip').'</span>';
 	if($wgUseTeX) {
 		//TeXが有効な場合のみ追加...
-		$txt .= '<span class="inIcon math" pre="<math>" post="</math>" sample="'.wfMsg('math_sample').'">'.wfMsg('math_tip').'</span>';
+	//	$txt .= '<span class="inIcon math" pre="<math>" post="</math>" sample="'.wfMsg('math_sample').'">'.wfMsg('math_tip').'</span>';
 	}
-	$txt .= '<span class="inIcon nowiki" pre="<nowiki>" post="</nowiki>" sample="'.wfMsg('nowiki_sample').'">'.wfMsg('nowiki_tip').'</span>';
+	//$txt .= '<span class="inIcon nowiki" pre="<nowiki>" post="</nowiki>" sample="'.wfMsg('nowiki_sample').'">'.wfMsg('nowiki_tip').'</span>';
 	$txt .= '<span class="inIcon signed" pre="--~~~~" post="" sample="">'.wfMsg('sig_tip').'</span>';
 	$txt .= '<span class="inIcon hr" pre="----" post="" sample="">'.wfMsg('hr_tip').'</span>';
 	$txt .= '</dd>';

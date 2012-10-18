@@ -237,8 +237,6 @@ jQuery(function($) {
 				$.wikibok.wfMsg('wikibok-linkcaution','title'),
 				$.wikibok.wfMsg('wikibok-linkcaution','text'),
 				{
-					height : $.wikibok.wfMsg('wikibok-linkcaution','height'),
-					width : $.wikibok.wfMsg('wikibok-linkcaution','width'),
 					buttons : [{
 						text : $.wikibok.wfMsg('common','button_ok','text'),
 						title: $.wikibok.wfMsg('common','button_ok','title'),

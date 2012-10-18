@@ -70,6 +70,20 @@
 			addDesc,addPath,
 			tranPath,
 			_desc;
+		//マーカの色分け設定(形はすべて同じ)
+		def
+			.data($.unique($.map(links,function(d){return d.type;})))
+			.enter()
+				.append('marker')
+				.attr('id', String)
+				.attr('viewBox', '0 0 5 5')
+				.attr('refX', 10)
+				.attr('refY', 2.5)
+				.attr('markerWidth', 5)
+				.attr('markerHeight', 5)
+				.attr('orient', 'auto')
+				.append('path')
+				.attr('d', 'M0,0L0,5L5,2.5L0,0');
 	//データ定義
 		descs = vis
 			.selectAll('g.node')
@@ -106,8 +120,8 @@
 			.append('svg:g')
 			.attr('data',function(d){return d.name;})
 			.attr('class',function(d){return d.type;})
-			.classed('empty',options.emptyFunc)
 			.classed('node',true);
+
 		addDesc.append('svg:circle')
 			.attr('r',6)
 			//テキスト要素の表示/非表示切り替え(Mouseoverによるトグル動作)
@@ -142,6 +156,9 @@
 			.text(function(d){return d.name;});
 		//削除
 		descs.exit().remove();
+		//クラス設定
+		vis.selectAll('g.node')
+			.classed('empty',options.emptyFunc);
 		//ドラッグイベントの追加
 		descs.call(advDrag);
 	}
@@ -378,6 +395,7 @@
 			gravity : 0.1,
 			linkDistance : 60,
 			charge : -300,
+			nodeFunc  : function() {},
 			emptyFunc : function() {},
 			textClick : function() {},
 		},
@@ -396,20 +414,7 @@
 					.gravity(options.gravity)
 					.linkDistance(options.linkDistance)
 					.charge(options.charge);
-				//マーカの色分け設定(形はすべて同じ)
-				def = svg.append('defs').selectAll('maker')
-					.data($.unique($.map(links,function(d){return d.type;})))
-					.enter()
-						.append('marker')
-						.attr('id', String)
-						.attr('viewBox', '0 0 5 5')
-						.attr('refX', 10)
-						.attr('refY', 2.5)
-						.attr('markerWidth', 5)
-						.attr('markerHeight', 5)
-						.attr('orient', 'auto')
-						.append('path')
-						.attr('d', 'M0,0L0,5L5,2.5L0,0');
+				def = svg.append('defs').selectAll('maker');
 				setSize();
 				//クリックで描画更新を停止
 				$('#BokXml').on('click',function() {
