@@ -272,7 +272,6 @@ $messages['ja'] = array(
 				'addnode' => 'BOKツリーへ追加',
 				'delete' => '記事削除',
 				'rename' => '記事名称変更',
-				'searchsmw' => 'SMWリンク先ごとBOKツリーへ追加',
 				'represent' => '代表表現へ置き換え',
 			),
 			'bok' => array(

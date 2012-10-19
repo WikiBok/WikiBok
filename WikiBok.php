@@ -35,6 +35,10 @@ $wgSpecialPageGroups['DescriptionEditor'] = "wikiboksystem";
 
 efWikiBokInitNamespace();
 
+//APIExtension Add
+$wgAutoloadClasses['LinkDataApi'] = "$dir/LinkData.api.php";
+$wgAPIModules['wikibok'] = 'LinkDataApi';
+
 /**
  * Namespaceの設定
  *  - wgExtensionFunctionsで実行した場合、通常ページで設定が反映されない
@@ -179,13 +183,14 @@ function efWikiBokInsertScript(OutputPage $out) {
 	$out->addInlineScript(
 		'var wgLogin = '.json_encode($wgUser->isLoggedIn()).','.
 		 'wgEdit = '.json_encode($wgUser->isAllowed('edit')).','.
+		 'wgDelete = '.json_encode($wgUser->isAllowed('delete')).','.
 		//名前空間を設定
 		 'wgExtraNamespace = '.json_encode($wgExtraNamespaces).','.
 		//ページ番号(名前空間と連動する)
 		 'wgDebug = '.$wgTitle->getNamespace().','.
 		 'wgNsBok = '.NS_SPECIAL_BOK.','.
 		 'wgNsDesc = '.NS_SPECIAL_DESCRIPTION.','.
-		 ' wgRepsFlg = '.json_encode((defined('BOK_REPRESENT_EDIT') && BOK_REPRESENT_EDIT) ? BOK_REPRESENT_EDIT : FALSE).','.
+		 'wgRepsFlg = '.json_encode((defined('BOK_REPRESENT_EDIT') && BOK_REPRESENT_EDIT) ? BOK_REPRESENT_EDIT : FALSE).','.
 		 (defined('BOK_LINKTYPE_REPRESENT') ? ' wgReps = '.json_encode(BOK_LINKTYPE_REPRESENT).',' : '').
 		 (defined('BOKXML_REPRESENT_CHILD_DELETE') ? ' wgRepsDel='.json_encode(BOKXML_REPRESENT_CHILD_DELETE).',' : '').
 		 'meta_message = '.json_encode(unserialize(wfMsg('wikibok-message'))).';'
@@ -200,7 +205,6 @@ function efWikiBokInsertScript(OutputPage $out) {
 	$out->addScriptFile("{$wgScriptPath}/extensions/WikiBok/js/jquery-1.7.2.min.js");
 	$out->addScriptFile("{$wgScriptPath}/extensions/WikiBok/js/jquery-ui-1.8.16.custom.min.js");
 	$out->addScriptFile("{$wgScriptPath}/extensions/WikiBok/js/d3.v2.min.js");
-	//$out->addScriptFile("{$wgScriptPath}/extensions/WikiBok/js/d3.v2.js");
 	$out->addScriptFile("{$wgScriptPath}/extensions/WikiBok/js/scroll_event.js");
 	$out->addScriptFile("{$wgScriptPath}/extensions/WikiBok/js/jquery.scrollTo.js");
 	$out->addScriptFile("{$wgScriptPath}/extensions/WikiBok/js/jquery.tablesorter.js");

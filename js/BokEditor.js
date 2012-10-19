@@ -277,7 +277,6 @@ jQuery(function($) {
 	function textClick(d) {
 		var
 			tmp,
-			_tmp,
 			open = false;
 		//対象ノードの名称を設定(ClickEventごとに変更の必要あり)
 		tid = d.name;
@@ -1252,22 +1251,58 @@ jQuery(function($) {
 			)
 			.done(
 				function(d) {
+					var
+						h = $.wikibok.getUrlVars('#') || $.wikibok.wfMsg('defaultFocus') || '',
+						count = 0;
 					//定期更新の予約(記事情報取得)
 					$.timer.add(svg.update,true);
-					$.timer.add($.wikibok.loadDescriptionPages);
-					$.timer.add($.revision.sync);
+					$.timer.add(function() {
+						$.wikibok.loadDescriptionPages()
+						.done(function() {
+							$.revision.sync();
+						});
+					});
 
 					//ハッシュタグまたはデフォルト値を強調
-					var h = $.wikibok.getUrlVars('#') || $.wikibok.wfMsg('defaultFocus');
 					if(h != undefined && h != '') {
-						var aNode = $('*[data="'+h+'"]');
-						if(aNode.length < 1) {
+						$.Deferred(function(def) {
+							if($('g[data="'+h+'"]').length > 0) {
+								def.resolve();
+							}
+							else if( count > 5) {
+								def.reject();
+							}
+							else {
+								count++;
+								setTimeout(arguments.callee.call({},def),1000);
+							}
+						})
+						.done(function() {
+							var
+								time = 100,
+								opt = {offset:{top:-150,left:-150}};
+							$.Deferred(function(def) {
+								svg.actNode(h);
+								WINDOW_APP.util.scrollMonitor.add(function(p) {
+									if(p.status == 0) {
+										WINDOW_APP.util.scrollMonitor.remove(arguments.callee);
+										$.scrollTo($('g[data="'+h+'"]'),time,opt);
+									}
+								});
+								def.resolve();
+							})
+							.done(function(){
+								setTimeout(function() {
+									$.scrollTo($('g[data="'+h+'"]'),time,opt);
+								},1000);
+							});
+						})
+						.fail(function() {
 							$(window).scrollTo('50%');
-						}
-						else {
-							svg.actNode(h);
-							$.scrollTo(aNode);
-						}
+						});
+					}
+					else {
+						$(window).scrollTo('50%');
 					}
 				}
 			);

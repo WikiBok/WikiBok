@@ -413,7 +413,8 @@
 					.links(links)
 					.gravity(options.gravity)
 					.linkDistance(options.linkDistance)
-					.charge(options.charge);
+					.charge(options.charge)
+					.start();
 				def = svg.append('defs').selectAll('maker');
 				setSize();
 				//クリックで描画更新を停止
@@ -424,7 +425,6 @@
 					force.stop();
 				});
 				update();
-				force.start();
 			},
 			update : function(){
 				//描画更新なので、DOM要素の更新と
@@ -432,6 +432,9 @@
 				//描画位置の再計算を行う
 				force.start();
 				force.tick();
+				force.stop();
+			},
+			stop : function() {
 				force.stop();
 			},
 			classed : classed,

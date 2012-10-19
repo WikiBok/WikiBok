@@ -533,7 +533,6 @@ class BokXml{
 	}
 	/**
 	 * D3.JS用のBOK-XMLリンクデータ取得
-	 * @param	$type	設定するリンク種別名称
 	 */
 	public function getLinkData() {
 		$result = array();
@@ -561,6 +560,30 @@ class BokXml{
 					'type' => 'bok'
 				);
 			}
+		}
+		return ($result);
+	}
+	/**
+	 * D3.JS用のBOK-XMLを一覧データとして取得
+	 *  - TOP[root]との関係も出力
+	 * @param	$type	設定するリンク種別名称
+	 */
+	public function getListData($type="bok") {
+		$result = array();
+		$tree = $this->getNodeTree();
+		foreach($tree as $key => $value) {
+			$tmp = explode(BOKXML_SEPARATE_CHAR,$value);
+			$k = array_pop($tmp);
+			$v = htmlspecialchars($key);
+			if($k == '') {
+				continue;
+			}
+			//階層設定済みの場合
+			$result[] = array(
+				'source' => $k,
+				'target' => $v,
+				'type' => $type
+			);
 		}
 		return ($result);
 	}
