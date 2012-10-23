@@ -238,12 +238,30 @@ $messages['ja'] = array(
 			),
 			'error' => array(
 				'empty' => '変更後ノード名称が入力されていません',
+				'norename' => '変更前ノード名称と同じ名称です',
 				'already' => 'すでに同じ名前のノードがあります',
 				'different' => nl2br("すでに同じ名前の記事があります\n名称変更はできません"),
 			)
 		),
 		//participant
 		'wikibok-represent-node' => array(
+			'title' => '代表表現選択',
+			'headline1' => '代表ノード名称',
+			'headline2' => '従属ノード名称',
+			'caution' => '[従属ノードが選択されていません]',
+			'error' => array(
+				'depth'=>'同じ階層にないノードは選択できません',
+				'already'=>'すでに選択されています',
+				'equal'=>'代表ノードとして選択済みです',
+				'noselect'=>nl2br("従属ノードが選択されていません\n処理を中止します"),
+			),
+			'button' => array(
+				'text' => '実行',
+				'title' => 'ノード名称を変更します',
+				'class' => 'commit',
+			),
+		),
+		'wikibok-addnode-node' => array(
 			'title' => '代表表現選択',
 			'headline1' => '代表ノード名称',
 			'headline2' => '従属ノード名称',

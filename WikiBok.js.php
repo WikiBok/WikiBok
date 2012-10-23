@@ -485,6 +485,15 @@ class WikiBokJs {
 	 * @param $linkname	関係名称
 	 */
 	public static function checkSMWLinkTarget($name,$linkname) {
+		$res = self::_checkSMWLinkTarget($name,$linkname);
+		return json_encode($res);
+	}
+	/**
+	 * SMWリンクの対象になっているかチェックする
+	 * @param $name		記事名称
+	 * @param $linkname	関係名称
+	 */
+	private function _checkSMWLinkTarget($name,$linkname) {
 		$dbr = wfGetDB(DB_SLAVE);
 		//SMWテーブル名称取得
 		$smw_rels2 = $dbr->tableName('smw_rels2');
@@ -505,7 +514,7 @@ class WikiBokJs {
 		$rows = $dbr->query($query);
 		$res = ($dbr->numRows($rows) > 0);
 		$dbr->freeResult($rows);
-		return json_encode($res);
+		return $res;
 	}
 	/**
 	 * 代表表現先として設定されているノード情報を取得(一括)
@@ -549,15 +558,15 @@ class WikiBokJs {
 	 * @param $to	変更後のノード名
 	 */
 	public static function renameNodeRequest($rev,$user,$from,$to) {
-		$represent = true;
+		$represent = false;
 		$res = array();
 		//変更後のノード名称が代表表現の従属に使用されている場合、リネーム不可
 		if(defined('BOK_REPRESENT_EDIT') && (BOK_REPRESENT_EDIT)) {
-			if(self::checkSMWLinkTarget($to,BOK_LINKTYPE_REPRESENT)) {
-				$represent = false;
+			if(self::_checkSMWLinkTarget($to,BOK_LINKTYPE_REPRESENT)) {
+				$represent = true;
 			}
 		}
-		if(!$represent) {
+		if($represent) {
 			$res['res'] = false;
 			$res['message'] = '代表表現の従属ノードとして使用されています';
 		}
@@ -688,11 +697,7 @@ class WikiBokJs {
 		if($new_bok === FALSE) {
 		//作成失敗
 			$result['res'] = false;
-			$result['t']   = wfMsg('wikibok-bokeditor-new-element').' '.wfMsg('wikibok-bokeditor-error');
 			$result['b']   = nl2br(wfMsg('wikibok-bokeditor-error-new-element-added'));
-			$result['y']   = wfMsg('wikibok-bokeditor-error-button');
-			$result['h']   = wfMsg('wikibok-bokeditor-error-new-element-h');
-			$result['w']   = wfMsg('wikibok-bokeditor-error-new-element-w');
 		}
 		else {
 			//編集済みデータをユーザーテーブルへ登録
@@ -722,16 +727,26 @@ class WikiBokJs {
 			$rev = 0;
 			$xml = new BokXml();
 		}
-		//指定ノード配下に新規ノードを追加
-		$new_bok = $xml->addNodeTo($child,$parent);
+		if(is_array($child)) {
+			//指定ノード配下に新規ノードを追加
+			foreach($child as $_child) {
+				$new_bok = $xml->addNodeTo($_child,$parent);
+				if($new_bok === FALSE) {
+					//追加後に失敗した場合は考慮外
+					$result['res'] = false;
+					$result['b']   = nl2br(wfMsg('wikibok-bokeditor-error-new-element-added')).'['.$_child.']';
+					break;
+				}
+			}
+		}
+		else{
+			//指定ノード配下に新規ノードを追加
+			$new_bok = $xml->addNodeTo($child,$parent);
+		}
 		if($new_bok === FALSE) {
 			//追加後に失敗した場合は考慮外
 			$result['res'] = false;
-			$result['t']   = wfMsg('wikibok-bokeditor-new-element').' '.wfMsg('wikibok-bokeditor-error');
 			$result['b']   = nl2br(wfMsg('wikibok-bokeditor-error-new-element-added'));
-			$result['y']   = wfMsg('wikibok-bokeditor-error-button');
-			$result['h']   = wfMsg('wikibok-bokeditor-error-new-element-h');
-			$result['w']   = wfMsg('wikibok-bokeditor-error-new-element-w');
 		}
 		else {
 			$res = $db->setEditData($rev,$new_bok);
@@ -764,11 +779,7 @@ class WikiBokJs {
 		if($new_bok === FALSE) {
 			//追加後に失敗した場合は考慮外
 			$result['res'] = false;
-			$result['t']   = wfMsg('wikibok-bokeditor-element-move').' '.wfMsg('wikibok-bokeditor-error');
 			$result['b']   = nl2br(wfMsg('wikibok-bokeditor-error-hierarchy-change'));
-			$result['y']   = wfMsg('wikibok-bokeditor-error-button');
-			$result['h']   = wfMsg('wikibok-bokeditor-error-element-move-h');
-			$result['w']   = wfMsg('wikibok-bokeditor-error-element-move-w');
 		}
 		else {
 			$res = $db->setEditData($rev,$new_bok);
@@ -801,11 +812,7 @@ class WikiBokJs {
 		if($new_bok === FALSE) {
 			//追加後に失敗した場合は考慮外
 			$result['res'] = false;
-			$result['t']   = wfMsg('wikibok-bokeditor-element-move').' '.wfMsg('wikibok-bokeditor-error');
 			$result['b']   = nl2br(wfMsg('wikibok-bokeditor-error-hierarchy-change'));
-			$result['y']   = wfMsg('wikibok-bokeditor-error-button');
-			$result['h']   = wfMsg('wikibok-bokeditor-error-element-move-h');
-			$result['w']   = wfMsg('wikibok-bokeditor-error-element-move-w');
 		}
 		else {
 			$res = $db->setEditData($rev,$new_bok);
@@ -837,11 +844,7 @@ class WikiBokJs {
 		if($new_bok === FALSE) {
 			//追加後に失敗した場合は考慮外
 			$result['res'] = false;
-			$result['t']   = wfMsg('wikibok-bokeditor-element-move').' '.wfMsg('wikibok-bokeditor-error');
 			$result['b']   = nl2br(wfMsg('wikibok-bokeditor-error-hierarchy-change'));
-			$result['y']   = wfMsg('wikibok-bokeditor-error-button');
-			$result['h']   = wfMsg('wikibok-bokeditor-error-element-move-h');
-			$result['w']   = wfMsg('wikibok-bokeditor-error-element-move-w');
 		}
 		else {
 			$res = $db->setEditData($rev,$new_bok);
@@ -873,11 +876,7 @@ class WikiBokJs {
 		if($new_bok === FALSE) {
 			//追加後に失敗した場合は考慮外
 			$result['res'] = false;
-			$result['t']   = wfMsg('wikibok-bokeditor-element-move').' '.wfMsg('wikibok-bokeditor-error');
 			$result['b']   = nl2br(wfMsg('wikibok-bokeditor-error-hierarchy-change'));
-			$result['y']   = wfMsg('wikibok-bokeditor-error-button');
-			$result['h']   = wfMsg('wikibok-bokeditor-error-element-move-h');
-			$result['w']   = wfMsg('wikibok-bokeditor-error-element-move-w');
 		}
 		else {
 			$res = $db->setEditData($rev,$new_bok);

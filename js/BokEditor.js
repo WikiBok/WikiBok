@@ -36,9 +36,12 @@ jQuery(function($) {
 		});
 	function context_dialog(tmp) {
 		var
+			dtitle = $.wikibok.wfMsg('wikibok-contextmenu','title'),
+			dparent = $.wikibok.wfMsg('wikibok-edittool','search','parent'),
+			dchild = $.wikibok.wfMsg('wikibok-edittool','search','child'),
 			_open = true;
 		$.wikibok.exDialog(
-			$.wikibok.wfMsg('wikibok-contextmenu','title'),
+			dtitle,
 			'',
 			{
 				create : function() {
@@ -67,12 +70,12 @@ jQuery(function($) {
 						})
 						.on('click','.bokeditor-find-parent',function(a,b) {
 							pid = tid;
-							chkCancel($.wikibok.wfMsg('wikibok-edittool','search','parent'))
+							chkCancel(dparent)
 							mode = 'parent';
 						})
 						.on('click','.bokeditor-find-childs' ,function(a,b) {
 							pid = tid;
-							chkCancel($.wikibok.wfMsg('wikibok-edittool','search','child'))
+							chkCancel(dchild)
 							mode = 'childs';
 						})
 						.on('click','.bokeditor-only-delete',function(a,b) {
@@ -113,6 +116,7 @@ jQuery(function($) {
 	function delNodeRequest(a,b) {
 		var
 			error,
+			dtitle = $.wikibok.wfMsg('wikibok-delete-node','title')+' '+$.wikibok.wfMsg('common','error'),
 			arg_args = [a],
 			arg_func = (arguments.length < 2 || b == undefined || b == false) 
 				? 'WikiBokJs::deleteNodeOnlyRequest':'WikiBokJs::deleteNodeRequest';
@@ -136,7 +140,7 @@ jQuery(function($) {
 		})
 		.fail(function(dat) {
 			$.wikibok.timePopup(
-				$.wikibok.wfMsg('wikibok-delete-node','title')+' '+$.wikibok.wfMsg('common','error'),
+				dtitle,
 				error,
 				5000
 			);
@@ -148,6 +152,7 @@ jQuery(function($) {
 	 */
 	function delEdgeRequest(a) {
 		var
+			dtitle = $.wikibok.wfMsg('wikibok-move-node','title')+' '+$.wikibok.wfMsg('common','error'),
 			error = '';
 		$.wikibok.requestCGI(
 			'WikiBokJs::deleteEdgeRequest',
@@ -171,7 +176,7 @@ jQuery(function($) {
 		})
 		.fail(function() {
 			$.wikibok.timePopup(
-				$.wikibok.wfMsg('wikibok-move-node','title')+' '+$.wikibok.wfMsg('common','error'),
+				dtitle,
 				error,
 				5000
 			);
@@ -184,6 +189,7 @@ jQuery(function($) {
 	 */
 	function moveNodeRequest(a,b) {
 		var
+			dtitle = $.wikibok.wfMsg('wikibok-move-node','title')+' '+$.wikibok.wfMsg('common','error'),
 			error = '';
 		$.wikibok.requestCGI(
 			'WikiBokJs::moveNodeRequest',
@@ -205,7 +211,7 @@ jQuery(function($) {
 		})
 		.fail(function() {
 			$.wikibok.timePopup(
-				$.wikibok.wfMsg('wikibok-move-node','title')+' '+$.wikibok.wfMsg('common','error'),
+				dtitle,
 				error,
 				5000
 			);
@@ -276,7 +282,23 @@ jQuery(function($) {
 	 */
 	function textClick(d) {
 		var
-			tmp,
+			dtitle = $.wikibok.wfMsg('wikibok-represent-node','title')+' '+$.wikibok.wfMsg('common','error'),
+			error = false,
+			tmp = '<dl class="content"><dt>'+$.wikibok.wfMsg('wikibok-contextmenu','itemgroup','view')+'</dt>'
+					+ '<dd class="command description-view">'+$.wikibok.wfMsg('wikibok-contextmenu','description','view')+'</dd>'
+					+ ((wgLogin && wgEdit && wgAction != 'load') ?
+					  '<dt>'+$.wikibok.wfMsg('wikibok-contextmenu','itemgroup','edit')+'</dt>'
+					+ '<dd class="command bokeditor-edge-delete">'+$.wikibok.wfMsg('wikibok-contextmenu','bok','edge-delete')+'</dd>'
+					+ '<dd class="command bokeditor-node-delete">'+$.wikibok.wfMsg('wikibok-contextmenu','bok','node-delete')+'</dd>'
+					+ '<dd class="command bokeditor-find-parent">'+$.wikibok.wfMsg('wikibok-contextmenu','bok','find-parent')+'</dd>'
+					+ '<dd class="command bokeditor-find-childs">'+$.wikibok.wfMsg('wikibok-contextmenu','bok','find-childs')+'</dd>'
+					+ '<dd class="command bokeditor-only-delete">'+$.wikibok.wfMsg('wikibok-contextmenu','bok','only-delete')+'</dd>'
+					+ '<dd class="command bokeditor-node-create">'+$.wikibok.wfMsg('wikibok-contextmenu','bok','node-create')+'</dd>'
+					+ '<dt>'+$.wikibok.wfMsg('wikibok-contextmenu','itemgroup','special')+'</dt>'
+					+ '<dd class="command bokeditor-rename">'+$.wikibok.wfMsg('wikibok-contextmenu','description','rename')+'</dd>'
+					+ ((wgRepsFlg) ? '<dd class="command bokeditor-represent">'+$.wikibok.wfMsg('wikibok-contextmenu','description','represent')+'</dd>' : '')
+					: '')
+					+ '</dl>',
 			open = false;
 		//対象ノードの名称を設定(ClickEventごとに変更の必要あり)
 		tid = d.name;
@@ -297,11 +319,7 @@ jQuery(function($) {
 				if(wgRepsFlg) {
 					//除外
 					if(tid == pid.name) {
-						$.wikibok.timePopup(
-							$.wikibok.wfMsg('wikibok-represent-node','title')+' '+$.wikibok.wfMsg('common','error'),
-							$.wikibok.wfMsg('wikibok-represent-node','error','equal'),
-							5000
-						);
+						error = $.wikibok.wfMsg('wikibok-represent-node','error','equal');
 					}
 					else if(rid[tid] == undefined) {
 						if(depth == pid.depth) {
@@ -309,17 +327,16 @@ jQuery(function($) {
 							represent(pid.name);
 						}
 						else {
-							$.wikibok.timePopup(
-								$.wikibok.wfMsg('wikibok-represent-node','title')+' '+$.wikibok.wfMsg('common','error'),
-								$.wikibok.wfMsg('wikibok-represent-node','error','depth'),
-								5000
-							);
+							error = $.wikibok.wfMsg('wikibok-represent-node','error','depth');
 						}
 					}
 					else {
+						error = $.wikibok.wfMsg('wikibok-represent-node','error','already');
+					}
+					if(error != false) {
 						$.wikibok.timePopup(
-							$.wikibok.wfMsg('wikibok-represent-node','title')+' '+$.wikibok.wfMsg('common','error'),
-							$.wikibok.wfMsg('wikibok-represent-node','error','already'),
+							dtitle,
+							error,
 							5000
 						);
 					}
@@ -328,22 +345,6 @@ jQuery(function($) {
 			case 'normal':
 			default:
 				pid = '';
-				tmp = '<dl class="content"><dt>'+$.wikibok.wfMsg('wikibok-contextmenu','itemgroup','view')+'</dt>'
-						+ '<dd class="command description-view">'+$.wikibok.wfMsg('wikibok-contextmenu','description','view')+'</dd>';
-				if(wgLogin && wgEdit && wgAction != 'load') {
-				tmp = tmp
-						+ '<dt>'+$.wikibok.wfMsg('wikibok-contextmenu','itemgroup','edit')+'</dt>'
-						+ '<dd class="command bokeditor-edge-delete">'+$.wikibok.wfMsg('wikibok-contextmenu','bok','edge-delete')+'</dd>'
-						+ '<dd class="command bokeditor-node-delete">'+$.wikibok.wfMsg('wikibok-contextmenu','bok','node-delete')+'</dd>'
-						+ '<dd class="command bokeditor-find-parent">'+$.wikibok.wfMsg('wikibok-contextmenu','bok','find-parent')+'</dd>'
-						+ '<dd class="command bokeditor-find-childs">'+$.wikibok.wfMsg('wikibok-contextmenu','bok','find-childs')+'</dd>'
-						+ '<dd class="command bokeditor-only-delete">'+$.wikibok.wfMsg('wikibok-contextmenu','bok','only-delete')+'</dd>'
-						+ '<dd class="command bokeditor-node-create">'+$.wikibok.wfMsg('wikibok-contextmenu','bok','node-create')+'</dd>'
-						+ '<dt>'+$.wikibok.wfMsg('wikibok-contextmenu','itemgroup','special')+'</dt>'
-						+ '<dd class="command bokeditor-rename">'+$.wikibok.wfMsg('wikibok-contextmenu','description','rename')+'</dd>'
-						+ ((wgRepsFlg) ? '<dd class="command bokeditor-represent">'+$.wikibok.wfMsg('wikibok-contextmenu','description','represent')+'</dd>' : '');
-				}
-				tmp = tmp+'</dl>';
 				open = true;
 				break;
 		}
@@ -357,7 +358,7 @@ jQuery(function($) {
 	 */
 	function represent(a) {
 		var
-			tmp = '<dl class="rename_new_node">'
+			tmp = '<dl>'
 					+ '<dt>'+$.wikibok.wfMsg('wikibok-represent-node','headline1')+'</dt>'
 					+ '<dd><span class="txt">'+a+'</span></dd>'
 					+ '<dt>'+$.wikibok.wfMsg('wikibok-represent-node','headline2')+'</dt>'
@@ -492,7 +493,10 @@ jQuery(function($) {
 						if(newName == '') {
 							error = $.wikibok.wfMsg('wikibok-rename-node','error','empty');
 						}
-						if(svg.allNode().filter(function(d) {return d.name == newName}).length > 0) {
+						else if(oldName == newName) {
+							error = $.wikibok.wfMsg('wikibok-rename-node','error','norename');
+						}
+						else if(svg.allNode().filter(function(d) {return d.name == newName}).length > 0) {
 							error = $.wikibok.wfMsg('wikibok-rename-node','error','already');
 						}
 						if(error !== false) {

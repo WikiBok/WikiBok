@@ -47,8 +47,8 @@
 			path.selectAll('path')
 				.attr('d',function(d) {
 					var
-						dx = d.target.x - d.source.x,
-						dy = d.target.y - d.source.y,
+						dx = (d.target.x - d.source.x),
+						dy = (d.target.y - d.source.y),
 						dr = Math.sqrt(dx * dx + dy * dy);
 					return 'M'+d.source.x+','+d.source.y+' '+d.target.x+','+d.target.y;
 				});
@@ -87,10 +87,10 @@
 	//データ定義
 		descs = vis
 			.selectAll('g.node')
-			.data(aryNodes());
+			.data(aryNodes(),function(d){return d.id || (d.id = ++i);});
 		path = vis
 			.selectAll('g.edge')
-			.data(_links());
+			.data(_links(),function(d){return d.target.id});
 	//関連付け要素
 		addPath = path.enter()
 			.append('svg:g')
@@ -126,13 +126,13 @@
 			.attr('r',6)
 			//テキスト要素の表示/非表示切り替え(Mouseoverによるトグル動作)
 			.on('mouseover.orig',function(d){
-				if(d.vis == undefined) {
-					d.vis = false;
+				if(d.visible == undefined) {
+					d.visible = false;
 				}
-				$('g[data="'+d.name+'"]').find('g').toggle(d.vis);
+				$('g[data="'+d.name+'"]').find('g').toggle(d.visible);
 			})
 			.on('mouseout.orig',function(d) {
-				d.vis = (d.vis == undefined) || (!d.vis);
+				d.visible = (d.visible == undefined) || (!d.visible);
 			});
 		_desc = addDesc.append('svg:g')
 			.on('click.add',options.textClick)
@@ -230,8 +230,8 @@
 	/**
 	 * 記事データ参照/追加
 	 */
-	function addDescription(a,b) {
-		return nodes[a] || (nodes[a] = {name : a,type :b});
+	function addDescription(a,b,c) {
+		return nodes[a] || (nodes[a] = (arguments.length < 3) ? {name : a,type :b} : $.extend({},c,{name:a,type:b}));
 	}
 	/**
 	 * 関係付けデータ追加
@@ -294,7 +294,7 @@
 			links.filter(function(d) {
 				var
 					res = true;
-				if(filtOpt.linkName != null) {
+				if(filtOpt.linkName != null && res) {
 					if($.isArray(filtOpt.linkName)) {
 						res = (filtOpt.linkName.filter(function(e){return (e == d.linkName)}).length > 0);
 					}
@@ -302,7 +302,7 @@
 						res = (filtOpt.linkName == d.linkName);
 					}
 				}
-				if(filtOpt.node != null) {
+				if(filtOpt.node != null && res) {
 					if($.isArray(filtOpt.node)) {
 						res = (filtOpt.node.filter(function(e){return ((e == d.source.name) || (e == d.target.name));}).length > 0);
 					}
@@ -310,7 +310,7 @@
 						res = (filtOpt.node == d.source.name || filtOpt.node == d.target.name);
 					}
 				}
-				if(filtOpt.type != null) {
+				if(filtOpt.type != null && res) {
 					if($.isArray(filtOpt.type)) {
 						res = (filtOpt.type.filter(function(e){return (e == d.type)}).length > 0);
 					}
@@ -347,6 +347,43 @@
 		});
 	}
 	/**
+	 * ノードの名前を変更する
+	 * @param 変更前の名前
+	 * @param 変更後の名前
+	 */
+	function renameNode(a,b) {
+		var
+			node,
+			fnode,
+			tnode,
+			flink = _links({node:a});
+		if(nodes[a] != undefined) {
+			if(nodes[b] == undefined) {
+				node = nodes[a];
+				//旧データを削除
+				delete nodes[a];
+				for(var i=0;i < flink.length;i++) {
+					deleteLink(flink[i].source,flink[i].target,flink[i].linkName);
+				}
+				update();
+				//新データを設定
+				fnode = addDescription(a,'desc',node);
+				tnode = addDescription(b,node.type,node);
+				for(var i=0;i < flink.length;i++) {
+					addLink(
+						(flink[i].source == node) ? tnode : flink[i].source,
+						(flink[i].target == node) ? tnode : flink[i].target,
+						flink[i].type,
+						flink[i].linkName
+					);
+				}
+				return true
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * 対象ノードを強調
 	 * @param a 対象ノード名称
 	 * @param b 強調設定用クラス名称
@@ -375,6 +412,7 @@
 				tick();
 				force.resume();
 			}),
+		i=0,
 		force,
 		svg,
 		vis,
@@ -384,6 +422,10 @@
 		aryNodes = function(){
 			return $.map(d3.values(nodes),function(d){
 				if(typeof d.name =='string' && d.name.length > 0) {
+					d.x = (d.x == undefined) ? 0 : d.x;
+					d.y = (d.y == undefined) ? 0 : d.y;
+					d.px = d.x;
+					d.py = d.y;
 					return d;
 				}
 			});
@@ -426,13 +468,17 @@
 				});
 				update();
 			},
-			update : function(){
+			update : function(a){
+				force
+					.nodes(aryNodes())
+					.links(links);
 				//描画更新なので、DOM要素の更新と
 				update();
 				//描画位置の再計算を行う
-				force.start();
-				force.tick();
-				force.stop();
+				force.resume();
+				if(a) {
+					force.stop();
+				}
 			},
 			stop : function() {
 				force.stop();
@@ -446,6 +492,12 @@
 			actNode : actNode,
 			allNode : allNode,
 			deleteLink : deleteLink,
+			renameNode : renameNode,
+			fixclear : function() {
+				$.each(nodes,function(i,d) {
+					d.fixed = false;
+				});
+			}
 		};
 	$.fn.extend({
 		description : DescriptionEditor.init,

@@ -1010,8 +1010,9 @@
 			 * @param a ダイアログタイトル
 			 * @param b ダイアログ表示文字列
 			 * @param c 表示している時間[マイクロ秒]
+			 * @param d close時に実行する
 			 */
-			function timePopup(a,b,c) {
+			function timePopup(a,b,c,d) {
 				var
 					open = true;
 				exDialog(
@@ -1038,6 +1039,9 @@
 							t = $.data($(this).get(0),'timer');
 						if(t != null) {
 							clearTimeout(t);
+						}
+						if($.isFunction(d)) {
+							d.apply({},[a,b]);
 						}
 					}
 				});
@@ -1305,10 +1309,65 @@
 				stop : stop,
 				setIntervalTime : setIntervalTime
 			};
+		}()),
+		drag : (function() {
+			var
+				_stX = 0,
+				_stY = 0,
+				_edX = 0,
+				_edY = 0,
+				_drE,
+				_oldZindex = 0;
+			function InitDragDrop(func) {
+				$(this)
+					.on('mousedown',_mousedown)
+					.on('mouseup',_mouseup);
+				_drE = func;
+			}
+			function _mousedown(e) {
+				var
+					target;
+				if(e == null) {
+					e = window.event;
+				}
+				target = (e.target != null) ? e.target : e.srcElement;
+				
+				_stX = e.clientX;
+				_stY = e.clientY;
+				_edX = _stX;
+				_stY = _stY;
+			}
+			function _mouseup(e) {
+				var
+					target;
+				if(e == null) {
+					e = window.event;
+				}
+				target = (e.target != null) ? e.target : e.srcElement;
+				
+				_edX = e.clientX;
+				_edY = e.clientY;
+				if(_stX != _edX || _stY != _edY) {
+					
+					_drE.apply({},[{
+						start: [Math.min.apply({},[_stX,_edX]),Math.min.apply({},[_stY,_edY])],
+						end  : [Math.max.apply({},[_stX,_edX]),Math.max.apply({},[_stY,_edY])],
+					},target]);
+				}
+				_stX = 0;
+				_stY = 0;
+				_edX = 0;
+				_edY = 0;
+			}
+			
+			return {
+				InitDragDrop : InitDragDrop
+			}
 		}())
 	});
 
 	$.fn.extend({
+		InitDragDrop : $.drag.InitDragDrop,
 		revision : $.revision.construct,
 		/**
 		 * 同一行内に複数画像アイコンを設定する
