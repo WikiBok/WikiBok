@@ -1,5 +1,4 @@
 <?php
-
 if(!defined("REVISION_DB")) {
 	define("REVISION_DB",TRUE);
 	define("BOK_TARGET_DB_MAIN","bok_tree");
@@ -12,20 +11,19 @@ if(!defined("REVISION_DB")) {
 	define("BOK_COLUMN_SEP_PATH","\1");
 	define("TABLE_POST_STRING","BOK_TARGET_DB_");
 }
-require_once("MergerBackup.class.php");
 
 class RevisionDB {
-
 	protected $db;
 	protected $user;
 	protected $data;
 	protected $edit;
-
 	/**
 	 * コンストラクタ
 	 */
-	public function __construct($dbhost, $dbname, $dbusername, $dbpassword,$session="") {
-		$this->__init($dbhost, $dbname, $dbusername, $dbpassword);
+	public function __construct() {
+		global $wgDBserver,$wgDBname,$wgDBpassword,$wgDBuser;
+		$this->__init($wgDBserver,$wgDBname,$wgDBuser,$wgDBpassword);
+//		$dbhost, $dbname, $dbusername, $dbpassword);
 		$this->user = "";
 		if(empty($session)) {
 			$this->session = session_id();
@@ -39,6 +37,7 @@ class RevisionDB {
 	 * 必要なテーブルを一括作成
 	 *  - インストール用に外部呼出し可能としておく
 	 */
+/*
 	public function __create($dbhost, $dbname, $dbusername, $dbpassword) {
 		//DB接続インスタンスの再作成(DB指定された接続に変更)
 		$this->__init($dbhost, $dbname, $dbusername, $dbpassword);
@@ -55,6 +54,7 @@ class RevisionDB {
 		//2012/09/25追加
 		$this->createRepresentTable();
 	}
+*/
 	/**
 	 * ユーザーIDを設定する
 	 */
@@ -76,7 +76,8 @@ class RevisionDB {
 	 * @param $rev	指定リビジョン番号
 	 */
 	public function getUserRev($rev) {
-		$sql  = 'SELECT * FROM '.BOK_TARGET_DB_USER.'  ';
+		$name = wfGetDB(DB_SLAVE)->tableName('wbs_userboktree');
+		$sql  = 'SELECT * FROM '.$name.'  ';
 		//指定リビジョンが最新リビジョンより大きい場合を考慮
 		$sql .= ' WHERE (rev <= ? ';
 		//指定リビジョンが初回リビジョンより大きい場合を考慮
@@ -104,7 +105,8 @@ class RevisionDB {
 			$data = $this->getBokHead();
 		}
 		else {
-			$sql  = 'SELECT * FROM '.BOK_TARGET_DB_MAIN.'  ';
+			$name = wfGetDB(DB_SLAVE)->tableName('wbs_boktree');
+			$sql  = 'SELECT * FROM '.$name.'  ';
 			//指定リビジョンが最新リビジョンより大きい場合を考慮
 			$sql .= ' WHERE rev <= ? ';
 			//指定リビジョンが初回リビジョンより大きい場合を考慮
@@ -121,7 +123,8 @@ class RevisionDB {
 	 * コミット済みのBOKデータより、最新リビジョンのデータを取得
 	 */
 	public function getBokHead() {
-		$sql  = 'SELECT * FROM '.BOK_TARGET_DB_MAIN.'  ';
+		$name = wfGetDB(DB_SLAVE)->tableName('wbs_boktree');
+		$sql  = 'SELECT * FROM '.$name.'  ';
 		$sql .= ' ORDER BY rev DESC ';
 		$sql .= ' LIMIT 1';
 		$sth = $this->db->prepare($sql);
@@ -148,7 +151,8 @@ class RevisionDB {
 	 */
 	public function getUserHead() {
 		if($this->getUserEdit()) {
-			$sql  = 'SELECT * FROM '.BOK_TARGET_DB_USER.'  ';
+			$name = wfGetDB(DB_SLAVE)->tableName('wbs_userboktree');
+			$sql  = 'SELECT * FROM '.$name.'  ';
 			$sql .= ' WHERE session_id = ?';
 			$sql .= '   AND user_id = ?';
 			$sql .= ' ORDER BY rev DESC ';
@@ -171,7 +175,8 @@ class RevisionDB {
 	 */
 	public function getUserBase() {
 		if($this->getUserEdit()) {
-			$sql  = 'SELECT * FROM '.BOK_TARGET_DB_USER.'  ';
+			$name = wfGetDB(DB_SLAVE)->tableName('wbs_userboktree');
+			$sql  = 'SELECT * FROM '.$name.'  ';
 			$sql .= ' WHERE session_id = ?';
 			$sql .= '   AND user_id = ?';
 			$sql .= ' ORDER BY rev ASC ';
@@ -202,26 +207,30 @@ class RevisionDB {
 		$param = array_values($data);
 		$v = array_fill(0,count($param),'?');
 
-		$sql  = 'INSERT INTO '.BOK_TARGET_DB_SAVE.' (';
+		$name = wfGetDB(DB_SLAVE)->tableName('wbs_saveboktree');
+		$sql  = 'INSERT INTO '.$name.' (';
 		$sql .= '`'.implode('`,`',$k).'`';
 		$sql .= ') VALUES ('.implode(',',$v).')';
 		$sth = $this->db->prepare($sql);
-		if($sth->execute($param) === FALSE) {
-			//データ登録ができない場合、テーブルを作成...
-			$this->createSaveTable();
-			//再度データ登録を行う
-			return $sth->execute($param);
-		}
-		else {
-			return true;
-		}
+		return ($sth->execute($param));
+//		if($sth->execute($param) === FALSE) {
+//			//データ登録ができない場合、テーブルを作成...
+//			$this->createSaveTable();
+//			//再度データ登録を行う
+//			return $sth->execute($param);
+//		
+//		}
+//		else {
+//			return true;
+//		}
 	}
 	/**
 	 * 保存済みBOKデータを取得
 	 * @param $name	保存名称
 	 */
 	public function loadBokData($name) {
-		$sql  = 'SELECT * FROM '.BOK_TARGET_DB_SAVE.' ';
+		$name = wfGetDB(DB_SLAVE)->tableName('wbs_saveboktree');
+		$sql  = 'SELECT * FROM '.$name.' ';
 		$sql .= ' WHERE title = ?';
 		$sql .= '   AND user_id = ?';
 		$sql .= ' LIMIT 1';
@@ -300,7 +309,8 @@ class RevisionDB {
 	 * @param $rev	リビジョン番号
 	 */
 	public function clearEditData($rev = 0) {
-		$del  = 'DELETE FROM '.BOK_TARGET_DB_USER.' ';
+		$name = wfGetDB(DB_SLAVE)->tableName('wbs_userboktree');
+		$del  = 'DELETE FROM '.$name.' ';
 		$del .= ' WHERE `session_id` = ? ';
 		$del .= '   AND `user_id` = ?';
 		if($rev == 0) {
@@ -322,14 +332,15 @@ class RevisionDB {
 	public function setMergeTemporary($work) {
 		$param = array($this->session,$this->user,0);
 		//既存のテンポラリデータを削除
-		$del  = 'DELETE FROM '.BOK_TARGET_DB_USER.' ';
+		$name = wfGetDB(DB_SLAVE)->tableName('wbs_userboktree');
+		$del  = 'DELETE FROM '.$name.' ';
 		$del .= ' WHERE `session_id` = ? ';
 		$del .= '   AND `user_id` = ?';
 		$del .= '   AND `rev` = ?';
 		$sth = $this->db->prepare($del);
 		$sth->execute($param);
 		//データ登録
-		$sql  = 'INSERT INTO '.BOK_TARGET_DB_USER.' ';
+		$sql  = 'INSERT INTO '.$name.' ';
 		$sql .= ' (`session_id`,`user_id`,`rev`,`bok`) ';
 		$sql .= 'VALUES ';
 		$sql .= ' ( ? , ? , ? , ? )';
@@ -345,8 +356,9 @@ class RevisionDB {
 	public function getMergeTemporary() {
 		$data = $this->getUserRev(0);
 		$param = array($this->session,$this->user,0);
+		$name = wfGetDB(DB_SLAVE)->tableName('wbs_userboktree');
 		//既存のテンポラリデータを削除
-		$del  = 'DELETE FROM '.BOK_TARGET_DB_USER.' ';
+		$del  = 'DELETE FROM '.$name.' ';
 		$del .= ' WHERE `session_id` = ? ';
 		$del .= '   AND `user_id` = ?';
 		$del .= '   AND `rev` = ?';
@@ -361,10 +373,11 @@ class RevisionDB {
 	 * @param	$work	変更後BOK(XML形式)
 	 */
 	public function setEditData($rev,$work) {
+		$name = wfGetDB(DB_SLAVE)->tableName('wbs_userboktree');
 		if(($head = $this->getUserHead()) === FALSE){
 			//編集開始データの作成(表示中のベースREVをもとにする...)
 			$head = $this->getBokRev($rev);
-			$sql  = 'INSERT INTO '.BOK_TARGET_DB_USER.' ';
+			$sql  = 'INSERT INTO '.$name.' ';
 			$sql .= ' (`session_id`,`rev`,`bok`,`user_id`) ';
 			$sql .= 'VALUES ';
 			$sql .= ' ( ? , ? , ? , ? )';
@@ -385,7 +398,7 @@ class RevisionDB {
 		if(!empty($rev)) {
 			$rev = intval($rev) + 1;
 			//データ登録
-			$sql  = 'INSERT INTO '.BOK_TARGET_DB_USER.' ';
+			$sql  = 'INSERT INTO '.$name.' ';
 			$sql .= ' (`session_id`,`rev`,`bok`,`user_id`) ';
 			$sql .= 'VALUES ';
 			$sql .= ' ( ? , ? , ? , ? )';
@@ -446,8 +459,9 @@ class RevisionDB {
 	 *  - (前提)RULE_TITLE にその編集競合条件の名称を設定する
 	 */
 	public function getMergeConfigRevList() {
+		$name = wfGetDB(DB_SLAVE)->tableName('wbs_mergerclass');
 		$sql  = "SELECT merge_rev rev,max(value) name,max(time) last";
-		$sql .= "  FROM ".BOK_TARGET_DB_MERGER." ";
+		$sql .= "  FROM ".$name." ";
 		$sql .= " WHERE item_name = 'RULE_TITLE'";
 		$sql .= " GROUP BY merge_rev";
 		$sth = $this->db->prepare($sql);
@@ -472,9 +486,10 @@ class RevisionDB {
 	public function getMergeConfigDataList($rev,$search=FALSE) {
 		$param = array();
 		array_push($param,$rev);
+		$name = wfGetDB(DB_SLAVE)->tableName('wbs_mergerclass');
 		$sql  = "";
 		$sql .= "SELECT item_name,value_name,value ";
-		$sql .= "  FROM ".BOK_TARGET_DB_MERGER." ";
+		$sql .= "  FROM ".$name." ";
 		$sql .= " WHERE merge_rev = ? ";
 		//マージルールタイトルと項目内容の名称設定データを除く
 		$sql .= "   AND item_name != 'RULE_TITLE' ";
@@ -500,9 +515,10 @@ class RevisionDB {
 	 * @param	$name	設定項目名称
 	 */
 	public function getMergeConfigValueList($rev,$name) {
+		$tname = wfGetDB(DB_SLAVE)->tableName('wbs_mergerclass');
 		$sql  = "";
 		$sql .= "SELECT item_name,value_name,value ";
-		$sql .= "  FROM ".BOK_TARGET_DB_MERGER." ";
+		$sql .= "  FROM ".$tname." ";
 		$sql .= " WHERE merge_rev = ? ";
 		$sql .= "   AND item_name = ? ";
 		$sql .= "   AND value_name != '' ";
@@ -522,11 +538,12 @@ class RevisionDB {
 	 * @param	$rev	マージルールリビジョン番号
 	 */
 	public function getMergeSetting($rev) {
+		$name = wfGetDB(DB_SLAVE)->tableName('wbs_mergerclass');
 		//設定値の読み込み
 		$sql  = "";
 		$sql .= "SELECT a.item_name name,b.value ";
-		$sql .= "  FROM ".BOK_TARGET_DB_MERGER." a ";
-		$sql .= "  LEFT JOIN ".BOK_TARGET_DB_MERGER." b ON (";
+		$sql .= "  FROM ".$name." a ";
+		$sql .= "  LEFT JOIN ".$name." b ON (";
 		$sql .= "      a.merge_rev = b.merge_rev ";
 		$sql .= "  AND a.item_name = b.item_name ";
 		$sql .= "  AND a.value = b.value_name ";
@@ -542,7 +559,7 @@ class RevisionDB {
 		//判定値の読み込み
 		$sql  = "";
 		$sql .= "SELECT concat(item_name,'_',value_name) name,value ";
-		$sql .= "  FROM ".BOK_TARGET_DB_MERGER." ";
+		$sql .= "  FROM ".$name." ";
 		$sql .= " WHERE merge_rev = ? ";
 		//マージルールタイトルと項目内容の名称設定データを除く
 		$sql .= "   AND item_name != 'RULE_TITLE' ";
@@ -570,7 +587,7 @@ class RevisionDB {
 	 */
 	public function setEditConflict($data) {
 		//対象テーブル作成(未作成の場合作成する)
-		$this->createConflictLogTable();
+//		$this->createConflictLogTable();
 		//データにユーザーIDを追加
 		$data += array('user_id' => $this->user);
 		//ソート
@@ -578,7 +595,9 @@ class RevisionDB {
 		$k = array_keys($data);
 		$param = array_values($data);
 		$v = array_fill(0,count($param),'?');
-		$sql  = 'INSERT INTO '.BOK_TARGET_DB_CONFLICT.' (';
+
+		$name = wfGetDB(DB_SLAVE)->tableName('wbs_conflictlog');
+		$sql  = 'INSERT INTO '.$name.' (';
 		$sql .= '`'.implode('`,`',$k).'`';
 		$sql .= ') VALUES ('.implode(',',$v).')';
 		$sth = $this->db->prepare($sql);
@@ -590,13 +609,14 @@ class RevisionDB {
 	 */
 	public function setMerger($data) {
 		//対象テーブル作成(未作成の場合作成する)
-		$this->createMergerClassTable();
+//		$this->createMergerClassTable();
 		//ソート
 		ksort($data);
 		$k = array_keys($data);
 		$param = array_values($data);
 		$v = array_fill(0,count($param),'?');
-		$sql  = 'INSERT INTO '.BOK_TARGET_DB_MERGER.' (';
+		$name = wfGetDB(DB_SLAVE)->tableName('wbs_mergerclass');
+		$sql  = 'INSERT INTO '.$name.' (';
 		$sql .= '`'.implode('`,`',$k).'`';
 		$sql .= ') VALUES ('.implode(',',$v).')';
 		$sth = $this->db->prepare($sql);
@@ -607,15 +627,17 @@ class RevisionDB {
 	 */
 	public function getEditConflictList() {
 		$result = array();
+		$name = wfGetDB(DB_SLAVE)->tableName('wbs_conflictlog');
 		$sql  = 'SELECT log.id, log.type, log.user_id, log.time';
-		$sql .= '  FROM '.BOK_TARGET_DB_CONFLICT.' log ';
+		$sql .= '  FROM '.$name.' log ';
 		$sth = $this->db->prepare($sql);
 		$sth->execute();
 		$result = $sth->fetchAll(PDO::FETCH_ASSOC);
 		return $result;
 	}
 	public function getEditConflict($num) {
-		$sql  = 'SELECT * FROM '.BOK_TARGET_DB_CONFLICT.' ';
+		$name = wfGetDB(DB_SLAVE)->tableName('wbs_conflictlog');
+		$sql  = 'SELECT * FROM '.$name.' ';
 		$sql .= ' WHERE id = ?';
 		$sth = $this->db->prepare($sql);
 		$sth->execute(array($num));
@@ -642,10 +664,13 @@ class RevisionDB {
 		$param = array_values($data);
 		$v = array_fill(0,count($param),'?');
 
-		$sql  = 'INSERT INTO '.BOK_TARGET_DB_REPRESENT.' (';
+		$name = wfGetDB(DB_SLAVE)->tableName('wbs_wkrepresent');
+		$sql  = 'INSERT INTO '.$name.' (';
 		$sql .= '`'.implode('`,`',$k).'`';
 		$sql .= ') VALUES ('.implode(',',$v).')';
 		$sth = $this->db->prepare($sql);
+		return($sth->execute($param) === FALSE);
+/*
 		if($sth->execute($param) === FALSE) {
 			//データ登録ができない場合、テーブルを作成...
 			$this->createRepresentTable();
@@ -655,15 +680,17 @@ class RevisionDB {
 		else {
 			return true;
 		}
+*/
 	}
 	/**
 	 * 代表表現データの取得
 	 *   - 削除成功ノード名を指定して、書き込むSMW-LINK情報を取得
 	 */
 	public function getRepresentData($rev) {
+		$name = wfGetDB(DB_SLAVE)->tableName('wbs_wkrepresent');
 		//代表表現
 		$sql  = "SELECT `source`,`target`,concat('*[[".BOK_LINKTYPE_REPRESENT."::',`target`,']]') link ";
-		$sql .= "FROM ".BOK_TARGET_DB_REPRESENT." ";
+		$sql .= "FROM ".$name." ";
 		$sql .= " WHERE `session_id` = ? ";
 		$sql .= "   AND `user_id` = ?";
 		if(empty($rev)) {
@@ -684,8 +711,9 @@ class RevisionDB {
 	 */
 	public function clearRepresentData($rev="") {
 		$param = array($this->session,$this->user);
+		$name = wfGetDB(DB_SLAVE)->tableName('wbs_wkrepresent');
 		//既存のテンポラリデータを削除
-		$del  = 'DELETE FROM '.BOK_TARGET_DB_REPRESENT.' ';
+		$del  = 'DELETE FROM '.$name.' ';
 		$del .= ' WHERE `session_id` = ? ';
 		$del .= '   AND `user_id` = ?';
 		//UNDO/REDO対策(設定リビジョン番号以降のデータを削除)
@@ -715,6 +743,7 @@ class RevisionDB {
 		}
 		catch(PDOException $e) {
 			$message = $e->getMessage();
+/*
 			if(strpos($message,"Unknown database") !== FALSE) {
 				//データベース指定せずに接続を作成
 				$this->db = new \PDO(
@@ -729,8 +758,11 @@ class RevisionDB {
 				$this->__create($dbhost, $dbname, $dbusername, $dbpassword);
 			}
 			else {
+*/
 				var_dump($message);
+/*
 			}
+*/
 		}
 	}
 	/**
@@ -739,7 +771,8 @@ class RevisionDB {
 	 * @access	private
 	 */
 	private function getUserEdit() {
-		$sql  = 'SELECT COUNT(*) cnt FROM '.BOK_TARGET_DB_USER.' ';
+		$name = wfGetDB(DB_SLAVE)->tableName('wbs_userboktree');
+		$sql  = 'SELECT COUNT(*) cnt FROM '.$name.' ';
 		$sql .= ' WHERE session_id = ?';
 		$sql .= '   AND user_id = ?';
 		$sth = $this->db->prepare($sql);
@@ -761,8 +794,10 @@ class RevisionDB {
 	 * @param	$diff	差分配列
 	 */
 	private function insertMain($data) {
+/*
 		//対象テーブル作成(未作成の場合作成する)
 		$this->createMainTable();
+*/
 		//データにユーザーIDを追加
 		$data += array('user_id' => $this->user);
 		//ソート
@@ -771,119 +806,45 @@ class RevisionDB {
 		$param = array_values($data);
 		$v = array_fill(0,count($param),'?');
 		//クエリ生成
-		$sql  = 'INSERT INTO '.BOK_TARGET_DB_MAIN.' (';
+		$name = wfGetDB(DB_SLAVE)->tableName('wbs_boktree');
+		$sql  = 'INSERT INTO '.$name.' (';
 		$sql .= '`'.implode('`,`',$k).'`';
 		$sql .= ') VALUES ('.implode(',',$v).')';
 		$sth = $this->db->prepare($sql);
 		return ($sth->execute($param));
 	}
 	/**
-	 * データベースにメインテーブルを作成
+	 * @param $updater DatabaseUpdater
+	 * @return bool
 	 */
-	private function createMainTable() {
-		$ddl  = 'CREATE TABLE IF NOT EXISTS '.BOK_TARGET_DB_MAIN.' (';
-		$ddl .= '  rev     int(10) unsigned NOT NULL AUTO_INCREMENT,';
-		$ddl .= '  bok     longtext,';
-		$ddl .= '  new_ids longtext,';
-		$ddl .= '  del_ids longtext,';
-		$ddl .= '  user_id int(10) NOT NULL,';
-		$ddl .= '  time    timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,';
-		$ddl .= '  PRIMARY KEY `rev` (rev),';
-		$ddl .= '  KEY `user` (user_id),';
-		$ddl .= '  KEY `time` (time)';
-		$ddl .= ') ENGINE=InnoDB  DEFAULT CHARSET=utf8';
-		$this->db->exec($ddl);
+	public static function onLoadExtensionSchemaUpdates(DatabaseUpdater $updater = null) {
+		$dir = dirname( __FILE__ );
+
+		if ( $updater === null ) {
+			// <= 1.16 support
+			global $wgExtNewTables, $wgExtModifiedFields;
+			$wgExtNewTables[] = array('wikibok-systems',"$dir/sql/create_revision_tables.sql");
+			//$wgExtModifiedFields[] = array('table','field_name',dirname( __FILE__ ) . '/table.patch.field_name.sql');
+		} else {
+			// >= 1.17 support
+			$updater->addExtensionUpdate( array( 'addTable', 'wikibok_system', "$dir/sql/create_revision_tables.sql", true ) );
+			//$updater->addExtensionUpdate( array( 'addField', 'abuse_filter', 'af_global', "$dir/db_patches/patch-global_filters.sql", true ) );
+
+/*
+			//DBタイプによってSQL変更する場合,下記のように場合分け...
+			if($updater->getDB()->getType() == 'mysql') {
+			}
+			else if($updater->getDB()->getType() == 'sqlite') {
+			}
+			else if($updater->getDB()->getType() == 'sqlite') {
+			}
+			else {
+				throw new MWException("No known Schema updates.");
+			}
+*/
+		}
+		return true;
 	}
-	/**
-	 * データベースにユーザーテーブルを作成
-	 */
-	private function createUserTable() {
-		$ddl  = 'CREATE TABLE IF NOT EXISTS '.BOK_TARGET_DB_USER.' (';
-		$ddl .= '  session_id varchar(255) NOT NULL,';
-		$ddl .= '  rev        int(10) unsigned NOT NULL,';
-		$ddl .= '  bok        longtext,';
-		$ddl .= '  user_id    int(10) NOT NULL,';
-		$ddl .= '  time       timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,';
-		$ddl .= '  PRIMARY KEY `user_edit` (session_id,user_id,rev),';
-		$ddl .= '  KEY `user` (user_id),';
-		$ddl .= '  KEY `time` (time)';
-		$ddl .= ') ENGINE=InnoDB  DEFAULT CHARSET=utf8';
-		$this->db->exec($ddl);
-	}
-	/**
-	 * 競合解消条件を保存するためのテーブルを作成
-	 */
-	private function createMergerClassTable() {
-		$ddl  = 'CREATE TABLE IF NOT EXISTS '.BOK_TARGET_DB_MERGER.' (';
-		$ddl .= ' merge_rev  int(10) unsigned NOT NULL, ';
-		$ddl .= ' item_name  varchar(255) NOT NULL, ';
-		$ddl .= ' value_name varchar(255) NOT NULL DEFAULT \'\' , ';
-		$ddl .= ' value      varchar(255) NOT NULL, ';
-		$ddl .= ' search_flg tinyint(1) NOT NULL DEFAULT 0, ';
-		$ddl .= ' sort_order int(10) NOT NULL DEFAULT 0, ';
-		$ddl .= ' user_id    int(10) NOT NULL, ';
-		$ddl .= ' time       timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, ';
-		$ddl .= ' PRIMARY KEY `rev` (merge_rev,item_name,value_name), ';
-		$ddl .= ' KEY `form` (merge_rev,search_flg) ';
-		$ddl .= ') ENGINE=InnoDB  DEFAULT CHARSET=utf8';
-		$this->db->exec($ddl);
-	}
-	/**
-	 * 競合ログ取得用テーブルを作成
-	 */
-	private function createConflictLogTable() {
-		$ddl  = 'CREATE TABLE IF NOT EXISTS '.BOK_TARGET_DB_CONFLICT.' (';
-		$ddl .= ' id        int(10) unsigned NOT NULL AUTO_INCREMENT,';
-		$ddl .= ' type      varchar(255) NOT NULL,';
-		$ddl .= ' base_rev  int(10) unsigned NOT NULL,';
-		$ddl .= ' head_rev  int(10) unsigned NOT NULL,';
-		$ddl .= ' work_xml  longtext,';
-		$ddl .= ' merge_rev int(10) unsigned NOT NULL,';
-		$ddl .= ' user_id   int(10) NOT NULL,';
-		$ddl .= ' time      timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,';
-		$ddl .= ' PRIMARY KEY `id` (id),';
-		$ddl .= ' KEY `type` (type),';
-		$ddl .= ' KEY `rev` (merge_rev),';
-		$ddl .= ' KEY `user` (user_id),';
-		$ddl .= ' KEY `time` (time)';
-		$ddl .= ') ENGINE=InnoDB  DEFAULT CHARSET=utf8';
-		$this->db->exec($ddl);
-	}
-	/**
-	 * データベースに保存用テーブルを作成
-	 */
-	private function createSaveTable() {
-		$ddl  = 'CREATE TABLE IF NOT EXISTS '.BOK_TARGET_DB_SAVE.' (';
-		$ddl .= ' user_id  int(10) NOT NULL, ';
-		$ddl .= ' title    varchar(255) NOT NULL, ';
-		$ddl .= ' base_rev int(10) unsigned NOT NULL, ';
-		$ddl .= ' bok_xml  text, ';
-		$ddl .= ' comment  text, ';
-		$ddl .= ' time     timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, ';
-		$ddl .= ' PRIMARY KEY `save_name` (user_id,title),';
-		$ddl .= ' KEY `rev`  (base_rev),';
-		$ddl .= ' KEY `time` (time)';
-		$ddl .= ') ENGINE=InnoDB  DEFAULT CHARSET=utf8';
-		$this->db->exec($ddl);
-	}
-	/**
-	 * 代表ノード選択処理のデータ保持用テーブルを作成
-	 */
-	public function createRepresentTable() {
-		$ddl  = 'CREATE TABLE IF NOT EXISTS '.BOK_TARGET_DB_REPRESENT.' (';
-		$ddl .= ' id     bigint unsigned NOT NULL AUTO_INCREMENT,';
-		$ddl .= ' session_id varchar(255) NOT NULL,';
-		$ddl .= ' user_id    int(10)      NOT NULL,';
-		$ddl .= ' rev        int(10)      NOT NULL,';
-		$ddl .= ' `source`   varchar(255) NOT NULL,';
-		$ddl .= ' `target`   varchar(255) NOT NULL,';
-		$ddl .= ' time       timestamp    NOT NULL DEFAULT CURRENT_TIMESTAMP, ';
-		$ddl .= ' PRIMARY KEY `id` (id),';
-		$ddl .= ' KEY `filter` (session_id,user_id,rev),';
-		$ddl .= ' KEY `source`  (`source`),';
-		$ddl .= ' KEY `time` (time)';
-		$ddl .= ') ENGINE=InnoDB  DEFAULT CHARSET=utf8';
-		$this->db->exec($ddl);
-	}
+
 }
 ?>

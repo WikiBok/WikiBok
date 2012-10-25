@@ -134,10 +134,7 @@ class BokXmlMerger {
 		//初期化
 		$this->config = array();
 		//DBから設定値を取得
-		$db = new RevisionDB(BOK_DATABASE_HOST,
-							 BOK_DATABASE_DB,
-							 BOK_DATABASE_USER,
-							 BOK_DATABASE_PASS);
+		$db = new RevisionDB();
 		$rows = $db->getMergeSetting($rev);
 		//インスタンス内で保持する
 		if($rows !== FALSE) {
@@ -177,7 +174,7 @@ class BokXmlMerger {
 						'merge_rev' => 1,
 						'item_name' => 'BOKMERGE_CONFLICT',
 						'value_name' => '',
-						'value' => '',
+						'value' => 'NON',
 						'search_flg' => 0,
 						'sort_order' => 0
 				),
@@ -335,10 +332,7 @@ class BokXmlMerger {
 	}
 	private function setConflictType() {
 		//DBから設定値を取得
-		$db = new RevisionDB(BOK_DATABASE_HOST,
-							 BOK_DATABASE_DB,
-							 BOK_DATABASE_USER,
-							 BOK_DATABASE_PASS);
+		$db = new RevisionDB();
 		$list = array();
 		$rows = $db->getMergeConfigValueList($this->merge_rev,'BOKMERGE_CONFLICT');
 		//インスタンス内で保持する
@@ -453,7 +447,7 @@ class BokXmlMerger {
 				$conflict_type = $this->getConfig($type);
 				//複数ある競合タイプを検索
 				if(array_search($conflict_type,$conflict_list) !== FALSE) {
-					$result = (empty($conflict_type)) ? false:$conflict_type;
+					$result = (empty($conflict_type)) ? false : $conflict_type;
 					break;
 				}
 				//見つからない場合には、次の競合タイプを確認する

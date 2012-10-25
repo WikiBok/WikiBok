@@ -22,10 +22,15 @@ if(!$wgUseAjax) {
 $wgAutoloadClasses['WikiBokJs'] = "$dir/WikiBok.js.php";
 $wgAutoloadClasses['BokEditor'] = "$dir/BokEditor.page.php";
 $wgAutoloadClasses['DescriptionEditor'] = "$dir/DescriptionEditor.page.php";
+$wgAutoloadClasses['RevisionDB'] = "$dir/class/RevisionDB.class.php";
 $wgExtensionMessagesFiles['WikiBok'] = "$dir/WikiBok.i18n.php";
 $wgExtensionMessagesFiles['WikiBokAlias'] = "$dir/WikiBok.alias.php";
 
 $wgExtensionFunctions[] = 'efWikiBokSetup';
+
+//DB更新
+$wgHooks['LoadExtensionSchemaUpdates'][] = 'RevisionDB::onLoadExtensionSchemaUpdates';
+
 //SpecialPage登録
 $wgSpecialPages['BokEditor'] = "BokEditor";
 $wgSpecialPages['DescriptionEditor'] = "DescriptionEditor";

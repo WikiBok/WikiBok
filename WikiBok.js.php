@@ -264,11 +264,7 @@ class WikiBokJs {
 	 */
 	private static function getDB() {
 		//BOKデータベースへ接続
-		$db = new RevisionDB(BOK_DATABASE_HOST,
-							 BOK_DATABASE_DB,
-							 BOK_DATABASE_USER,
-							 BOK_DATABASE_PASS);
-
+		$db = new RevisionDB();
 		return $db;
 	}
 	/**
@@ -916,7 +912,7 @@ class WikiBokJs {
 				$merger = new BokXmlMerger();
 				$type = $merger->checkMerge($base['bok'],$head['bok'],$work['bok']);
 				if($type === false) {
-					//引っかからない場合
+					//引っかからない場合：競合なし[NO CONFLICT]はFLASEではない
 					$ret['res'] = 'no edit';
 				}
 				else {
