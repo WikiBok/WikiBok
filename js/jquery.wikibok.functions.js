@@ -1406,6 +1406,8 @@
 		setPosition : function(a,b){
 			var opt = $.extend({},{
 				position : 'lt',
+				//設定前の要素位置を設定
+				base : $(this).offset(),
 				x : 20,
 				y : 20,
 				slideSpeed : 'fast'
@@ -1446,9 +1448,10 @@
 								y += h - set.y - $(this).height();
 								break;
 						}
+						//親要素が位置変更されている場合を考慮(固定位置が画面外にならないようにする)
 						$(this).css({
-							top : y,
-							left : x
+							top :(y > set.base.top) ? (y - set.base.top) : y,
+							left:(x > set.base.left)? (x - set.base.left): x
 						});
 					},
 					//イベント登録用関数

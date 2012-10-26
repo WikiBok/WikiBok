@@ -423,12 +423,12 @@ function efWikiBokInsertHtml(OutputPage $out,Skin $skin) {
 	$out->addHTML(efWikiBokCreateAccount());
 
 	if(efCheckPageTitle($wgTitle->mTextform)) {
-		//BOKツリー表示パネル
-		$out->addHTML('<div id="result"></div>');
 		$out->addHTML(efWikiBokSearch());
 		$out->addHTML(efWikiBokSearchResult());
 		$out->addHTML(efWikiBokDescriptionView());
 		$out->addHTML(efWikiBokDescriptionEdit());
+		//BOKツリー表示パネル[一番最後固定]
+		$out->addHTML('<div id="result"></div>');
 	}
 	return true;
 }
