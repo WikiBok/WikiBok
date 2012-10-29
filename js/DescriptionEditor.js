@@ -477,6 +477,7 @@ jQuery(function($) {
 									return d.name;
 								});
 							if(_rows.length < 1) {
+							//未選択エラー
 								$.wikibok.timePopup(
 									$.wikibok.wfMsg('wikibok-addnode-node','title')+' '+$.wikibok.wfMsg('common','error'),
 									$.wikibok.wfMsg('wikibok-addnode-node','error','noselect'),
@@ -484,7 +485,7 @@ jQuery(function($) {
 								);
 							}
 							else {
-								//BOK-XMLと代表表現リンクの作業データを登録
+							//BOK-XMLと代表表現リンクの作業データを登録
 								$.wikibok.requestCGI(
 									'WikiBokJs::createNodeToRequest',
 									[_rows,a],

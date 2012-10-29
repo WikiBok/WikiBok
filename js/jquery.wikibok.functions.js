@@ -183,7 +183,11 @@
 							}
 						],
 						autoOpen : true,
-						position : 'center'
+						position : {
+							my:'center',
+							at:'center',
+							of:$('#result')
+						}
 					},c),
 					baseCreate = function(e,ui) {
 					}
@@ -194,7 +198,7 @@
 						.addClass('wikibok-exdialog')
 						.addClass(a)
 						.toggleClass('hide',true);
-					$('body').append(content);
+					$('#result').append(content);
 				}
 				//ダイアログ作成
 				$('body').on('dialogcreate',mid,function(){

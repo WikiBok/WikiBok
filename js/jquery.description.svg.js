@@ -39,10 +39,7 @@
 	 * レイアウト位置算出1回ごとのイベント処理
 	 */
 	function tick(ev) {
-		if(draw !== true) {
-			draw = (ev.alpha < 0.07);
-		}
-		else {
+		if(draw == true) {
 			//紐付描画
 			path.selectAll('path')
 				.attr('d',function(d) {
@@ -409,8 +406,8 @@
 			})
 			.on('dragend',function(d,i) {
 				d.fixed = true;
-				tick();
 				force.resume();
+				tick();
 			}),
 		i=0,
 		force,
@@ -460,12 +457,15 @@
 				def = svg.append('defs').selectAll('maker');
 				setSize();
 				//クリックで描画更新を停止
-				$('#BokXml').on('click',function() {
-					//何も書かれていない場合を考慮して、一度描画計算処理をする
-					draw = true;
-					force.tick();
-					force.stop();
-				});
+				$('#BokXml')
+					.ready(function() {
+						draw = true;
+					})
+					.on('click',function() {
+						//何も書かれていない場合を考慮して、一度描画計算処理をする
+						force.tick();
+						force.stop();
+					});
 				update();
 			},
 			update : function(a){
@@ -474,9 +474,9 @@
 					.links(links);
 				//描画更新なので、DOM要素の更新と
 				update();
-				//描画位置の再計算を行う
-				force.resume();
 				if(a) {
+					//描画位置の再計算を行う
+					force.resume();
 					force.stop();
 				}
 			},
