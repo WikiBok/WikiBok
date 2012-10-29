@@ -289,10 +289,12 @@ dl.context dd {
 .create_new_node > input {
 	width : 300px;
 }
-.rename_new_node .txt{
+.added_bok_nodes .txt,
+.represent-node  .txt{
 	margin-left : 18px;
 }
-.rename_new_node .del{
+.added_bok_nodes .del,
+.represent-node  .del{
 	background-image : url("images/delete.png");
 	width : 16px;
 	height: 16px;

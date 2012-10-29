@@ -183,11 +183,7 @@
 							}
 						],
 						autoOpen : true,
-						position : {
-							my:'center',
-							at:'center',
-							of:$('#result')
-						}
+						position : 'center'
 					},c),
 					baseCreate = function(e,ui) {
 					}

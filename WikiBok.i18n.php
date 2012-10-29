@@ -261,16 +261,16 @@ $messages['ja'] = array(
 				'class' => 'commit',
 			),
 		),
-		'wikibok-addnode-node' => array(
-			'title' => '代表表現選択',
-			'headline1' => '代表ノード名称',
-			'headline2' => '従属ノード名称',
-			'caution' => '[従属ノードが選択されていません]',
+		'wikibok-description-addnode' => array(
+			'title' => '追加ノード選択',
+			'headline1' => '追加先ノード名称',
+			'headline2' => '追加ノード名称',
+			'caution' => '[追加ノードが選択されていません]',
 			'error' => array(
-				'depth'=>'同じ階層にないノードは選択できません',
+				'parents'=>'すでに選択されています',
 				'already'=>'すでに選択されています',
-				'equal'=>'代表ノードとして選択済みです',
-				'noselect'=>nl2br("従属ノードが選択されていません\n処理を中止します"),
+				'represent'=>'代表表現は追加できません',
+				'noselect'=>nl2br("追加ノードが選択されていません\n処理を中止します"),
 			),
 			'button' => array(
 				'text' => '実行',

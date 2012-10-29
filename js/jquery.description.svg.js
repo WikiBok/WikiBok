@@ -471,7 +471,8 @@
 			update : function(a){
 				force
 					.nodes(aryNodes())
-					.links(links);
+					.links(links)
+					.start();
 				//描画更新なので、DOM要素の更新と
 				update();
 				if(a) {
@@ -488,9 +489,18 @@
 			xmlconvert : xmlconvert,
 			linkconvert: linkconvert,
 			addDescription : addDescription,
+			delDescription : function(d) {
+				if(d in nodes) {
+					//BOKへ追加していない・記事内容なし
+					if(nodes[d].type == 'desc' && options.emptyFunc(nodes[d])) {
+						delete nodes[d];
+					}
+				}
+			},
 			links : _links,
 			actNode : actNode,
 			allNode : allNode,
+			addLink : addLink,
 			deleteLink : deleteLink,
 			renameNode : renameNode,
 			fixclear : function() {

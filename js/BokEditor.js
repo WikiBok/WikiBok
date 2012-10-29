@@ -358,7 +358,7 @@ jQuery(function($) {
 	 */
 	function represent(a) {
 		var
-			tmp = '<dl>'
+			tmp = '<dl class="represent-node">'
 					+ '<dt>'+$.wikibok.wfMsg('wikibok-represent-node','headline1')+'</dt>'
 					+ '<dd><span class="txt">'+a+'</span></dd>'
 					+ '<dt>'+$.wikibok.wfMsg('wikibok-represent-node','headline2')+'</dt>'
@@ -459,7 +459,7 @@ jQuery(function($) {
 			tmp = '<dl>'
 					+ '<dt>'+$.wikibok.wfMsg('wikibok-rename-node','headline1')+'</dt><dd>'+a+'</dd>'
 					+ '<dt>'+$.wikibok.wfMsg('wikibok-rename-node','headline2')+'</dt>'
-					+ '<dd class="rename_new_node"><input type="text" class="name"/></dd>'
+					+ '<dd><input type="text" class="name"/></dd>'
 					+ '</dl>';
 		$.wikibok.exDialog(
 			$.wikibok.wfMsg('wikibok-rename-node','title'),

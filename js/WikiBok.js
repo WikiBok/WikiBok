@@ -113,11 +113,17 @@ jQuery(function($) {
 	});
 
 	//ページ破棄前にすべてのajax通信を停止
-	$('body').on('ajaxSend',function(c,xhr) {
-		$(window).one('beforeunload',function(){
-			xhr.abort();
+	$('body')
+		.css({
+			//jQueryUI[Draggable]の移動範囲設定のため
+			// - 未設定の場合、1画面の上限までしかドラッグできない
+			position:'relative'
 		})
-	});
+		.on('ajaxSend',function(c,xhr) {
+			$(window).one('beforeunload',function(){
+				xhr.abort();
+			})
+		});
 	//アイコン設定
 	$('.ui-icon-inline,.icon16').lineicon({width:'16px',height:'16px'});
 	$('.icon32').lineicon({width:'32px',height:'32px'});

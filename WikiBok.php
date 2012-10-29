@@ -416,8 +416,6 @@ function efWikiBokInsertHtml(OutputPage $out,Skin $skin) {
 	require_once("config/setting.php");
 	global $wgTitle,$wgLanguageCode;
 
-	//BOKツリー表示パネル[一番最後固定]
-	$out->addHTML('<div id="result">');
 	//すべてのページで使用するタグ
 	$out->addHTML("<div class=\"hide\" id=\"wikibok-loading\"></div>");
 	$out->addHTML(efWikiBokPopupLogin());
@@ -429,7 +427,8 @@ function efWikiBokInsertHtml(OutputPage $out,Skin $skin) {
 		$out->addHTML(efWikiBokSearchResult());
 		$out->addHTML(efWikiBokDescriptionView());
 		$out->addHTML(efWikiBokDescriptionEdit());
+		//BOKツリー表示パネル[一番最後固定]
+		$out->addHTML('<div id="result"></div>');
 	}
-	$out->addHTML('</div>');
 	return true;
 }
