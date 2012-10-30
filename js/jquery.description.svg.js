@@ -116,7 +116,7 @@
 		addDesc = descs.enter()
 			.append('svg:g')
 			.attr('data',function(d){return d.name;})
-			.attr('class',function(d){return d.type;})
+//			.attr('class',function(d){return d.type;})
 			.classed('node',true);
 
 		addDesc.append('svg:circle')
@@ -133,7 +133,7 @@
 			});
 		_desc = addDesc.append('svg:g')
 			.on('click.add',options.textClick)
-			.on('click.orig',function(){
+			.on('click.orig',function(d){
 				force.stop();
 				event.preventDefault();
 				return false;
@@ -155,6 +155,9 @@
 		descs.exit().remove();
 		//クラス設定
 		vis.selectAll('g.node')
+			.classed('desc',function(d){return (d.type == 'desc');})
+			.classed('prebok',function(d){return (d.type == 'prebok');})
+			.classed('bok',function(d){return (d.type == 'bok');})
 			.classed('empty',options.emptyFunc);
 		//ドラッグイベントの追加
 		descs.call(advDrag);
@@ -181,8 +184,8 @@
 						var
 							cn = $(m).find('>name').text();
 						addLink(
-							addDescription(pn,xmlopt.nclass),
-							addDescription(cn,xmlopt.nclass),
+							addDescription(pn,{type:xmlopt.nclass}),
+							addDescription(cn,{type:xmlopt.nclass}),
 							xmlopt.eclass,
 							xmlopt.linkName
 						);
@@ -216,8 +219,8 @@
 		//名称から記事情報へ変更する
 		$.each(dat,function(i,o) {
 			addLink(
-				addDescription(o.source,linkopt.nclass),
-				addDescription(o.target,linkopt.nclass),
+				addDescription(o.source,{type:linkopt.nclass}),
+				addDescription(o.target,{type:linkopt.nclass}),
 				linkopt.eclass,
 				o.linkName || linkopt.linkName
 			);
@@ -227,8 +230,15 @@
 	/**
 	 * 記事データ参照/追加
 	 */
-	function addDescription(a,b,c) {
-		return nodes[a] || (nodes[a] = (arguments.length < 3) ? {name : a,type :b} : $.extend({},c,{name:a,type:b}));
+	function addDescription(a,b) {
+//		return nodes[a] || (nodes[a] = (arguments.length < 3) ? {name : a,type :b} : $.extend({},c,{name:a,type:b}));
+		var
+			node = nodes[a] || (nodes[a] = {name : a}),
+			c = (arguments < 2) ? {} : b;
+		return $.extend(node,c);
+
+
+
 	}
 	/**
 	 * 関係付けデータ追加
@@ -364,8 +374,8 @@
 				}
 				update();
 				//新データを設定
-				fnode = addDescription(a,'desc',node);
-				tnode = addDescription(b,node.type,node);
+				fnode = addDescription(a,{type:'desc'});
+				tnode = addDescription(a,{name:b,type:node.type});
 				for(var i=0;i < flink.length;i++) {
 					addLink(
 						(flink[i].source == node) ? tnode : flink[i].source,

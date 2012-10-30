@@ -32,13 +32,16 @@ class LinkDataApi extends ApiBase {
 		$data = array_merge($bokdata,$smwdata);
 		if(count($data) > 0) {
 			//各リンクの件数
-			$result->addValue(null,$this->getModuleName(),array('links'=>array('bok'=>count($bokdata),'smw'=>count($smwdata))));
+			$result->addValue(null,$this->getModuleName(),array('count'=>array('bok'=>count($bokdata),'smw'=>count($smwdata))));
 			$result->setIndexedTagName($data,'link');
 			$result->addValue($this->getModuleName(),'links',$data);
 		}
 		
 		return true;
 	}
+	/**
+	 * BOK-XMLデータを取り除く
+	 */
 	private function filterBok($v) {
 		return (isset($v['filter']) && ($v['filter']));
 	}
@@ -69,7 +72,12 @@ class LinkDataApi extends ApiBase {
 					$a_flg[] = ((array_search($rec['source'],$check) > -1)
 								||(array_search($rec['target'],$check) > -1));
 				}
-				$rec['filter'] = (count(array_filter($a_flg)) > 0);
+				if(!$this->params['ldsource'] && !$this->params['ldtarget'] && !$this->params['ldnode']) {
+					$rec['filter'] = true;
+				}
+				else {
+					$rec['filter'] = (count(array_filter($a_flg)) > 0);
+				}
 				$res[] = $rec;
 			}
 		}

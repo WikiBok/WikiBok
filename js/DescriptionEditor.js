@@ -24,7 +24,13 @@ jQuery(function($) {
 			'WikiBokJs::getDescriptionJson',
 			[],
 			function(dat,stat,xhr) {
-					$.timer.add($.revision.allsync,true);
+				//初期リビジョン番号設定
+				$.revision.setRev();
+				//データの定期更新設定
+				$.timer.add(function(){
+					$.revision.allsync();
+					$.wikibok.loadDescriptionPages();
+				},false);
 				return true;
 			},
 			function(xhr,stat,err) {
@@ -37,13 +43,17 @@ jQuery(function($) {
 			h = $.wikibok.getUrlVars('#') || $.wikibok.wfMsg('defaultFocus') || '',
 			count = 0,
 			descjson = func2[0];
-		svg.xmlconvert(descjson.basexml,{nclass:'bok',eclass:'bok',linkName:''});
-		svg.xmlconvert(descjson.userxml,{nclass:'prebok',eclass:'prebok',linkName:''});
-		svg.linkconvert(descjson.smwlink,{nclass:'desc',eclass:'smw'});
-		//単独記事の作成
+		//ノードのクラス分けの関係で弱いクラスを先に作成
+		// - 単独記事の作成
 		$.each($.wikibok.allDescriptionPage(),function(d,k){
-			svg.addDescription(d,'desc');
+			svg.addDescription(d,{type:'desc'});
 		});
+		// - 記事同士のリンク
+		svg.linkconvert(descjson.smwlink,{nclass:'desc',eclass:'smw'});
+		// - コミット前BOK-LINK
+		svg.xmlconvert(descjson.userxml,{nclass:'prebok',eclass:'prebok',linkName:''});
+		// - コミット済みBOK-LINK
+		svg.xmlconvert(descjson.basexml,{nclass:'bok',eclass:'bok',linkName:''});
 		svg.load()
 		svg.update();
 		//ハッシュタグまたはデフォルト値を強調
@@ -64,6 +74,7 @@ jQuery(function($) {
 				var
 					time = 100,
 					opt = {offset:{top:-150,left:-150}};
+				//指定ノードを強調
 				$.Deferred(function(def) {
 					svg.actNode(h);
 					WINDOW_APP.util.scrollMonitor.add(function(p) {
@@ -133,6 +144,9 @@ jQuery(function($) {
 			//現時点で有効なSMW-LINKを追加
 			svg.linkconvert(dat.data,{nclass:'desc',eclass:'smw'});
 			svg.update();
+		})
+		.fail(function(){
+			svg.update();
 		});
 	}
 	/**
@@ -148,25 +162,24 @@ jQuery(function($) {
 					+ ((wgEdit && (d.type=='desc')) ? '<dd class="command description-create">'+$.wikibok.wfMsg('wikibok-contextmenu','description','addnode')+'</dd>' : '')
 					+ ((wgEdit)   ? '<dd class="command description-rename">'+$.wikibok.wfMsg('wikibok-contextmenu','description','rename')+'</dd>' : '')
 					+ ((wgDelete) ? '<dd class="command description-delete">'+$.wikibok.wfMsg('wikibok-contextmenu','description','delete')+'</dd>' : '')
-					+ '</dl>';
+					+ '</dl>',
 			_open = true,
-			tid = d.name,
 			message = false,
 			reps = svg.links({linkName:wgReps});
 		switch(mode) {
 			case 'addSelect':
 				//追加記事選択モード
-				if(tid == pid.name) {
+				if(d.name == pid.name) {
 					message = $.wikibok.wfMsg('wikibok-description-addnode','error','parents');
 				}
-				else if(rid[tid] == undefined) {
+				else if(rid[d.name] == undefined) {
 					//BOK-XMLへ追加していないもののみ許可
 					if(d.type == 'desc') {
 						if(reps.filter(function(e){return (e.target.name == d.name)}).length > 0) {
 							message = $.wikibok.wfMsg('wikibok-description-addnode','error','represent');
 						}
 						else {
-							rid[tid] = d;
+							rid[d.name] = d;
 						}
 					}
 					else {
@@ -197,16 +210,13 @@ jQuery(function($) {
 						create : function() {
 							var
 								me = $(this);
-							me
-								.on('click','.command',function(){
+							me.on('click','.command',function(){
 								//メニュークリック時にメニューそのものを閉じる
 									me.dialog('close');
 								})
 								.on('click','.description-view',function(a,b) {
 								//記事内容表示
-									var
-										_title = tid;
-									$.wikibok.getDescriptionPage(_title)
+									$.wikibok.getDescriptionPage(pid.name)
 									.done(function(dat) {
 										var
 											page = dat.parse,
@@ -214,14 +224,14 @@ jQuery(function($) {
 											desc = (ptxt.html() == null) ? $('<div>'+$.wikibok.wfMsg('wikibok-description','empty')+'</div>') : ptxt;
 											//リンクを別タブ(ウィンドウ)で開く
 											desc.find('a').attr({target:'_blank'});
-										$.wikibok.viewDescriptionDialog(_title,desc)
+										$.wikibok.viewDescriptionDialog(pid.name,desc)
 										.done(function(){
-											AfterDescriptionUpdate(_title);
+											AfterDescriptionUpdate(pid.name);
 										});
 									})
 									.fail(function() {
 										var
-											_t = $.wikibok.getPageNamespace(_title)+':'+$.wikibok.getPageName(_title);
+											_t = $.wikibok.getPageNamespace(pid.name)+':'+$.wikibok.getPageName(pid.name);
 										//記事がないので直接編集画面を開く
 										$.wikibok.getDescriptionEdit(_t)
 										.done(function(dat) {
@@ -239,7 +249,7 @@ jQuery(function($) {
 											.done(function(res) {
 												if(res) {
 													//SVGデータ更新
-													AfterDescriptionUpdate(_title);
+													AfterDescriptionUpdate(pid.name);
 												}
 											});
 										});
@@ -252,19 +262,21 @@ jQuery(function($) {
 								})
 								.on('click','.description-create',function(a,b) {
 								//単一ノード追加
+									var
+										eMes = false;
 									if(pid.type == 'desc') {
 										if(reps.filter(function(e){return (e.target.name == pid.name)}).length > 0) {
-											message = '代表表現は追加できない';
+											eMes = '代表表現は追加できない';
 										}
 									}
 									else {
-										message = 'ノードとして追加済み';
+										eMes = 'ノードとして追加済み';
 									}
 									//BOK-XMLへ追加していないもののみ許可
-									if(message !== false) {
+									if(eMes !== false) {
 										$.wikibok.timePopup(
 											'BOK登録'+' '+$.wikibok.wfMsg('common','error'),
-											message,
+											eMes,
 											5000
 										);
 									}
@@ -277,11 +289,8 @@ jQuery(function($) {
 											function(xhr,stat,err) {return false;}
 										)
 										.done(function(dat,stat,xhr) {
-											//画面表示データを更新
-											svg.classed(pid.name,'desc',false);
-											svg.classed(pid.name,'prebok',true);
-											//固定化を解除
-											svg.fixclear();
+											//クライアントデータを更新
+											svg.addDescription(pid.name,{type:'prebok'});
 											svg.update();
 											$.revision.setRev(dat.res);
 											$(me).dialog('close');
@@ -495,23 +504,21 @@ jQuery(function($) {
 								.done(function(dat,stat,xhr) {
 									var
 										_source,
-										_target,
-										_targets = [];
+										_target;
 									if(dat.res !== false) {
-										_source = svg.addDescription(a); 
-										for(var i=0;i<_rows.length;i++){
-											_target = svg.addDescription(_rows[i]);
-											svg.classed(_rows[i],'prebok');
-											svg.deleteLink(_source,_target,'');
-											_targets.push(_target);
-										}
-										$.each(_targets,function(i,d) {
-											d.type = 'prebok';
-											svg.addLink(_source,d,'prebok','');
-										});
-										svg.update();
+										//リビジョン番号(編集回数)更新
 										$.revision.setRev(dat.res);
 										$(me).dialog('close');
+										//クライアント側データを更新
+										//追加先のタイプは変更なし
+										_source = svg.addDescription(a); 
+										for(var i=0;i<_rows.length;i++){
+											//追加対象は必ず[コミット前状態]
+											_target = svg.addDescription(_rows[i],{type:'prebok'});
+											//リンクを追加
+											svg.addLink(_source,_target,'prebok','');
+										}
+										svg.update();
 									}
 								});
 							}

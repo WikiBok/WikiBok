@@ -1068,6 +1068,7 @@
 				createWikiPage : createWikiPage,
 				addWikiPage : addWikiPage,
 				renamePage : renamePage,
+				escapeHTML : _escapeHTML
 			};
 		},
 		/**
@@ -1093,39 +1094,39 @@
 			 * サーバリクエスト処理
 			 */
 			function request() {
-				var
-					myDef = $.Deferred();
-				//二重実行の阻止
-				if(!isRequest) {
-					isRequest = true;
-					//リビジョン番号取得
-					$.wikibok.requestCGI(
-						'WikiBokJs::getBokRevision',
-						[wgUserName],
-						function(dat,stat,xhr) {
-							//最新情報の取得
-							allData = $.extend({},allData,dat);
-							return true;
-						},
-						function(xhr,stat,err) {
-							return false;
-						},
-						false
-					)
-					.done(function(dat) {
-						myDef.resolve();
-					})
-					.fail(function() {
+				return $.Deferred(function(myDef) {
+					//二重実行の阻止
+					if(!isRequest) {
+						isRequest = true;
+						//リビジョン番号取得
+						$.wikibok.requestCGI(
+							'WikiBokJs::getBokRevision',
+							[wgUserName],
+							function(dat,stat,xhr) {
+								//最新情報の取得
+								allData = $.extend({},allData,dat);
+								return true;
+							},
+							function(xhr,stat,err) {
+								return false;
+							},
+							false
+						)
+						.done(function(dat) {
+							myDef.resolve();
+						})
+						.fail(function() {
+							myDef.reject();
+						})
+						.always(function() {
+							isRequest = false;
+						})
+					}
+					else {
 						myDef.reject();
-					})
-					.always(function() {
-						isRequest = false;
-					})
-				}
-				else {
-					myDef.reject();
-				}
-				return myDef.promise();
+					}
+				}).promise();
+				
 			}
 			/**
 			 * サーバリクエスト+表示更新(Timerによる定期実施)
@@ -2277,16 +2278,6 @@
 			return { o : markup(out.o,os,'ins') , n : markup(out.n,ns,'del')};
 		},
 		/**
-		 * HTML特殊文字のエスケープ
-		 */
-		_escapeHTML = function(a) {
-			return a.replace(/&/g,'&amp;')
-					.replace(/"/g,'&quot;') //"
-					.replace(/'/g,'&#039;') //'
-					.replace(/</g,'&lt;')
-					.replace(/>/g,'&gt;');
-		},
-		/**
 		 * イメージファイルリストの取得
 		 */
 		_allImages = function () {
@@ -2344,8 +2335,18 @@
 					}
 				);
 			}
-		}
+		};
 
+	/**
+	 * HTML特殊文字のエスケープ
+	 */
+	function _escapeHTML(a) {
+		return a.replace(/&/g,'&amp;')
+				.replace(/"/g,'&quot;') //"
+				.replace(/'/g,'&#039;') //'
+				.replace(/</g,'&lt;')
+				.replace(/>/g,'&gt;');
+	}
 
 })(jQuery);
 
