@@ -58,11 +58,6 @@
 					return 'translate('+d.x+','+d.y+')';
 				});
 		}
-		else{
-			if(ev != undefined && ev.alpha != undefined) {
-				draw = (ev.alpha < 0.05);
-			}
-		}
 	}
 	/**
 	 *
@@ -121,7 +116,6 @@
 		addDesc = descs.enter()
 			.append('svg:g')
 			.attr('data',function(d){return d.name;})
-//			.attr('class',function(d){return d.type;})
 			.classed('node',true);
 
 		addDesc.append('svg:circle')
@@ -166,6 +160,7 @@
 			.classed('empty',options.emptyFunc);
 		//ドラッグイベントの追加
 		descs.call(advDrag);
+		tick();
 	}
 	/**
 	 * BOK-XML形式のデータをDescriptionEditor用リンク形式に変換
@@ -471,14 +466,17 @@
 					.start();
 				def = svg.append('defs').selectAll('maker');
 				setSize();
-				//クリックで描画更新を停止
-				$('#BokXml')
-					.on('click',function() {
-						//何も書かれていない場合を考慮して、一度描画計算処理をする
-						force.tick();
-						force.stop();
-					});
+				for(var i=0;i<100;i++) {
+					force.tick();
+				}
+				draw = true;
 				update();
+				force.stop();
+				//クリックで描画更新を停止
+				$('#BokXml').on('click',function() {
+					update();
+					force.stop();
+				});
 			},
 			update : function(a){
 				force
@@ -490,8 +488,8 @@
 				if(a) {
 					//描画位置の再計算を行う
 					force.resume();
-					force.stop();
 				}
+				force.stop();
 			},
 			stop : function() {
 				force.stop();
