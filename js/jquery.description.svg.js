@@ -58,6 +58,11 @@
 					return 'translate('+d.x+','+d.y+')';
 				});
 		}
+		else{
+			if(ev != undefined && ev.alpha != undefined) {
+				draw = (ev.alpha < 0.05);
+			}
+		}
 	}
 	/**
 	 *
@@ -468,9 +473,6 @@
 				setSize();
 				//クリックで描画更新を停止
 				$('#BokXml')
-					.ready(function() {
-						draw = true;
-					})
 					.on('click',function() {
 						//何も書かれていない場合を考慮して、一度描画計算処理をする
 						force.tick();
