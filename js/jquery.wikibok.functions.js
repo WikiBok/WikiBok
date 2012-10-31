@@ -1413,6 +1413,10 @@
 				y : 20,
 				slideSpeed : 'fast'
 			},a);
+			//絶対配置以外は元位置を考える必要なし
+			if($(this).css('position') != 'absolute') {
+				opt.base = {top : 0,left : 0};
+			}
 			return $.each(this,function() {
 				if($(this).length < 1) return false;
 				var timer = false,
