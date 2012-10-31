@@ -194,7 +194,7 @@
 						.addClass('wikibok-exdialog')
 						.addClass(a)
 						.toggleClass('hide',true);
-					$('#result').append(content);
+					$('body').append(content);
 				}
 				//ダイアログ作成
 				$('body').on('dialogcreate',mid,function(){
