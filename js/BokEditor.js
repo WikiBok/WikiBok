@@ -9,7 +9,7 @@ jQuery(function($) {
 		mode = 'normal',
 		mode_mes,
 		svg = $('#result').bok({
-			w : 300,
+			w : 600,
 			h : 30,
 			success : function(r) {
 			},
@@ -1386,8 +1386,9 @@ jQuery(function($) {
 			.done(
 				function(d) {
 					var
-						h = $.wikibok.getUrlVars('#') || $.wikibok.wfMsg('defaultFocus') || '',
-						count = 0;
+						time = 100,
+						opt = {offset:{top:-150,left:-150}},
+						h = $.wikibok.getUrlVars('#') || $.wikibok.wfMsg('defaultFocus') || '';
 					//定期更新の予約(記事情報取得)
 					$.timer.add(svg.update,true);
 					$.timer.add(function() {
@@ -1399,41 +1400,18 @@ jQuery(function($) {
 
 					//ハッシュタグまたはデフォルト値を強調
 					if(h != undefined && h != '') {
-						$.Deferred(function(def) {
-							if($('g[data="'+h+'"]').length > 0) {
-								def.resolve();
-							}
-							else if( count > 5) {
-								def.reject();
-							}
-							else {
-								count++;
-								setTimeout(arguments.callee.call({},def),1000);
-							}
-						})
-						.done(function() {
-							var
-								time = 100,
-								opt = {offset:{top:-150,left:-150}};
-							$.Deferred(function(def) {
-								svg.actNode(h);
-								WINDOW_APP.util.scrollMonitor.add(function(p) {
-									if(p.status == 0) {
-										WINDOW_APP.util.scrollMonitor.remove(arguments.callee);
-										$.scrollTo($('g[data="'+h+'"]'),time,opt);
-									}
-								});
-								def.resolve();
-							})
-							.done(function(){
-								setTimeout(function() {
+						if($('g[data="'+h+'"]').length > 0) {
+							svg.actNode(h);
+							WINDOW_APP.util.scrollMonitor.add(function(p) {
+								if(p.status == 0) {
+									WINDOW_APP.util.scrollMonitor.remove(arguments.callee);
 									$.scrollTo($('g[data="'+h+'"]'),time,opt);
-								},1000);
+								}
 							});
-						})
-						.fail(function() {
-							$(window).scrollTo('50%');
-						});
+							setTimeout(function() {
+								$.scrollTo($('g[data="'+h+'"]'),time,opt);
+							},1000);
+						}
 					}
 					else {
 						$(window).scrollTo('50%');

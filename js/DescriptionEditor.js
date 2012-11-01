@@ -161,7 +161,6 @@ jQuery(function($) {
 					+ ((wgEdit && (d.type!='desc')) ? '<dd class="command description-add">'+$.wikibok.wfMsg('wikibok-contextmenu','bok','node-create')+'</dd>' : '')
 					+ ((wgEdit && (d.type=='desc')) ? '<dd class="command description-create">'+$.wikibok.wfMsg('wikibok-contextmenu','description','addnode')+'</dd>' : '')
 					+ ((wgEdit)   ? '<dd class="command description-rename">'+$.wikibok.wfMsg('wikibok-contextmenu','description','rename')+'</dd>' : '')
-					+ ((wgDelete) ? '<dd class="command description-delete">'+$.wikibok.wfMsg('wikibok-contextmenu','description','delete')+'</dd>' : '')
 					+ '</dl>',
 			_open = true,
 			message = false,
@@ -425,17 +424,6 @@ jQuery(function($) {
 											buttons : [commit_btn,close_btn]
 										}
 									);
-								})
-								.on('click','.description-delete',function(a,b) {
-								//記事削除
-									var
-										pname = $.wikibok.getPageNamespace(pid.name)+':'+$.wikibok.getPageName(pid.name);
-									if(pid.type == 'desc') {
-										alert(pname+'\n削除');
-									}
-									else {
-										alert('NG');
-									}
 								});
 						},
 						focus : function() {

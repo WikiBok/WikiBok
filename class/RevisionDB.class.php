@@ -689,7 +689,7 @@ class RevisionDB {
 	public function getRepresentData($rev) {
 		$name = wfGetDB(DB_SLAVE)->tableName('wbs_wkrepresent');
 		//代表表現
-		$sql  = "SELECT `source`,`target`,concat('*[[".BOK_LINKTYPE_REPRESENT."::',`target`,']]') link ";
+		$sql  = "SELECT `source`,`target`,concat('*[[".BOK_LINKTYPE_REPRESENT."::',`target`,' | ',BOK_LINKTYPE_REPRESENT,':',`target`,']]') link ";
 		$sql .= "FROM ".$name." ";
 		$sql .= " WHERE `session_id` = ? ";
 		$sql .= "   AND `user_id` = ?";

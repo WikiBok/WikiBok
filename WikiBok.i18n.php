@@ -69,6 +69,7 @@ $messages['ja'] = array(
 	
 	//Javascriptで利用する文字列の設定
 	'wikibok-message' => serialize(array(
+		'defaultFocus' => false,
 		'common' => array(
 			'success' => '成功',
 			'error' => '失敗',

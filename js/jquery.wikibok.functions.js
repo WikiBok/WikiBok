@@ -497,7 +497,7 @@
 					_href = window.location.href,
 					_query = _href.slice(_href.indexOf('?')+1,_href.indexOf('#')),
 					hashes = _query.split('&'),
-					names = _href.slice(_href.indexOf('#') + 1),
+					names = (window.location.href.indexOf('#') < 0) ? false : _href.slice(_href.indexOf('#') + 1),
 					vars = [];
 				//省略時
 				if(arguments.length<1||a==undefined||a=='') {
