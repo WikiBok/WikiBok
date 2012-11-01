@@ -757,21 +757,23 @@ jQuery(function($) {
 					.done(function(dat,stat,xhr){
 						var
 							res = (dat.res).toUpperCase(),
-							conflicttype = (dat.conflict_type).toLowerCase(),
-							rev = parseInt(dat.newRev),
+							rev = parseInt(dat.newRev) || 0,
+							conflicttype,
 							message = true;
-						eSet = dat.eSet;
 						switch(res) {
 							case 'NO PERMISION':
 								message = $.wikibok.wfMsg('wikibok-merge','error','nologin')+$.wikibok.wfMsg('wikibok-merge','error','needlogin');
 								break;
 							case 'INSERT':
+								eSet = dat.eSet;
+								conflicttype = (dat.conflict_type).toLowerCase();
 								$.wikibok.timePopup(
 									$.wikibok.wfMsg('wikibok-merge','conflict','title'),
 									$.wikibok.wfMsg('wikibok-merge','conflict',conflicttype),
 									5000
 								);
 								break;
+							case 'NO MERGE':
 							default:
 								message = $.wikibok.wfMsg('wikibok-merge','error','nochange')+$.wikibok.wfMsg('wikibok-merge','error','refreshdata');
 								break;

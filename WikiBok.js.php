@@ -914,8 +914,7 @@ class WikiBokJs {
 				$type = $merger->checkMerge($base['bok'],$head['bok'],$work['bok']);
 				if($type === false) {
 					//引っかからない場合：競合なし[NO CONFLICT]はFLASEではない
-					$ret['res'] = 'no edit';
-					$ret['conflict_type'] = 'no conflict';
+					$ret['res'] = 'no merge';
 				}
 				else {
 					$link = self::getRepresentTarget();
