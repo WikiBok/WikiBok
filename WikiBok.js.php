@@ -890,6 +890,7 @@ class WikiBokJs {
 		//ログインしていない場合は処理しない
 		if($user == '') {
 			$ret['res'] = 'no permision';
+			$ret['conflict_type'] = 'no conflict';
 		}
 		else {
 			//BOKデータベースへ接続
@@ -914,6 +915,7 @@ class WikiBokJs {
 				if($type === false) {
 					//引っかからない場合：競合なし[NO CONFLICT]はFLASEではない
 					$ret['res'] = 'no edit';
+					$ret['conflict_type'] = 'no conflict';
 				}
 				else {
 					$link = self::getRepresentTarget();
