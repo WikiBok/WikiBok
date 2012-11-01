@@ -1,3 +1,6 @@
+#wikibok-tooltip {
+	background-color : white;
+}
 #wikibok-loading {
 	background-repeat: no-repeat;
 	background-image : url("images/loadinfo.net.gif");
