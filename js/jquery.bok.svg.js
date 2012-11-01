@@ -74,6 +74,8 @@
 	function load(xml) {
 		var	root = convert.call($(xml));
 		allData = root[0];
+		//キャンパスサイズを再計算
+		setSize();
 		return update(allData)
 	}
 	/**
@@ -94,8 +96,6 @@
 			link,
 			add,
 			tran;
-		//キャンパスサイズを再計算
-		setSize();
 		//深さで横位置を決定
 		nodes.forEach(function(d) {
 			d.y = (d.depth - 1) * options.w + d.depth * 5;
@@ -133,6 +133,8 @@
 					d.children = d._children;
 					d._children = null;
 				}
+				//キャンパスサイズを再計算
+				setSize();
 				update(d);
 			});
 		//ノード名称タグの追加
@@ -223,6 +225,8 @@
 			else {
 				add.push(c);
 			}
+			//キャンパスサイズを再計算
+			setSize();
 			update(p);
 		}
 		actNode(a);
@@ -283,6 +287,8 @@
 				return d;
 			}
 		});
+		//キャンパスサイズを再計算
+		setSize();
 		update(p);
 	}
 	/**
@@ -310,16 +316,16 @@
 	function setSize() {
 		var
 			n = tree.nodes(allData),
-			hc = allNode().length + 1,
+			//hc = allNode().length + 1,
+			hc = n.length + 1,
 			wc = Math.max.apply({},$.map(n,function(d){return [d.depth]})) || 1,
-			s = $.map([hc * options.h , wc * options.w],Math.ceil);
-		w = (w < s[1]) ? s[1] : w;
-		h = (h < s[0]) ? s[0] : h;
-			view = '0 0 '+w+' '+h;
-		tree.size(s);
-		svg
-			.attr('width',w)
-			.attr('height',h)
+			s = $.map([hc * options.h , wc * options.w],Math.ceil),
+			view;
+		w = Math.max.apply({},[w,s[1]]) || w;
+		view = '0 0 '+w+' '+s[0];
+		tree.size([s[0],w]);
+		svg.attr('width',w)
+			.attr('height',s[0])
 			.attr('viewBox',view);
 	}
 	/**
@@ -382,6 +388,8 @@
 				if(p._children) {
 					p.children = p._children;
 					p._children = null;
+					//キャンパスサイズを再計算
+					setSize();
 					update(p);
 				}
 				arguments.callee.call(p);
@@ -440,7 +448,6 @@
 	var
 		i = 0,
 		w = 0,
-		h = 0,
 		tree,
 		svg,
 		vis,
