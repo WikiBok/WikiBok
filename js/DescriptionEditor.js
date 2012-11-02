@@ -543,7 +543,7 @@ jQuery(function($) {
 				dtitle = $.wikibok.wfMsg('wikibok-new-element','title'),
 				etitle = dtitle+' '+$.wikibok.wfMsg('common','error'),
 				tmp = '<dl>'
-						+ '<dt>'+$.wikibok.wfMsg('wikibok-new-element','description','headline')+'<dt>'
+						+ '<dt>'+$.wikibok.wfMsg('wikibok-new-element','description','headline')+'</dt>'
 						+ '<dd><input type="text" class="name"/></dd>'
 						+ '</dl>',
 				close_btn = {
