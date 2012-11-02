@@ -13,9 +13,9 @@
 	height : 20px;
 }
 #rev {
-	/*固定化する場合em表記では無限スクロールになることがある*/
 	font-size : 10px;
 	white-space : nowrap;
+	position : absolute;
 	width : 100px;
 	height : 30px
 }

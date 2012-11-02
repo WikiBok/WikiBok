@@ -584,7 +584,7 @@ jQuery(function($) {
 					click: function(){
 						var
 							dialog = this,
-							newName = $(dialog).find('input.name').val(),
+							newName = ($(dialog).find('input.name').val()).replace(/ /g,'_'),
 							_status = true;
 						//クライアント上で分かるエラー
 						if(newName == '') {

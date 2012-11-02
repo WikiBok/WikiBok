@@ -1593,7 +1593,7 @@
 					source : function(q,s) {
 						var
 							_find,
-							inp = q.term.replace(/\W/g,'\\$&'),
+							inp = q.term.replace(/\W/g,'\\$&').replace(/ /g,'_'),
 							reg = (top) ? new RegExp('^'+inp,'mi') : new RegExp(inp,'mi'),
 							sug = alldata;
 						//データなし

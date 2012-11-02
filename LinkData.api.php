@@ -91,7 +91,7 @@ class LinkDataApi extends ApiBase {
 	 * パラメータを元にWHERE句を作成...
 	 */
 	private function setWhere($item,$val,$quote=true) {
-		$db = $this->getDB();
+		$db = $this->_getDB();
 		$res = array();
 		$data = $val;
 		if(!empty($data)) {
@@ -113,7 +113,7 @@ class LinkDataApi extends ApiBase {
 	 */
 	private function getSmwData() {
 		$res = array();
-		$db = $this->getDB();
+		$db = $this->_getDB();
 
 		$smw_ids = $db->tableName('smw_ids');
 		$smw_rels2 = $db->tableName('smw_rels2');
@@ -184,8 +184,9 @@ class LinkDataApi extends ApiBase {
 	}
 	/**
 	 * WIKIDBへのアクセス用インスタンスを作成
+	 *  - API_BASE に同名関数があるので変更...
 	 */
-	private function getDB() {
+	private function _getDB() {
 		if (!isset ($this->mSlaveDB)) {
 			$this->profileDBIn();
 			$this->mSlaveDB = wfGetDB(DB_SLAVE,'api');

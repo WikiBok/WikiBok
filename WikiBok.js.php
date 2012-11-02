@@ -325,7 +325,7 @@ class WikiBokJs {
 		));
 	}
 	/**
-	 * DescriptionEditor表示データの取得
+	 * BOK-XMLへ追加前のDescriptionEditorに表示されているデータ
 	 */
 	public static function getDescriptionList($rev="",$user="") {
 		//BOKデータベースへ接続
@@ -357,6 +357,7 @@ class WikiBokJs {
 								__METHOD__
 							);
 		$desc = array();
+		$_desc = array();
 		if($dbr->numRows($rows) > 0) {
 			while($row = $dbr->fetchObject($rows)) {
 				$i = $row->page_id;
@@ -366,6 +367,36 @@ class WikiBokJs {
 					continue;
 				}
 				$desc[] = array('id'=>$i,'name'=>$v,'type'=>'desc');
+				$_desc[$v] = true;
+			}
+		}
+		//リンク先としてのみ作成されいるものを追加
+		//Wikiデータベースへ接続
+		$smw_ids = $dbr->tableName('smw_ids');
+		$smw_rels2 = $dbr->tableName('smw_rels2');
+		//SMWリンクデータを取得
+		$query = 
+		'SELECT s_id.smw_namespace subject_namespace,'.
+		'       s_id.smw_title s,'.
+		'       p_id.smw_title p,'.
+		'       o_id.smw_title o,'.
+		'       s_id.smw_id s_id,'.
+		'       p_id.smw_id p_id,'.
+		'       o_id.smw_id o_id '.
+		'  FROM '.$smw_ids.' s_id '.
+		'  JOIN '.$smw_rels2.' s_rel ON s_id.smw_id = s_rel.s_id '.
+		'  JOIN '.$smw_ids.' p_id ON s_rel.p_id = p_id.smw_id'.
+		'  JOIN '.$smw_ids.' o_id ON s_rel.o_id = o_id.smw_id '.
+		' WHERE o_id.smw_namespace = '.NS_SPECIAL_DESCRIPTION.
+		' ORDER BY s_id.smw_id,p_id.smw_id,o_id.smw_id ';
+		$res = $dbr->query($query);
+		if($dbr->numRows($res) > 0) {
+			while($row = $dbr->fetchObject($res)) {
+				$v = "{$row->o}";
+				if($v == '' || array_key_exists($v,$_desc)) {
+					continue;
+				}
+				$desc[] = array('id'=>0,'name'=>$v,'type'=>'desc');
 			}
 		}
 		return json_encode($desc);

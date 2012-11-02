@@ -563,7 +563,7 @@ jQuery(function($) {
 							efunc,
 							error = false,
 							me = $(this),
-							_title = me.find('input.name').val(),
+							_title = (me.find('input.name').val()).replace(/ /g,'_'),
 							_t = $.wikibok.getPageNamespace(_title)+':'+$.wikibok.getPageName(_title);
 						//クライアントで分かるエラー
 						if(_title == '') {
