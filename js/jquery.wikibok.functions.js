@@ -2049,14 +2049,24 @@
 				tar.value = before_text+insert+after_text;
 			}
 			//クリックイベントがないため、mousedownへ設定
-			area.find(icon).on('mousedown','.wikibok_icon',function(){
+			area.find(icon)
+			.on('mousedown','.wikibok_icon',function(){
 				var
 					target = area.find(text).get(0),
 					item = $(this),
-					pre_word = item.attr('pre') || '',
-					post_word = item.attr('post') || '',
+					tag_word = item.attr('tag') || false,
+					pre_word,
+					post_word,
 					def_word = item.attr('sample') || '',
 					namespace = item.attr('nsn') || '';
+				if(tag_word == false) {
+					pre_word = item.attr('pre') || '';
+					post_word = item.attr('post') || '';
+				}
+				else {
+					pre_word = '<'+tag_word+'>';
+					post_word = '</'+tag_word+'>';
+				}
 				//ファイル選択ダイアログを表示
 				if(namespace !== '') {
 					_allImages().done(function(d) {
@@ -2148,7 +2158,7 @@
 						else {
 							//ノードなし
 							$.wikibok.timePopup(
-								$.wikibok.wfMsg('wikibok-edittool','fileselect','title')+' '+wfMsg('common','error'),
+								$.wikibok.wfMsg('wikibok-edittool','fileselect','title')+' '+$.wikibok.wfMsg('common','error'),
 								$.wikibok.wfMsg('wikibok-edittool','fileselect','error','nofile'),
 								5000
 							);
@@ -2159,6 +2169,10 @@
 					//通常のテキスト挿入のみ
 					wrap(target,pre_word,post_word,def_word);
 				}
+			})
+			.on('mouseup','.wikibok_icon',function(){
+				//入力エリアへフォーカスを設定
+				area.find(text).focus();
 			});
 
 		},

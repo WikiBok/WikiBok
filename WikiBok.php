@@ -400,9 +400,9 @@ function efWikiBokDescriptionEdit($id="wikibok-description-edit") {
 	$txt .= '<span class="inIcon media popup" pre="[[" post="]]" nsn="'.$wgContLang->getNsText(NS_MEDIA).'" ns="'.NS_MEDIA.'" sample="'.wfMsg('media_sample').'">'.wfMsg('media_tip').'</span>';
 	if($wgUseTeX) {
 		//TeXが有効な場合のみ追加...
-		$txt .= '<span class="inIcon math" pre="<math>" post="</math>" sample="'.wfMsg('math_sample').'">'.wfMsg('math_tip').'</span>';
+		$txt .= '<span class="inIcon math" tag="math" sample="'.wfMsg('math_sample').'">'.wfMsg('math_tip').'</span>';
 	}
-	$txt .= '<span class="inIcon nowiki" pre="<nowiki>" post="</nowiki>" sample="'.wfMsg('nowiki_sample').'">'.wfMsg('nowiki_tip').'</span>';
+	$txt .= '<span class="inIcon nowiki" tag="nowiki" sample="'.wfMsg('nowiki_sample').'">'.wfMsg('nowiki_tip').'</span>';
 	$txt .= '<span class="inIcon signed" pre="--~~~~" post="" sample="">'.wfMsg('sig_tip').'</span>';
 	$txt .= '<span class="inIcon hr" pre="----" post="" sample="">'.wfMsg('hr_tip').'</span>';
 	$txt .= '</dd>';
