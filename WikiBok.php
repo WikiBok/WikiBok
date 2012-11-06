@@ -133,14 +133,14 @@ function efWikiBokAjaxRequest() {
 	$wgAjaxExportList[] = "WikiBokJs::getDescriptionList";
 	$wgAjaxExportList[] = "WikiBokJs::getDescriptionJson";
 	$wgAjaxExportList[] = "WikiBokJs::getSMWLinks";
-
 	$wgAjaxExportList[] = "WikiBokJs::viewData";
 	$wgAjaxExportList[] = "WikiBokJs::createNodeFromLinks";
 	$wgAjaxExportList[] = "WikiBokJs::representNodeRequest";
 	$wgAjaxExportList[] = "WikiBokJs::checkSMWLinkTarget";
 	$wgAjaxExportList[] = "WikiBokJs::representLinkData";
-
 	$wgAjaxExportList[] = "WikiBokJs::renameNodeRequest";
+
+	$wgAjaxExportList[] = "WikiBokJs::debug";
 	return;
 }
 /**
@@ -308,6 +308,8 @@ function efWikiBokSearch($id="wikibok-search") {
 	$txt .= '<div>';
 	$txt .= '<span class="icon32 list">'.wfMsg('wikibok-search-list').'</span>';
 	$txt .= '<span class="icon32 in_window">'.wfMsg('wikibok-dialog-reset').'</span>';
+//jQueryの実行テスト...(リリース時はここをコメントアウト)
+//	$txt .= '<span class="debug">デバッグ</span>';
 	$txt .= '</div>';
 	$txt .= '</div>';
 	return "{$txt}\n";
@@ -398,9 +400,9 @@ function efWikiBokDescriptionEdit($id="wikibok-description-edit") {
 	$txt .= '<span class="inIcon media popup" pre="[[" post="]]" nsn="'.$wgContLang->getNsText(NS_MEDIA).'" ns="'.NS_MEDIA.'" sample="'.wfMsg('media_sample').'">'.wfMsg('media_tip').'</span>';
 	if($wgUseTeX) {
 		//TeXが有効な場合のみ追加...
-	//	$txt .= '<span class="inIcon math" pre="<math>" post="</math>" sample="'.wfMsg('math_sample').'">'.wfMsg('math_tip').'</span>';
+		$txt .= '<span class="inIcon math" pre="<math>" post="</math>" sample="'.wfMsg('math_sample').'">'.wfMsg('math_tip').'</span>';
 	}
-	//$txt .= '<span class="inIcon nowiki" pre="<nowiki>" post="</nowiki>" sample="'.wfMsg('nowiki_sample').'">'.wfMsg('nowiki_tip').'</span>';
+	$txt .= '<span class="inIcon nowiki" pre="<nowiki>" post="</nowiki>" sample="'.wfMsg('nowiki_sample').'">'.wfMsg('nowiki_tip').'</span>';
 	$txt .= '<span class="inIcon signed" pre="--~~~~" post="" sample="">'.wfMsg('sig_tip').'</span>';
 	$txt .= '<span class="inIcon hr" pre="----" post="" sample="">'.wfMsg('hr_tip').'</span>';
 	$txt .= '</dd>';

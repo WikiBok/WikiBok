@@ -23,7 +23,6 @@ class RevisionDB {
 	public function __construct() {
 		global $wgDBserver,$wgDBname,$wgDBpassword,$wgDBuser;
 		$this->__init($wgDBserver,$wgDBname,$wgDBuser,$wgDBpassword);
-//		$dbhost, $dbname, $dbusername, $dbpassword);
 		$this->user = "";
 		if(empty($session)) {
 			$this->session = session_id();
@@ -32,29 +31,6 @@ class RevisionDB {
 			$this->session = $session;
 		}
 	}
-
-	/**
-	 * 必要なテーブルを一括作成
-	 *  - インストール用に外部呼出し可能としておく
-	 */
-/*
-	public function __create($dbhost, $dbname, $dbusername, $dbpassword) {
-		//DB接続インスタンスの再作成(DB指定された接続に変更)
-		$this->__init($dbhost, $dbname, $dbusername, $dbpassword);
-		//MAINテーブル
-		$this->createMainTable();
-		//USERテーブル作成
-		$this->createUserTable();
-		//データ保存用テーブル作成
-		$this->createSaveTable();
-		//競合解消用クラス履歴テーブル作成
-		$this->createMergerClassTable();
-		//編集競合ログテーブル作成
-		$this->createConflictLogTable();
-		//2012/09/25追加
-		$this->createRepresentTable();
-	}
-*/
 	/**
 	 * ユーザーIDを設定する
 	 */
@@ -213,16 +189,6 @@ class RevisionDB {
 		$sql .= ') VALUES ('.implode(',',$v).')';
 		$sth = $this->db->prepare($sql);
 		return ($sth->execute($param));
-//		if($sth->execute($param) === FALSE) {
-//			//データ登録ができない場合、テーブルを作成...
-//			$this->createSaveTable();
-//			//再度データ登録を行う
-//			return $sth->execute($param);
-//		
-//		}
-//		else {
-//			return true;
-//		}
 	}
 	/**
 	 * 保存済みBOKデータを取得
@@ -431,21 +397,6 @@ class RevisionDB {
 			//バックアップファイル作成(フォルダ込み)
 			$xml_file = $backup->make_backup(BOK_MERGER_XMLCLASS,$time);
 			$merge_file = $backup->make_backup(BOK_MERGER_MERGERCLASS,$time);
-//			//各クラス内のパラメータを保持するためインスタンスを作成
-//			$bokxml = new BokXml();
-//			$merger = new BokXmlMerger();
-//			//データ登録
-//			$this->setMerger(array(
-//				BOKMERGE_REV,
-//				date('YmdHis',$time),
-//				$merger->getConfig('BOKMERGE_FIRSTUSER_INTENTION'),
-//				$merger->getConfig('BOKMERGE_DELETE_NODE_CHILED'),
-//				$merge_file,
-//				$xml_file,
-//				serialize($merger),
-//				serialize($bokxml),
-//				date('Y-m-d H:i:s',$time)
-//			));
 		}
 		else {
 			if($data['merge_rev'] == BOKMERGE_REV) {
@@ -586,8 +537,6 @@ class RevisionDB {
 	 * 編集競合データ登録
 	 */
 	public function setEditConflict($data) {
-		//対象テーブル作成(未作成の場合作成する)
-//		$this->createConflictLogTable();
 		//データにユーザーIDを追加
 		$data += array('user_id' => $this->user);
 		//ソート
@@ -608,8 +557,6 @@ class RevisionDB {
 	 * デフォルトデータを登録していないと競合種別がすべてNoEdit扱いになってしまう
 	 */
 	public function setMerger($data) {
-		//対象テーブル作成(未作成の場合作成する)
-//		$this->createMergerClassTable();
 		//ソート
 		ksort($data);
 		$k = array_keys($data);
@@ -670,20 +617,28 @@ class RevisionDB {
 		$sql .= ') VALUES ('.implode(',',$v).')';
 		$sth = $this->db->prepare($sql);
 		return($sth->execute($param) === FALSE);
-/*
-		if($sth->execute($param) === FALSE) {
-			//データ登録ができない場合、テーブルを作成...
-			$this->createRepresentTable();
-			//再度データ登録を行う
-			return $sth->execute($param);
-		}
-		else {
-			return true;
-		}
-*/
 	}
 	/**
-	 * 代表表現データの取得
+	 *
+	 */
+	public function getWkRepresent($rev) {
+		$name = wfGetDB(DB_SLAVE)->tableName('wbs_wkrepresent');
+		$sql = 'SELECT `source`,`target` FROM '.$name.' WHERE `session_id` = ? AND `user_id` = ? ';
+		if(empty($rev)) {
+			$param = array($this->session,$this->user);
+		}
+		else {
+			$sql .= ' AND `rev` <= ? ';
+			$param = array($this->session,$this->user,$rev);
+		}
+		$sql .= ' ORDER BY `source`,`target`';
+		$sth = $this->db->prepare($sql);
+		$sth->execute($param);
+		$result = $sth->fetchAll(PDO::FETCH_ASSOC);
+		return $result;
+	}
+	/**
+	 * 代表表現データの取得(書き込み文字列込み)
 	 *   - 削除成功ノード名を指定して、書き込むSMW-LINK情報を取得
 	 */
 	public function getRepresentData($rev) {
@@ -743,26 +698,7 @@ class RevisionDB {
 		}
 		catch(PDOException $e) {
 			$message = $e->getMessage();
-/*
-			if(strpos($message,"Unknown database") !== FALSE) {
-				//データベース指定せずに接続を作成
-				$this->db = new \PDO(
-					"mysql:host={$dbhost};",
-					$dbusername,
-					$dbpassword,
-					array(\PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES UTF8')
-				);
-				//データベースを作成
-				$this->db->exec('CREATE DATABASE '.$dbname.' DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci');
-				//ついでに使用するテーブルを作成
-				$this->__create($dbhost, $dbname, $dbusername, $dbpassword);
-			}
-			else {
-*/
-				var_dump($message);
-/*
-			}
-*/
+			var_dump($message);
 		}
 	}
 	/**
@@ -794,10 +730,6 @@ class RevisionDB {
 	 * @param	$diff	差分配列
 	 */
 	private function insertMain($data) {
-/*
-		//対象テーブル作成(未作成の場合作成する)
-		$this->createMainTable();
-*/
 		//データにユーザーIDを追加
 		$data += array('user_id' => $this->user);
 		//ソート
@@ -814,6 +746,9 @@ class RevisionDB {
 		return ($sth->execute($param));
 	}
 	/**
+	 * 拡張機能インストール時の共通更新処理(SQL実行)
+	 *  - $> cd maintenance
+	 *    $> php update.php
 	 * @param $updater DatabaseUpdater
 	 * @return bool
 	 */

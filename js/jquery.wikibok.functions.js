@@ -393,11 +393,12 @@
 			 */
 			function findDescriptionPage(a,b,c) {
 				var
-					inp = a.replace(/\W/g,'\\$&'),
+					inp = a.replace(/\W/g,'\\$&').replace(/ /g,'_'),
 					reg = new RegExp((arguments.length < 2) ? inp : ((!b) ? ('^'+inp+'$') : inp)),
 					pagesize = (arguments.length < 3) ? 0 : ((c == true) ? 1 : 0);
 				return $.map(description_pages,function(d) {
-					if(d.name.match(reg)) {
+					var _name = d.name.replace(/ /g,'_');
+					if(_name.match(reg)) {
 						if(d.size >= pagesize) {return d;}
 					}
 				});
@@ -971,8 +972,16 @@
 								postEditData(_inTitle,_inBody,_pst)
 								.done(function(dat) {
 									if(dat) {
-										//登録成功
-										$(me).dialog('close');
+										//記事情報(空欄など)の更新(表示の更新はしていない)
+										(function(){
+											return $.Deferred(function(def){
+												_description.call(def,getPageName(a),true);
+											}).promise();
+										}())
+										.done(function(){
+											//登録成功
+											$(me).dialog('close');
+										});
 									}
 									//正常終了時の引数判定で後続処理を記述する(EditConflictはFALSE扱い...)
 									myDef.resolve(dat);
@@ -1030,9 +1039,12 @@
 								clearTimeout(t);
 							}
 						}
-						$.data($(me).get(0),'timer',setTimeout(function() {
-							$(me).dialog('close');
-						},c));
+						//秒数が0以下の場合、自動で閉じない...
+						if(c > 0) {
+							$.data($(me).get(0),'timer',setTimeout(function() {
+								$(me).dialog('close');
+							},c));
+						}
 					},
 					close : function() {
 						var

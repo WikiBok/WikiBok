@@ -302,3 +302,20 @@ dl.context dd {
 	width : 16px;
 	height: 16px;
 }
+/* 代表表現エラー結果一覧 */
+table.linkloop {
+	border : 1px solid #000;
+}
+.linkloop th {
+	background-color : #000;
+	color : #FFF;
+}
+.linkloop tr.odd {
+	background-color : #FFC;
+}
+.linkloop tr.even {
+	background-color : #CCC;
+}
+.linkloop td.mark {
+	text-align : center;
+}

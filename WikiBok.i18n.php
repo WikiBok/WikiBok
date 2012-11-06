@@ -108,6 +108,9 @@ $messages['ja'] = array(
 			'connection_error' => 'サーバと通信できません'
 		),
 		'wikibok-merge' => array(
+			'title'=>'データ登録',
+			'loading'=>'作業中...',
+			'end' => nl2br("登録作業が終了しました\n"),
 			'conflict'=>array(
 				'title' => '編集内容反映中',
 				'no conflict' => '編集の競合はありませんでした',
@@ -117,9 +120,19 @@ $messages['ja'] = array(
 				'del' => '削除ノード一覧',
 				'move' => '移動ノード一覧'
 			),
-			'title'=>'データ登録',
-			'loading'=>'作業中...',
-			'end' => nl2br("登録作業が終了しました\n"),
+			'represent' => array(
+				'table' => array(
+					'mark' => '判定',
+					'source'=>'代表',
+					'target'=>'従属'
+				),
+				'ok' => '○',
+				'ng' => '×',
+				'title' => '代表表現変更内容',
+				'body' => nl2br("のリンクを追加すると、リンクがループしてしまいます。\n予期せぬBOKツリーとなる可能性があるため、マージを中断しました。\n※代表表現リンクの内容を確認し、個別に解消をして下さい。"),
+				'update' => '代表表現の更新を行いました',
+				'clear' => '',
+			),
 			'error' => array(
 				'busy' => nl2br("回線が混み合っています\n"),
 				'findnewrev' => nl2br("新しいBOKデータが見つかりました\n"),

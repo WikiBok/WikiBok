@@ -293,6 +293,17 @@ jQuery(function($) {
 		});
 //検索ツール
 	$('#wikibok-search')
+		//ajaxリクエストなどのデバック・開発用
+		.on('click','.debug',function() {
+			$.wikibok.requestCGI(
+				'WikiBokJs::debug',
+				[],
+				function(dat,stat,xhr) {
+				},
+				function(xhr,stat,err) {
+				}
+			);
+		})
 		.on('click','.in_window',function() {
 			//exDialogに付加しているクラスの内で表示中のもののみ対象
 			$('.wikibok-exdialog:visible').each(function(i,d) {

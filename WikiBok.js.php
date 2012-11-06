@@ -324,6 +324,17 @@ class WikiBokJs {
 			'edit' => $edit,
 		));
 	}
+	private static function getBaseQuerySMWLinks($items) {
+		$item = (!is_array($items)) ? array($items) : $items;
+		$_db = wfGetDB(DB_SLAVE);
+		$smw_ids = $_db->tableName('smw_ids');
+		$smw_rels2 = $_db->tableName('smw_rels2');
+		return	'SELECT '.implode(',',$item).' '.
+				'  FROM '.$smw_ids.' s_id '.
+				'  JOIN '.$smw_rels2.' s_rel ON s_id.smw_id = s_rel.s_id '.
+				'  JOIN '.$smw_ids.' o_id ON s_rel.o_id = o_id.smw_id '.
+				'  JOIN '.$smw_ids.' p_id ON s_rel.p_id = p_id.smw_id ';
+	}
 	/**
 	 * BOK-XMLへ追加前のDescriptionEditorに表示されているデータ
 	 */
@@ -371,24 +382,18 @@ class WikiBokJs {
 			}
 		}
 		//リンク先としてのみ作成されいるものを追加
-		//Wikiデータベースへ接続
-		$smw_ids = $dbr->tableName('smw_ids');
-		$smw_rels2 = $dbr->tableName('smw_rels2');
 		//SMWリンクデータを取得
-		$query = 
-		'SELECT s_id.smw_namespace subject_namespace,'.
-		'       s_id.smw_title s,'.
-		'       p_id.smw_title p,'.
-		'       o_id.smw_title o,'.
-		'       s_id.smw_id s_id,'.
-		'       p_id.smw_id p_id,'.
-		'       o_id.smw_id o_id '.
-		'  FROM '.$smw_ids.' s_id '.
-		'  JOIN '.$smw_rels2.' s_rel ON s_id.smw_id = s_rel.s_id '.
-		'  JOIN '.$smw_ids.' p_id ON s_rel.p_id = p_id.smw_id'.
-		'  JOIN '.$smw_ids.' o_id ON s_rel.o_id = o_id.smw_id '.
-		' WHERE o_id.smw_namespace = '.NS_SPECIAL_DESCRIPTION.
-		' ORDER BY s_id.smw_id,p_id.smw_id,o_id.smw_id ';
+		$query = self::getBaseQuerySMWLinks(array(
+			's_id.smw_namespace subject_namespace',
+			's_id.smw_title s',
+			'p_id.smw_title p',
+			'o_id.smw_title o',
+			's_id.smw_id s_id',
+			'p_id.smw_id p_id',
+			'o_id.smw_id o_id'
+		));
+		$query.=' WHERE o_id.smw_namespace = '.NS_SPECIAL_DESCRIPTION.
+				' ORDER BY s_id.smw_id,p_id.smw_id,o_id.smw_id ';
 		$res = $dbr->query($query);
 		if($dbr->numRows($res) > 0) {
 			while($row = $dbr->fetchObject($res)) {
@@ -424,23 +429,17 @@ class WikiBokJs {
 		
 		//Wikiデータベースへ接続
 		$dbr = wfGetDB(DB_SLAVE);
-		$smw_ids = $dbr->tableName('smw_ids');
-		$smw_rels2 = $dbr->tableName('smw_rels2');
-		//SMWリンクデータを取得
-		$query = 
-		'SELECT s_id.smw_namespace subject_namespace,'.
-		'       s_id.smw_title s,'.
-		'       p_id.smw_title p,'.
-		'       o_id.smw_title o,'.
-		'       s_id.smw_id s_id,'.
-		'       p_id.smw_id p_id,'.
-		'       o_id.smw_id o_id '.
-		'  FROM '.$smw_ids.' s_id '.
-		'  JOIN '.$smw_rels2.' s_rel ON s_id.smw_id = s_rel.s_id '.
-		'  JOIN '.$smw_ids.' p_id ON s_rel.p_id = p_id.smw_id'.
-		'  JOIN '.$smw_ids.' o_id ON s_rel.o_id = o_id.smw_id '.
-		' WHERE o_id.smw_namespace = '.NS_SPECIAL_DESCRIPTION.
-		' ORDER BY s_id.smw_id,p_id.smw_id,o_id.smw_id ';
+		$query = self::getBaseQuerySMWLinks(array(
+			's_id.smw_namespace subject_namespace',
+			's_id.smw_title s',
+			'p_id.smw_title p',
+			'o_id.smw_title o',
+			's_id.smw_id s_id',
+			'p_id.smw_id p_id',
+			'o_id.smw_id o_id'
+		));
+		$query.=' WHERE o_id.smw_namespace = '.NS_SPECIAL_DESCRIPTION.
+				' ORDER BY s_id.smw_id,p_id.smw_id,o_id.smw_id ';
 		$res = $dbr->query($query);
 		if($dbr->numRows($res) > 0) {
 			while($row = $dbr->fetchObject($res)) {
@@ -463,20 +462,15 @@ class WikiBokJs {
 	 */
 	private function getSMWLink($desc,$lname="") {
 		$dbr = wfGetDB(DB_SLAVE);
-		//SMWテーブル名称取得
-		$smw_rels2 = $dbr->tableName('smw_rels2');
-		$smw_ids = $dbr->tableName('smw_ids');
-		//SMWリンクを出力
-		$query ='SELECT s_id.smw_title s,'.
-				'       p_id.smw_title p,'.
-				'       o_id.smw_title o '.
-				'  FROM '.$smw_ids.' s_id '.
-				'  JOIN '.$smw_rels2.' s_rel ON s_id.smw_id = s_rel.s_id '.
-				'  JOIN '.$smw_ids.' o_id ON s_rel.o_id = o_id.smw_id '.
-				'  JOIN '.$smw_ids.' p_id ON s_rel.p_id = p_id.smw_id'.
-				' WHERE s_id.smw_title = '.$dbr->addQuotes( $desc ).
+		$query = self::getBaseQuerySMWLinks(array(
+			's_id.smw_title s',
+			'p_id.smw_title p',
+			'o_id.smw_title o'
+		));
+		$query.=' WHERE s_id.smw_title = '.$dbr->addQuotes( $desc ).
 				'   AND s_id.smw_namespace = '.NS_SPECIAL_DESCRIPTION.
 				'   AND o_id.smw_namespace = '.NS_SPECIAL_DESCRIPTION;
+
 		if(!empty($lname)) {
 			//関係名称が指定されている場合
 			$query .= '   AND p_id.smw_title = '.$dbr->addQuotes($lname);
@@ -522,18 +516,13 @@ class WikiBokJs {
 	 */
 	private function _checkSMWLinkTarget($name,$linkname) {
 		$dbr = wfGetDB(DB_SLAVE);
-		//SMWテーブル名称取得
-		$smw_rels2 = $dbr->tableName('smw_rels2');
-		$smw_ids = $dbr->tableName('smw_ids');
 		//SMWリンクを出力
-		$query ='SELECT s_id.smw_title s,'.
-				'       p_id.smw_title p,'.
-				'       o_id.smw_title o '.
-				'  FROM '.$smw_ids.' s_id '.
-				'  JOIN '.$smw_rels2.' s_rel ON s_id.smw_id = s_rel.s_id '.
-				'  JOIN '.$smw_ids.' o_id ON s_rel.o_id = o_id.smw_id '.
-				'  JOIN '.$smw_ids.' p_id ON s_rel.p_id = p_id.smw_id'.
-				' WHERE o_id.smw_title = '.$dbr->addQuotes($name).
+		$query = self::getBaseQuerySMWLinks(array(
+			's_id.smw_title s',
+			'p_id.smw_title p',
+			'o_id.smw_title o'
+		));
+		$query.=' WHERE o_id.smw_title = '.$dbr->addQuotes($name).
 				'   AND s_id.smw_namespace = '.NS_SPECIAL_DESCRIPTION.
 				'   AND o_id.smw_namespace = '.NS_SPECIAL_DESCRIPTION.
 				'   AND p_id.smw_title = '.$dbr->addQuotes($linkname);
@@ -550,16 +539,9 @@ class WikiBokJs {
 		$links = array();
 		if(defined('BOK_REPRESENT_EDIT') && BOK_REPRESENT_EDIT) {
 			$dbr = wfGetDB(DB_SLAVE);
-			//SMWテーブル名称取得
-			$smw_rels2 = $dbr->tableName('smw_rels2');
-			$smw_ids = $dbr->tableName('smw_ids');
 			//SMWリンクを出力
-			$query ='SELECT DISTINCT o_id.smw_title o '.
-					'  FROM '.$smw_ids.' s_id '.
-					'  JOIN '.$smw_rels2.' s_rel ON s_id.smw_id = s_rel.s_id '.
-					'  JOIN '.$smw_ids.' o_id ON s_rel.o_id = o_id.smw_id '.
-					'  JOIN '.$smw_ids.' p_id ON s_rel.p_id = p_id.smw_id'.
-					' WHERE s_id.smw_namespace = '.NS_SPECIAL_DESCRIPTION.
+			$query = self::getBaseQuerySMWLinks('DISTINCT o_id.smw_title o');
+			$query.=' WHERE s_id.smw_namespace = '.NS_SPECIAL_DESCRIPTION.
 					'   AND o_id.smw_namespace = '.NS_SPECIAL_DESCRIPTION;
 			if(defined('BOK_LINKTYPE_REPRESENT')) {
 				$query .= ' AND p_id.smw_title = '.$dbr->addQuotes(BOK_LINKTYPE_REPRESENT);
@@ -679,6 +661,98 @@ class WikiBokJs {
 		}
 		$result['res'] = $res;
 		return json_encode($result);
+	}
+	/**
+	 * リンクループの検出
+	 * @param $rev		作業中リビジョン番号
+	 * @param $user		作業ユーザID
+	 */
+	private static function checkLinkChain($rev,$user) {
+		global $wgExtraNamespaces;
+		//追加予定のデータを取得
+		$db = self::getDB();
+		$db->setUser($user);
+		$edit = $db->getWkRepresent($rev);
+		//BOK編集以外では確認しないようにしないと、Descriptionの内容によってエラーしかでなくなる...
+		if(count($edit) > 0) {
+			$all = $edit;
+			//追加済みSMW-LINKS取得
+			$dbr = wfGetDB(DB_SLAVE);
+			$query = self::getBaseQuerySMWLinks(array(
+				"concat('".$wgExtraNamespaces[NS_SPECIAL_DESCRIPTION].":',s_id.smw_title) `source`",
+				"concat('".$wgExtraNamespaces[NS_SPECIAL_DESCRIPTION].":',o_id.smw_title) `target`"
+			));
+			$query.=' WHERE s_id.smw_namespace = '.NS_SPECIAL_DESCRIPTION.
+					'   AND o_id.smw_namespace = '.NS_SPECIAL_DESCRIPTION;
+			//代表表現リンク名称を条件追加
+			if(defined('BOK_REPRESENT_EDIT') && (BOK_REPRESENT_EDIT)) {
+				if(defined('BOK_LINKTYPE_REPRESENT')) {
+					$query.=' AND p_id.smw_title = '.$dbr->addQuotes(BOK_LINKTYPE_REPRESENT);
+				}
+			}
+			$query.=' ORDER BY `source`,`target`';
+			$rows = $dbr->query($query);
+			if($dbr->numRows($rows) > 0) {
+				while($row = $dbr->fetchObject($rows)) {
+					$all[] = array('source'=>$row->source,'target'=>$row->target);
+				}
+			}
+			$dbr->freeResult($rows);
+			//リンクデータのKEY=>VALUE形式を統一
+			$links = array();
+			foreach($all as $link) {
+				$links[$link['source']][] = $link['target'];
+			}
+			//精査対象はユーザが編集したもののみ
+			foreach($edit as $k) {
+				//編集ごとに精査済みデータを初期化
+				$done = array();
+				//精査開始データの設定
+				$s = $k['source'];
+				$t = $k['target'];
+				$v = $links[$s];
+				$result[] = array(
+					'target' => $t,
+					'source' => $s,
+					'links' => $v,
+					'res' => self::_checkLinkChain($s,$v,$links,$done)
+				);
+			}
+		}
+		$_result = array_filter($result,array(__CLASS__,'filterLinkChain'));
+		$res = (count($_result) == 0);
+		return array('res'=>$res,'data'=>$result);
+	}
+	private static function filterLinkChain($link) {
+		return (!$link['res']);
+	}
+	/**
+	 * [再帰]リンクループの精査
+	 * @param $chk		検査対象
+	 * @param $link		検査対象からのリンク先名称
+	 * @param $alllinks	精査対象の全リンクデータ
+	 * @param $done		検査済みデータ
+	 */
+	private static function _checkLinkChain($chk,$link,$alllinks,$done) {
+		if(array_key_exists($chk,$done)) {
+			//2回目の場合、ループしているのでエラー
+			return false;
+		}
+		else {
+			$done[$chk] = true;
+		}
+		$res = true;
+		foreach($link as $next) {
+			//次検査対象がリンク先を持つ場合のみ、それを精査
+			if(array_key_exists($next,$alllinks)) {
+				//再帰呼出し
+				if(!self::_checkLinkChain($next,$alllinks[$next],$alllinks,$done)) {
+					$res = false;
+					break;
+				}
+			}
+		}
+		return $res;
 	}
 	/**
 	 * 代表表現設定用SMW-LINK文字列取得
@@ -921,7 +995,6 @@ class WikiBokJs {
 		//ログインしていない場合は処理しない
 		if($user == '') {
 			$ret['res'] = 'no permision';
-			$ret['conflict_type'] = 'no conflict';
 		}
 		else {
 			//BOKデータベースへ接続
@@ -940,38 +1013,46 @@ class WikiBokJs {
 				$ret['res'] = 'no edit';
 			}
 			else {
-				//マージ処理開始
-				$merger = new BokXmlMerger();
-				$type = $merger->checkMerge($base['bok'],$head['bok'],$work['bok']);
-				if($type === false) {
-					//引っかからない場合：競合なし[NO CONFLICT]はFLASEではない
-					$ret['res'] = 'no merge';
+				//ループリンクの検出
+				$res = self::checkLinkChain($rev,$user);
+				if($res['res']) {
+					//マージ処理開始
+					$merger = new BokXmlMerger();
+					$type = $merger->checkMerge($base['bok'],$head['bok'],$work['bok']);
+					if($type === false) {
+						//引っかからない場合：競合なし[NO CONFLICT]はFLASEではない
+						$ret['res'] = 'no merge';
+					}
+					else {
+						$link = self::getRepresentTarget();
+						list($_xml,$eSet) = $merger->doMerge($type,$link);
+						////テスト用データ登録をスキップするため...
+						//$ret['res'] = 'no permision';
+						//競合発生の記録を保管
+						$conflict_data = array(
+							'type' => $type,
+							'base_rev' => $base_rev,
+							'head_rev' => $head_rev,
+							'work_xml' => $work['bok'],
+							'merge_rev' => $merger->getMergeRev()
+						);
+						$db->setEditConflict($conflict_data);
+						//データ登録指示(一度Clientへ処理を戻す)
+						$ret['res'] = 'insert';
+						//競合タイプを返却
+						$ret['conflict_type'] = $type;
+						//登録用のリビジョン番号を設定
+						$ret['newRev'] = $head_rev + 1;
+						//$ret['newBok'] = $_xml;
+						//マージ結果をクライアントへ送信せず、DBのUserDataに格納する
+						$db->setMergeTemporary($_xml);
+						$ret['newBok'] = '';
+						$ret['eSet'] = $eSet;
+					}
 				}
 				else {
-					$link = self::getRepresentTarget();
-					list($_xml,$eSet) = $merger->doMerge($type,$link);
-					////テスト用データ登録をスキップするため...
-					//$ret['res'] = 'no permision';
-					//競合発生の記録を保管
-					$conflict_data = array(
-						'type' => $type,
-						'base_rev' => $base_rev,
-						'head_rev' => $head_rev,
-						'work_xml' => $work['bok'],
-						'merge_rev' => $merger->getMergeRev()
-					);
-					$db->setEditConflict($conflict_data);
-					//データ登録指示(一度Clientへ処理を戻す)
-					$ret['res'] = 'insert';
-					//競合タイプを返却
-					$ret['conflict_type'] = $type;
-					//登録用のリビジョン番号を設定
-					$ret['newRev'] = $head_rev + 1;
-					//$ret['newBok'] = $_xml;
-					//マージ結果をクライアントへ送信せず、DBのUserDataに格納する
-					$db->setMergeTemporary($_xml);
-					$ret['newBok'] = '';
-					$ret['eSet'] = $eSet;
+					$ret['res'] = 'link loop';
+					$ret['data'] = $res['data'];
 				}
 			}
 		}

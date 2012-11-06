@@ -46,7 +46,7 @@ jQuery(function($) {
 		//ノードのクラス分けの関係で弱いクラスを先に作成
 		// - 単独記事の作成
 		$.each($.wikibok.allDescriptionPage(),function(d,k){
-			svg.addDescription(d,{type:'desc'});
+			svg.addDescription(d.replace(/ /g,'_'),{type:'desc'});
 		});
 		// - 記事同士のリンク
 		svg.linkconvert(descjson.smwlink,{nclass:'desc',eclass:'smw'});

@@ -759,7 +759,8 @@ jQuery(function($) {
 							res = (dat.res).toUpperCase(),
 							rev = parseInt(dat.newRev) || 0,
 							conflicttype,
-							message = true;
+							message = true,
+							reps = true;
 						switch(res) {
 							case 'NO PERMISION':
 								message = $.wikibok.wfMsg('wikibok-merge','error','nologin')+$.wikibok.wfMsg('wikibok-merge','error','needlogin');
@@ -773,6 +774,20 @@ jQuery(function($) {
 									5000
 								);
 								break;
+							case 'LINK LOOP':
+								//代表表現エラー表示
+								message = '<table class="linkloop"><tr>'+
+								'<th>'+$.wikibok.wfMsg('wikibok-merge','represent','table','mark')+'</th>'+
+								'<th>'+$.wikibok.wfMsg('wikibok-merge','represent','table','source')+'</th>'+
+								'<th>'+$.wikibok.wfMsg('wikibok-merge','represent','table','target')+'</th>'+
+								'</tr>'+$.map(dat.data,function(d,i){
+									var mes = (i % 2) ? '<tr class="odd">':'<tr class="even">';
+									mes += '<td class="mark">'+((d.res)?$.wikibok.wfMsg('wikibok-merge','represent','ok'):$.wikibok.wfMsg('wikibok-merge','represent','ng'))+'</td>';
+									mes += '<td>'+d.source+'</td><td>'+d.target+'</td></tr>'
+									return mes;
+								}).join('') + '</table>';
+								reps = false;
+								break;
 							case 'NO MERGE':
 							default:
 								message = $.wikibok.wfMsg('wikibok-merge','error','nochange')+$.wikibok.wfMsg('wikibok-merge','error','refreshdata');
@@ -782,7 +797,7 @@ jQuery(function($) {
 							def.resolve.apply({},[rev,eSet]);
 						}
 						else {
-							def.reject.apply({},[message]);
+							def.reject.apply({},[message,reps]);
 						}
 					})
 				}).promise();
@@ -1141,26 +1156,36 @@ jQuery(function($) {
 												$(me).dialog('open');
 											});
 										})
-										.fail(function(message) {
+										.fail(function(message,repsup) {
 											//マージ条件外では再実行意味がない
 											if(wgRepsFlg) {
-												//BOK-XMLに変更なくても、代表表現は別途チェックする
-												setRepresentData()
-												.always(function() {
+												if(repsup) {
+													//代表表現の更新に問題ない場合
+													setRepresentData()
+													.always(function() {
+														$(me).dialog('close');
+														$.wikibok.timePopup(
+															$.wikibok.wfMsg('common','check'),
+															message + $.wikibok.wfMsg('wikibok-merge','represent','update'),
+															-1
+														);
+													});
+												}
+												else {
 													$(me).dialog('close');
 													$.wikibok.timePopup(
-														$.wikibok.wfMsg('common','check'),
-														'代表表現の更新を行いました(BOKの更新はありません)',
-														5000
+														$.wikibok.wfMsg('wikibok-merge','represent','title')+' '+$.wikibok.wfMsg('common','error'),
+														message+'<br/>'+$.wikibok.wfMsg('wikibok-merge','represent','ng')+$.wikibok.wfMsg('wikibok-merge','represent','body'),
+														-1
 													);
-												});
+												}
 											}
 											else {
 												$(me).dialog('close');
 												$.wikibok.timePopup(
 													$.wikibok.wfMsg('common','check'),
 													message,
-													5000
+													-1
 												);
 											}
 										})
