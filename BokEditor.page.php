@@ -65,10 +65,10 @@ class BokEditor extends IncludableSpecialPage {
 		$txt  = '<div id="wikibok-edit">';
 		//ログインしていない場合、編集させない
 		$txt .= ($login) ? '<span class="icon32 checked">'.wfMsg('wikibok-select-cancel').'</span>' : '';
+		$txt .= '<span class="icon32 help">'.'help'.'</span>';
 		$txt .= ($login) ? '<span class="icon32 new">'.wfMsg('wikibok-add-newnode').'</span>' : '';
 		$txt .= ($login) ? '<span class="icon32 commit">'.wfMsg('wikibok-bokxml-commit').'</span>' : '';
 		$txt .= '<span class="icon32 print">'.wfMsg('wikibok-pdf-download').'</span>';
-		//機能実装前のため、非表示に
 		$txt .= ($login) ? '<span class="icon32 save_as">'.wfMsg('wikibok-bokxml-save').'</span>' : '';
 		$txt .= ($login) ? '<span class="icon32 undo">'.wfMsg('wikibok-bokxml-undo').'</span>' : '';
 		$txt .= ($login) ? '<span class="icon32 redo">'.wfMsg('wikibok-bokxml-redo').'</span>' : '';

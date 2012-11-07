@@ -50,6 +50,7 @@ $messages['ja'] = array(
 	'wikibok-pager-last' => '終端',
 
 	'wikibok-select-cancel' => '探すことをやめますか？',
+	'wikibok-icon-help' => '凡例表示',
 	'wikibok-add-newnode' => '新規ノード追加',
 	'wikibok-add-article' => '新規記事追加',
 	'wikibok-bokxml-commit' => '編集内容をサーバへ送信(自動マージ)',
@@ -328,6 +329,17 @@ $messages['ja'] = array(
 			),
 		),
 		'wikibok-edittool' => array(
+			'help' => array(
+				'normal'=>'記事内容あり',
+				'empty'=>'記事内容なし',
+				'bok'=>array(
+					'title'=>'BOKツリー アイコン：凡例',
+					'reps_rect'=>'展開済み・従属ノードあり',
+					'rect'=>'展開済み・従属ノードなし',
+					'reps_triangel'=>'折畳済み・従属ノードあり',
+					'triangel'=>'折畳済み・従属ノードなし',
+				),
+			),
 			'view' => array(
 				'title' => '記事参照',
 			),

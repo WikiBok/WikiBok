@@ -11,9 +11,14 @@
 	function _pos(x,y) {
 		return (x || 0)+','+(y || 0);
 	}
+	/**
+	 * 端数切捨て処理
+	 * @param a 処理対象
+	 * @param b 切捨て桁数(0で整数/1で小数点第1位/-1で十の位)
+	 */
 	function _floor(a,b) {
 		var
-			p = Math.pow(10,b);
+			p = (arguments.length < 2 || b == undefined) ? 1 : Math.pow(10,b);
 		return (Math.floor(a * p) / p)
 	}
 	/**
@@ -22,18 +27,17 @@
 	 */
 	function triangel(r,reps) {
 		var
-			x = _floor((r/Math.sqrt(3)  *1.5),2),
-			y = _floor((r/Math.sqrt(3)*2*1.5),2),
+			x = _floor((r/Math.sqrt(3)  ),2),
+			y = _floor((r/Math.sqrt(3)*2),2),
 			_x = x * (-1),
 			_y = y * (-1),
-			_r = r * (-1),
-			hr = r / 2,
-			_hr = hr * (-1),
+			hr = _floor((r/ 2),2),
+			_hr= _floor((r/-2),2),
 			mpos;
 		mpos = (reps) ? [
-			_pos(0,0),_pos(_x,_y),_pos(_x, y),_pos(0,0),
-			_pos(0,0),_pos(hr,_hr),_pos( r, 0),_pos(hr,hr),
-			_pos(0,0)
+			_pos(r,0),_pos(_x,_y),_pos(_x,_hr),
+			_pos(r,0),_pos(_x, y),_pos(_x, hr),
+			_pos(r,0)
 		] : [
 			_pos(_x,_y),_pos(r,0),_pos(_x,y)
 		];
@@ -46,8 +50,8 @@
 	 */
 	function rect(r,reps) {
 		var
-			l = _floor((Math.sqrt(2) * r),2),
-			_l = l * (-1),
+			l  = _floor((r/Math.sqrt(2)),2),
+			_l = _floor((r/Math.sqrt(2)*(-1)),2),
 			mpos;
 		mpos = (reps) ? [
 			_pos( 0, 0),_pos( 0, l),_pos( l, l),_pos( l, 0),
@@ -508,6 +512,14 @@
 			renameNode : renameNode,
 			classed : classed,
 			clearClassed : clearClassed,
+			marks_point : function(r) {
+				return {
+					reps_rect : rect(r,true),
+					rect : rect(r),
+					reps_triangel : triangel(r,true),
+					triangel : triangel(r)
+				};
+			}
 		};
 	$.fn.extend({
 		bok : BokEditor.init,
