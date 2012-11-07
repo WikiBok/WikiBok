@@ -11,35 +11,52 @@
 	function _pos(x,y) {
 		return (x || 0)+','+(y || 0);
 	}
+	function _floor(a,b) {
+		var
+			p = Math.pow(10,b);
+		return (Math.floor(a * p) / p)
+	}
 	/**
 	 * 表示半径に内接する三角形(笆ｶ)となる座標文字列を作成
 	 * @param r 半径
 	 */
-	function triangel(r) {
+	function triangel(r,reps) {
 		var
-			x = r / Math.sqrt(3),
-			y = x * 2,
+			x = _floor((r/Math.sqrt(3)  *1.5),2),
+			y = _floor((r/Math.sqrt(3)*2*1.5),2),
 			_x = x * (-1),
 			_y = y * (-1),
-			mpos = [_pos(_x,_y),_pos(r,0),_pos(_x,y)];
-			return mpos.join(' ');
+			_r = r * (-1),
+			hr = r / 2,
+			_hr = hr * (-1),
+			mpos;
+		mpos = (reps) ? [
+			_pos(0,0),_pos(_x,_y),_pos(_x, y),_pos(0,0),
+			_pos(0,0),_pos(hr,_hr),_pos( r, 0),_pos(hr,hr),
+			_pos(0,0)
+		] : [
+			_pos(_x,_y),_pos(r,0),_pos(_x,y)
+		];
+		return mpos.join(' ');
 	}
 	/**
 	 * 表示半径に内接する四角形(■)となる座標文字列を作成
+	 *  - 代表表現を持つ場合、形状を変更
 	 * @param r 半径
 	 */
-	function rect(r) {
+	function rect(r,reps) {
 		var
-			l = Math.sqrt(2) * r / 2,
-			_l = l * (-1);
-			mpos = [
-				_pos(_l,_l),
-				_pos( l,_l),
-				_pos( l, l),
-				_pos(_l, l),
-				_pos(_l,_l)
-			];
-			return mpos.join(' ');
+			l = _floor((Math.sqrt(2) * r),2),
+			_l = l * (-1),
+			mpos;
+		mpos = (reps) ? [
+			_pos( 0, 0),_pos( 0, l),_pos( l, l),_pos( l, 0),
+			_pos( 0, 0),_pos( 0,_l),_pos(_l,_l),_pos(_l, 0),
+			_pos( 0, 0)
+		] : [
+			_pos(_l,_l),_pos( l,_l),_pos( l, l),_pos(_l, l),_pos(_l,_l)
+		];
+		return mpos.join(' ');
 	}
 	/**
 	 * BOK-XMLからD3ライブラリで利用するデータ形式に変換
@@ -118,8 +135,10 @@
 		//折り畳み用アイコンタグの追加
 		add.append('svg:polygon')
 			.attr('points',function(d){
-				var	r = d.r || 4.5;
-				return (d.children ? rect(r) : ((d._children) ? triangel(r) : rect(r)));
+				var
+					r = d.r || 4.5,
+					reps = options.reps(d);
+				return (d.children ? rect(r,reps) : ((d._children) ? triangel(r,reps) : rect(r,reps)));
 			})
 			//クリックイベントを基本(折畳/展開)+追加(init設定にて変更可能)の2つ設定
 			.on('click.add', options.polygonClick)
@@ -153,9 +172,10 @@
 		//アイコンのみを限定選択
 		tran.selectAll('polygon')
 			.attr('points',function(d){
-				var r = d.r || 4.5;
-				//折畳/展開の状態によって表示形状を変える
-				return (d.children ? rect(r) : ((d._children) ? triangel(r) : rect(r)));
+				var
+					r = d.r || 4.5,
+					reps = options.reps(d);
+				return (d.children ? rect(r,reps) : ((d._children) ? triangel(r,reps) : rect(r,reps)));
 			});
 		//記事名称の書き換えを即時展開
 		tran.selectAll('text')
@@ -456,6 +476,7 @@
 			w : 180,
 			h : 60,
 			duration : 10,
+			reps : function(d) {return false;},
 			node : {
 				class : '',
 				func : function() {return false;}

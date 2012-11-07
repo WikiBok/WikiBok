@@ -398,7 +398,7 @@ class WikiBokJs {
 		if($dbr->numRows($res) > 0) {
 			while($row = $dbr->fetchObject($res)) {
 				$v = "{$row->o}";
-				if($v == '' || array_key_exists($v,$_desc)) {
+				if($v == '' || array_key_exists($v,$bok_names)|| array_key_exists($v,$_desc)) {
 					continue;
 				}
 				$desc[] = array('id'=>0,'name'=>$v,'type'=>'desc');
@@ -557,7 +557,31 @@ class WikiBokJs {
 		}
 		return $links;
 	}
-
+	public static function getSMWLinkData($type="") {
+		$links = array();
+		if(defined('BOK_REPRESENT_EDIT') && BOK_REPRESENT_EDIT) {
+			$dbr = wfGetDB(DB_SLAVE);
+			//SMWリンクを出力
+			$query = self::getBaseQuerySMWLinks('DISTINCT s_id.smw_title s');
+			$query.=' WHERE s_id.smw_namespace = '.NS_SPECIAL_DESCRIPTION.
+					'   AND o_id.smw_namespace = '.NS_SPECIAL_DESCRIPTION;
+			if(defined('BOK_LINKTYPE_REPRESENT') && empty($type)) {
+				$type = BOK_LINKTYPE_REPRESENT;
+			}
+			if(!empty($type)) {
+				$query .= ' AND p_id.smw_title = '.$dbr->addQuotes(BOK_LINKTYPE_REPRESENT);
+			}
+			$rows = $dbr->query($query);
+			if($dbr->numRows($rows) > 0) {
+				while($row = $dbr->fetchObject($rows)) {
+					$link = $row->s;
+					$links[$link] = $link;
+				}
+			}
+			$dbr->freeResult($rows);
+		}
+		return json_encode($links);
+	}
 
 	/**
 	 * BOK-XMLのノード名称を変更
