@@ -294,6 +294,8 @@
 	function _links(filter) {
 		var filtOpt = $.extend({},{
 				linkName : null,
+				source : null,
+				target : null,
 				node : null,
 				type : null
 			},filter);
@@ -307,6 +309,22 @@
 					}
 					else {
 						res = (filtOpt.linkName == d.linkName);
+					}
+				}
+				if(filtOpt.source != null && res) {
+					if($.isArray(filtOpt.node)) {
+						res = (filtOpt.source.filter(function(e){return (e == d.source.name);}).length > 0);
+					}
+					else {
+						res = (filtOpt.source == d.source.name);
+					}
+				}
+				if(filtOpt.target != null && res) {
+					if($.isArray(filtOpt.node)) {
+						res = (filtOpt.target.filter(function(e){return (e == d.target.name);}).length > 0);
+					}
+					else {
+						res = (filtOpt.target == d.target.name);
 					}
 				}
 				if(filtOpt.node != null && res) {

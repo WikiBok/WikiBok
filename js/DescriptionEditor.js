@@ -120,10 +120,19 @@ jQuery(function($) {
 			[_title],
 			function(dat,stat,xhr) {
 				//編集記事から発生しているSMW-LINKを削除
-				$.each(svg.links({node:_title,type:'smw'}),function(i,d) {
+				$.each(svg.links({source:_title,type:'smw'}),function(i,d) {
 					//リンクデータの削除
 					svg.deleteLink(d.source,d.target,d.linkName);
 					_target[d.target.name] = true;
+				});
+				//SMW-LINK先としてのみ指定されていた記事を削除
+				$.each(dat.data,function(i,d){
+					if(d.target in _target) {
+						delete _target[d.target];
+					}
+				});
+				$.each(_target,function(d) {
+					svg.delDescription(d);
 				});
 				return (dat.res);
 			},
@@ -132,15 +141,6 @@ jQuery(function($) {
 			false
 		)
 		.done(function(dat,stat,xhr) {
-			//SMW-LINK先としてのみ指定されていた記事を削除
-			$.each(dat.data,function(i,d){
-				if(d.target in _target) {
-					delete _target[d.target];
-				}
-			});
-			$.each(_target,function(d) {
-				svg.delDescription(d);
-			});
 			//現時点で有効なSMW-LINKを追加
 			svg.linkconvert(dat.data,{nclass:'desc',eclass:'smw'});
 			svg.update();
