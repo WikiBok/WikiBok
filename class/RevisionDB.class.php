@@ -631,31 +631,7 @@ class RevisionDB {
 			$sql .= ' AND `rev` <= ? ';
 			$param = array($this->session,$this->user,$rev);
 		}
-		$sql .= ' ORDER BY `source`,`target`';
-		$sth = $this->db->prepare($sql);
-		$sth->execute($param);
-		$result = $sth->fetchAll(PDO::FETCH_ASSOC);
-		return $result;
-	}
-	/**
-	 * 代表表現データの取得(書き込み文字列込み)
-	 *   - 削除成功ノード名を指定して、書き込むSMW-LINK情報を取得
-	 */
-	public function getRepresentData($rev) {
-		$name = wfGetDB(DB_SLAVE)->tableName('wbs_wkrepresent');
-		//代表表現
-		$sql  = "SELECT `source`,`target`,concat('*[[".BOK_LINKTYPE_REPRESENT."::',`target`,' | ".BOK_LINKTYPE_REPRESENT.":',`target`,']]') link ";
-		$sql .= "FROM ".$name." ";
-		$sql .= " WHERE `session_id` = ? ";
-		$sql .= "   AND `user_id` = ?";
-		if(empty($rev)) {
-			$param = array($this->session,$this->user);
-		}
-		else {
-			$sql .= "   AND `rev` <= ?";
-			$param = array($this->session,$this->user,$rev);
-		}
-		$sql .= " ORDER BY `source`,`target`";
+		$sql .= ' ORDER BY `rev`,`source`,`target`';
 		$sth = $this->db->prepare($sql);
 		$sth->execute($param);
 		$result = $sth->fetchAll(PDO::FETCH_ASSOC);

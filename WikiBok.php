@@ -121,6 +121,7 @@ function efWikiBokAjaxRequest() {
 	$wgAjaxExportList[] = "WikiBokJs::getBokJson";
 	$wgAjaxExportList[] = "WikiBokJs::treeway_merge";
 	$wgAjaxExportList[] = "WikiBokJs::insertMergeXml";
+	$wgAjaxExportList[] = "WikiBokJs::clearRepresent";
 
 	$wgAjaxExportList[] = "WikiBokJs::createNodeRequest";
 	$wgAjaxExportList[] = "WikiBokJs::createNodeToRequest";
@@ -137,7 +138,6 @@ function efWikiBokAjaxRequest() {
 	$wgAjaxExportList[] = "WikiBokJs::createNodeFromLinks";
 	$wgAjaxExportList[] = "WikiBokJs::representNodeRequest";
 	$wgAjaxExportList[] = "WikiBokJs::checkSMWLinkTarget";
-	$wgAjaxExportList[] = "WikiBokJs::representLinkData";
 	$wgAjaxExportList[] = "WikiBokJs::renameNodeRequest";
 	$wgAjaxExportList[] = "WikiBokJs::getSMWLinkData";
 

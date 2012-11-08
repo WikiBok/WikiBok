@@ -324,6 +324,10 @@ class WikiBokJs {
 			'edit' => $edit,
 		));
 	}
+	/**
+	 * SMW-LINK取得用SQLのテーブル結合部分
+	 * @param $items	取得する項目を配列で指定
+	 */
 	private static function getBaseQuerySMWLinks($items) {
 		$item = (!is_array($items)) ? array($items) : $items;
 		$_db = wfGetDB(DB_SLAVE);
@@ -557,6 +561,10 @@ class WikiBokJs {
 		}
 		return $links;
 	}
+	/**
+	 * SMW-LINKデータを取得
+	 * @param $type	リンク名称[省略時:代表表現リンク/全データ]
+	 */
 	public static function getSMWLinkData($type="") {
 		$links = array();
 		if(defined('BOK_REPRESENT_EDIT') && BOK_REPRESENT_EDIT) {
@@ -699,7 +707,6 @@ class WikiBokJs {
 		$edit = $db->getWkRepresent($rev);
 		//BOK編集以外では確認しないようにしないと、Descriptionの内容によってエラーしかでなくなる...
 		if(count($edit) > 0) {
-			$all = $edit;
 			//追加済みSMW-LINKS取得
 			$dbr = wfGetDB(DB_SLAVE);
 			$query = self::getBaseQuerySMWLinks(array(
@@ -716,17 +723,13 @@ class WikiBokJs {
 			}
 			$query.=' ORDER BY `source`,`target`';
 			$rows = $dbr->query($query);
+			$smwlinks = array();
 			if($dbr->numRows($rows) > 0) {
 				while($row = $dbr->fetchObject($rows)) {
-					$all[] = array('source'=>$row->source,'target'=>$row->target);
+					$smwlinks[$row->source][] = $row->target;
 				}
 			}
 			$dbr->freeResult($rows);
-			//リンクデータのKEY=>VALUE形式を統一
-			$links = array();
-			foreach($all as $link) {
-				$links[$link['source']][] = $link['target'];
-			}
 			//精査対象はユーザが編集したもののみ
 			foreach($edit as $k) {
 				//編集ごとに精査済みデータを初期化
@@ -734,6 +737,9 @@ class WikiBokJs {
 				//精査開始データの設定
 				$s = $k['source'];
 				$t = $k['target'];
+				//各編集ごとに追加するリンク情報を設定
+				$links = $smwlinks;
+				$links[$s][] = $t;
 				$v = $links[$s];
 				$result[] = array(
 					'target' => $t,
@@ -743,12 +749,10 @@ class WikiBokJs {
 				);
 			}
 		}
-		$_result = array_filter($result,array(__CLASS__,'filterLinkChain'));
-		$res = (count($_result) == 0);
-		return array('res'=>$res,'data'=>$result);
-	}
-	private static function filterLinkChain($link) {
-		return (!$link['res']);
+		$ok = array_filter($result,create_function('$a', 'return $a["res"];'));
+		$ng = array_filter($result,create_function('$a', 'return (!$a["res"]);'));
+		$res = (count($ng) == 0);
+		return array('res'=>$res,'all'=>$result,'ok'=>$ok,'ng'=>$ng);
 	}
 	/**
 	 * [再帰]リンクループの精査
@@ -779,22 +783,15 @@ class WikiBokJs {
 		return $res;
 	}
 	/**
-	 * 代表表現設定用SMW-LINK文字列取得
+	 * 作業中代表表現を消去
 	 * @param $rev	コミット時のリビジョン番号
 	 * @param $user	ユーザID
-	 * @param $desc	記事名称
 	 */
-	public static function representLinkData($rev,$user) {
+	public static function clearRepresent($rev,$user) {
 		$db = self::getDB();
 		$db->setUser($user);
-		$rows = $db->getRepresentData($rev);
-		$res = array(
-			'res' => (count($rows) > 0),
-			'data' => $rows
-		);
-		//必要なデータは取得したので、クリア
 		$db->clearRepresentData();
-		return json_encode($res);
+		return json_encode(true);
 	}
 	/**
 	 * ノードを作成する
@@ -1038,49 +1035,63 @@ class WikiBokJs {
 			}
 			else {
 				//ループリンクの検出
-				$res = self::checkLinkChain($rev,$user);
-				if($res['res']) {
-					//マージ処理開始
-					$merger = new BokXmlMerger();
-					$type = $merger->checkMerge($base['bok'],$head['bok'],$work['bok']);
-					if($type === false) {
-						//引っかからない場合：競合なし[NO CONFLICT]はFLASEではない
-						$ret['res'] = 'no merge';
-					}
-					else {
-						$link = self::getRepresentTarget();
-						list($_xml,$eSet) = $merger->doMerge($type,$link);
-						////テスト用データ登録をスキップするため...
-						//$ret['res'] = 'no permision';
-						//競合発生の記録を保管
-						$conflict_data = array(
-							'type' => $type,
-							'base_rev' => $base_rev,
-							'head_rev' => $head_rev,
-							'work_xml' => $work['bok'],
-							'merge_rev' => $merger->getMergeRev()
-						);
-						$db->setEditConflict($conflict_data);
-						//データ登録指示(一度Clientへ処理を戻す)
-						$ret['res'] = 'insert';
-						//競合タイプを返却
-						$ret['conflict_type'] = $type;
-						//登録用のリビジョン番号を設定
-						$ret['newRev'] = $head_rev + 1;
-						//$ret['newBok'] = $_xml;
-						//マージ結果をクライアントへ送信せず、DBのUserDataに格納する
-						$db->setMergeTemporary($_xml);
-						$ret['newBok'] = '';
-						$ret['eSet'] = $eSet;
+				$reps_result = self::checkLinkChain($rev,$user);
+				if(!$reps_result['res']) {
+					//代表表現の編集が採用できないものは、削除ノードを復旧
+					$xml = new BokXml($work['bok']);
+					//XML復旧...
+					foreach($reps_result['ng'] as $link) {
+						if($link['res'] === false) {
+							$to = $xml->getParentNodeName(self::getPageName($link['source']));
+							$xml->addNodeTo(self::getPageName($link['target']),$to);
+						}
 					}
 				}
+				//マージ処理開始
+				$merger = new BokXmlMerger();
+				$type = $merger->checkMerge($base['bok'],$head['bok'],$work['bok']);
+				if($type === false) {
+					//引っかからない場合：競合なし[NO CONFLICT]はFLASEではない
+					$ret['res'] = 'no merge';
+					$ret['represent'] = $reps_result;
+				}
 				else {
-					$ret['res'] = 'link loop';
-					$ret['data'] = $res['data'];
+					$link = self::getRepresentTarget();
+					list($_xml,$eSet) = $merger->doMerge($type,$link);
+					//競合発生の記録を保管
+					$conflict_data = array(
+						'type' => $type,
+						'base_rev' => $base_rev,
+						'head_rev' => $head_rev,
+						'work_xml' => $work['bok'],
+						'merge_rev' => $merger->getMergeRev()
+					);
+					$db->setEditConflict($conflict_data);
+					//データ登録指示(一度Clientへ処理を戻す)
+					$ret['res'] = 'insert';
+					//競合タイプを返却
+					$ret['conflict_type'] = $type;
+					//登録用のリビジョン番号を設定
+					$ret['newRev'] = $head_rev + 1;
+					//$ret['newBok'] = $_xml;
+					//マージ結果をクライアントへ送信せず、DBのUserDataに格納する
+					$db->setMergeTemporary($_xml);
+					$ret['newBok'] = '';
+					$ret['eSet'] = $eSet;
+					$ret['represent'] = $reps_result;
 				}
 			}
 		}
 		return json_encode($ret);
+	}
+	/**
+	 * Description名前空間を除去
+	 * @param $v	対象ページ名称
+	 */
+	private static function getPageName($v) {
+		global $wgExtraNamespaces;
+		$pattern = '/^'.$wgExtraNamespaces[NS_SPECIAL_DESCRIPTION].':/';
+		return preg_replace($pattern,'',$v,1);
 	}
 	/**
 	 * BOK-XML登録

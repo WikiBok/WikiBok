@@ -297,7 +297,12 @@ dl.context dd {
 }
 .added_bok_nodes .txt,
 .represent-node  .txt{
-	margin-left : 18px;
+	margin-left : 20px;
+}
+.added_bok_nodes .button,
+.represent-node  .button{
+	border : 1px outset #CCC;
+	background-color : #CCC;
 }
 .added_bok_nodes .del,
 .represent-node  .del{
