@@ -820,8 +820,8 @@ jQuery(function($) {
 									mes += '<td>'+d.source+'</td><td>'+d.target+'</td></tr>'
 									return mes;
 								}).join('') + '</table><br/>'+
-								$.wikibok.wfMsg('wikibok-merge','represent','ok')+$.wikibok.wfMsg('wikibok-merge','represent','bodyok')+
-								$.wikibok.wfMsg('wikibok-merge','represent','ng')+$.wikibok.wfMsg('wikibok-merge','represent','bodyng')+
+								$.wikibok.wfMsg('wikibok-merge','represent','ok')+$.wikibok.wfMsg('wikibok-merge','represent','bodyok')+'<br/>'+
+								$.wikibok.wfMsg('wikibok-merge','represent','ng')+$.wikibok.wfMsg('wikibok-merge','represent','bodyng')+'<br/>'+
 								$.wikibok.wfMsg('wikibok-merge','represent','bodyend'),
 								-1
 							);
