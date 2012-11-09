@@ -523,9 +523,9 @@ jQuery(function($) {
 				a
 			),
 			itm = $.map(rid,function(d,i) {
-				return '<span class="del wikibok_icon" title="中止"/><span data="'+d.name+'" class="txt">'+d.name+'</span>';
+				return '<span class="del wikibok_icon button" title="中止"/><span data="'+d.name+'" class="txt">'+d.name+'</span>';
 			}),
-			itm = (itm.length < 1) ? $.wikibok.wfMsg('wikibok-represent-node','caution') : itm.join('<br/>');
+			itm = (itm.length < 1) ? $.wikibok.wfMsg('wikibok-description-addnode','caution') : itm.join('<br/>');
 		if(wgRepsFlg) {
 			$(dx).find('dd.data').html(itm);
 			//追加キャンセルイベントの設定
