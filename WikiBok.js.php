@@ -705,6 +705,7 @@ class WikiBokJs {
 		$db = self::getDB();
 		$db->setUser($user);
 		$edit = $db->getWkRepresent($rev);
+		$result = array();
 		//BOK編集以外では確認しないようにしないと、Descriptionの内容によってエラーしかでなくなる...
 		if(count($edit) > 0) {
 			//追加済みSMW-LINKS取得
@@ -752,7 +753,13 @@ class WikiBokJs {
 		$ok = array_filter($result,create_function('$a', 'return $a["res"];'));
 		$ng = array_filter($result,create_function('$a', 'return (!$a["res"]);'));
 		$res = (count($ng) == 0);
-		return array('res'=>$res,'all'=>$result,'ok'=>$ok,'ng'=>$ng);
+		if(is_null($result)) {
+			$all = array();
+		}
+		else {
+			$all = $result;
+		}
+		return array('res'=>$res,'all'=>$all,'ok'=>$ok,'ng'=>$ng);
 	}
 	/**
 	 * [再帰]リンクループの精査
