@@ -466,6 +466,7 @@
 			linkDistance : 60,
 			charge : -300,
 			nodeFunc  : function() {},
+			noArticle : function() {},
 			emptyFunc : function() {},
 			textClick : function() {},
 		},
@@ -524,7 +525,7 @@
 			delDescription : function(d) {
 				if(d in nodes) {
 					//BOKへ追加していない・記事内容なし
-					if(nodes[d].type == 'desc' && options.emptyFunc(nodes[d])) {
+					if(nodes[d].type == 'desc' && options.noArticle(nodes[d])) {
 						delete nodes[d];
 					}
 				}

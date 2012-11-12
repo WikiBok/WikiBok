@@ -13,6 +13,9 @@ jQuery(function($) {
 			ndoeFunc : function(d) {
 				return true;
 			},
+			noArticle : function(d) {
+				return (($.wikibok.findDescriptionPage(d.name,false,false)).length < 1)
+			},
 			emptyFunc : function(d) {
 				return (($.wikibok.findDescriptionPage(d.name,false,true)).length < 1)
 			},
