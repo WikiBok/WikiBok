@@ -142,7 +142,14 @@ jQuery(function($) {
 		)
 		.done(function(dat,stat,xhr) {
 			//現時点で有効なSMW-LINKを追加
-			svg.linkconvert(dat.data,{nclass:'desc',eclass:'smw'});
+			for(var i=0;i<dat.data.length;i++) {
+				var
+					o = dat.data[i],
+					//すでにある場合はそのままのクラスを使う
+					s = svg.getDescription(o.source) || svg.addDescription(o.source,{type:'desc'}),
+					t = svg.getDescription(o.target) || svg.addDescription(o.target,{type:'desc'});
+				svg.addLink(s,t,o.type,o.linkName);
+			}
 			svg.update();
 		})
 		.fail(function(){

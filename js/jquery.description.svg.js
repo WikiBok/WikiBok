@@ -236,9 +236,12 @@
 			node = nodes[a] || (nodes[a] = {name : a}),
 			c = (arguments < 2) ? {} : b;
 		return $.extend(node,c);
-
-
-
+	}
+	function getDescription(a,b) {
+		var
+			node = nodes[a] || false,
+			c = (arguments < 2) ? {} : b;
+		return (node === false) ? false : $.extend(node,c);
 	}
 	/**
 	 * 関係付けデータ追加
@@ -517,6 +520,7 @@
 			xmlconvert : xmlconvert,
 			linkconvert: linkconvert,
 			addDescription : addDescription,
+			getDescription : getDescription,
 			delDescription : function(d) {
 				if(d in nodes) {
 					//BOKへ追加していない・記事内容なし
