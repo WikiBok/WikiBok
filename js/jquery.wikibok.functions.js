@@ -694,13 +694,15 @@
 						fPage = rdata.filter(function(d){return d.from;}),
 						tPage = rdata.filter(function(d){return d.to;}),
 						fpage,
-						tpage;
+						tpage,
+						desc;
 					//変更元が存在する・変更先が存在しない
 					if(fPage.length == 1 && tPage.length == 1) {
 						fpage = fPage[0];
 						tpage = tPage[0];
+						desc = (fpage==undefined || fpage.desc==undefined || fpage.desc == '') ? '~~--' : fpage.desc;
 						//コピー新規
-						edit_request(tpage.name,fpage.desc,tpage.token)
+						edit_request(tpage.name,desc,tpage.token)
 						.done(function() {
 							//コピー元データの白紙化
 							edit_request(fpage.name,'',fpage.token,fpage.time)

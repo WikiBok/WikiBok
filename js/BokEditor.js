@@ -253,31 +253,17 @@ jQuery(function($) {
 		});
 	}
 	function renameNodeRequest(a,b) {
-		var
-			myDef = $.Deferred();
 		//BOK-XMLデータの更新
-		$.wikibok.requestCGI(
+		return $.wikibok.requestCGI(
 			'WikiBokJs::renameNodeRequest',
 			[a,b],
 			function(dat,stat,xhr) {
 				return (dat.res !== false);
 			},
 			function(xhr,stat,err) {
+				return false;
 			}
-		)
-		.done(function(dat) {
-			$.wikibok.renamePage(a,b)
-			.done(function(dat) {
-				myDef.resolve(dat);
-			})
-			.fail(function(dat){
-				myDef.reject(dat);
-			});
-		})
-		.fail(function(dat){
-			myDef.reject(dat);
-		});
-		return myDef.promise();
+		);
 	}
 
 	/**
@@ -520,14 +506,15 @@ jQuery(function($) {
 						else {
 							renameNodeRequest(oldName,newName)
 							.done(function(dat) {
-								svg.renameNode(oldName,newName);
+								$.wikibok.renamePage(oldName,newName);
 								$.revision.setRev(dat.act)
+								svg.renameNode(oldName,newName);
 								$(_box).dialog('close');
 							})
 							.fail(function(dat) {
 								$.wikibok.timePopup(
 									$.wikibok.wfMsg('wikibok-new-element','title')+' '+$.wikibok.wfMsg('common','error'),
-									dat.message,
+									'リネーム失敗',
 									5000
 								);
 							});
