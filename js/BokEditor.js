@@ -804,7 +804,7 @@ jQuery(function($) {
 								'</tr>'+$.map(dat.represent.all,function(d,i){
 									var mes = (i % 2) ? '<tr class="odd">':'<tr class="even">';
 									mes += '<td class="mark">'+((d.res)?$.wikibok.wfMsg('wikibok-merge','represent','ok'):$.wikibok.wfMsg('wikibok-merge','represent','ng'))+'</td>';
-									mes += '<td>'+d.source+'</td><td>'+d.target+'</td></tr>'
+									mes += '<td class="item">'+$.wikibok.getPageName(d.source)+'</td><td class="item">'+$.wikibok.getPageName(d.target)+'</td></tr>'
 									return mes;
 								}).join('') + '</table><br/>'+
 								$.wikibok.wfMsg('wikibok-merge','represent','ok')+$.wikibok.wfMsg('wikibok-merge','represent','bodyok')+'<br/>'+
@@ -1187,27 +1187,42 @@ jQuery(function($) {
 											});
 										})
 										.fail(function(message,represent) {
-											//マージ条件外では再実行意味がない
+											//BOK-XMLには変更がない
 											if(wgRepsFlg) {
+												//代表表現を更新
 												if(represent.ok.length > 0) {
-													//代表表現の更新に問題ない場合
+													//ループにならないもののみ更新
 													setRepresentData(represent.ok)
 													.always(function() {
-														$(me).dialog('close');
-														$.wikibok.timePopup(
-															$.wikibok.wfMsg('common','check'),
-															message + $.wikibok.wfMsg('wikibok-merge','represent','update'),
-															-1
-														);
+														//BOK-XML編集データをクリア
+														$.wikibok.requestCGI(
+															'WikiBokJs::clearEditHistory',
+															[],
+															function(dat,stat,xhr) {return true;},
+															function(dat,stat,xhr) {return true;}
+														)
+														.done(function() {
+															//結果表示
+															$.wikibok.timePopup($.wikibok.wfMsg('common','check'),message,-1);
+															$(me).dialog('close');
+															$.revision.allsync();
+														});
 													});
 												}
 												else {
-													$(me).dialog('close');
-													$.wikibok.timePopup(
-														$.wikibok.wfMsg('wikibok-merge','represent','title')+' '+$.wikibok.wfMsg('common','error'),
-														message+'<br/>'+$.wikibok.wfMsg('wikibok-merge','represent','ng')+$.wikibok.wfMsg('wikibok-merge','represent','body'),
-														-1
-													);
+													//BOK-XML編集データをクリア
+													$.wikibok.requestCGI(
+														'WikiBokJs::clearEditHistory',
+														[],
+														function(dat,stat,xhr) {return true;},
+														function(dat,stat,xhr) {return true;}
+													)
+													.done(function() {
+														//結果表示
+														$.wikibok.timePopup($.wikibok.wfMsg('common','check'),message,-1);
+														$(me).dialog('close');
+														$.revision.allsync();
+													});
 												}
 											}
 											else {
@@ -1264,6 +1279,7 @@ jQuery(function($) {
 												5000
 											);
 											$(me).dialog('close');
+											$.revision.allsync();
 										});
 									}
 								}

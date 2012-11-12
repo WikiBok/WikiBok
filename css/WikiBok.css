@@ -326,4 +326,9 @@ table.linkloop {
 }
 .linkloop td.mark {
 	text-align : center;
+	width : 50px;
+}
+.linkloop td.item {
+	text-align : left;
+	width : 250px;
 }
