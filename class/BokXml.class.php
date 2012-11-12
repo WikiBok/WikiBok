@@ -582,7 +582,7 @@ class BokXml{
 			$result[] = array(
 				'source' => $k,
 				'target' => $v,
-				'type' => $type
+				'linkname' => $type
 			);
 		}
 		return ($result);

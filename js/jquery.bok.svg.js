@@ -164,9 +164,16 @@
 		add.append('svg:text')
 			.attr('x', 8)
 			.attr('y', 3)
+			.classed('name',true)
 			.text(function(d) { return d.name; })
 			.on('click.add', options.textClick)
 			.on('click.orig', function(d){});
+		//ノード名称タグの追加
+		add.append('svg:text')
+			.attr('x', 4)
+			.attr('y', 8)
+			.classed('childs',true);
+
 		//ノード要素
 		tran = node.classed(options.node.class,options.node.func).transition()
 			.duration(options.duration)
@@ -182,8 +189,15 @@
 				return (d.children ? rect(r,reps) : ((d._children) ? triangel(r,reps) : rect(r,reps)));
 			});
 		//記事名称の書き換えを即時展開
-		tran.selectAll('text')
+		tran.selectAll('text.name')
 			.text(function(d){return d.name;});
+		tran.selectAll('text.childs')
+			.text(function(d) {
+				var
+					ch = d.children || d._children || [];
+				return ch.length; 
+			});
+
 		//ノードの消去時
 		node.exit().transition()
 			.duration(options.duration)
