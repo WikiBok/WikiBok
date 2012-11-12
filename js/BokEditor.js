@@ -1151,16 +1151,18 @@ jQuery(function($) {
 												}
 												//
 												if(wgRepsFlg) {
-													setRepresentData(represent.ok)
-													.always(function() {
-														//記事書換え結果に関係なく、マージは成功扱い[一応処理待ち]
-														$.revision.setRev();
-														$(me).dialog('close');
-														//結果表示
-														resultDialog($.wikibok.wfMsg('wikibok-merge','conflict','add'),nodes.add);
-														resultDialog($.wikibok.wfMsg('wikibok-merge','conflict','del'),nodes.del);
-														resultDialog($.wikibok.wfMsg('wikibok-merge','conflict','move'),nodes.move);
-													});
+													if(represent != undefined && represent.ok != undefined) {
+														setRepresentData(represent.ok)
+														.always(function() {
+															//記事書換え結果に関係なく、マージは成功扱い[一応処理待ち]
+															$.revision.setRev();
+															$(me).dialog('close');
+															//結果表示
+															resultDialog($.wikibok.wfMsg('wikibok-merge','conflict','add'),nodes.add);
+															resultDialog($.wikibok.wfMsg('wikibok-merge','conflict','del'),nodes.del);
+															resultDialog($.wikibok.wfMsg('wikibok-merge','conflict','move'),nodes.move);
+														});
+													}
 												}
 												else {
 												//代表表現を使用しない場合、負荷軽減
