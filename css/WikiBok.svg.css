@@ -85,6 +85,9 @@ text.shadow {
     stroke: #FFF;
     stroke-width: 3px;
 }
+text.childs {
+    fill : #009911;
+}
 g.smw.edge text {
     fill : #C99;
 }

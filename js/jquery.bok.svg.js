@@ -171,7 +171,7 @@
 		//ノード名称タグの追加
 		add.append('svg:text')
 			.attr('x', 4)
-			.attr('y', 8)
+			.attr('y',-3)
 			.classed('childs',true);
 
 		//ノード要素
@@ -356,7 +356,7 @@
 			n = tree.nodes(allData),
 			//hc = allNode().length + 1,
 			hc = n.length + 1,
-			wc = Math.max.apply({},$.map(n,function(d){return [d.depth]})) || 1,
+			wc = Math.max.apply({},$.map(n,function(d){return [d.depth+1]})) || 1,
 			s = $.map([hc * options.h , wc * options.w],Math.ceil),
 			view;
 		w = Math.max.apply({},[w,s[1]]) || w;
