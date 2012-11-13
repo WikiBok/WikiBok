@@ -1438,7 +1438,7 @@ jQuery(function($) {
 			chkItem.hide();
 		}
 		else {
-			chkParent.attr('title','['+pid.name+']'+a+'\n'+chkItem.text());
+			chkParent.attr('title','['+pid+']'+a+'\n'+chkItem.text());
 			chkItem.show();
 		}
 	}

@@ -53,10 +53,10 @@ jQuery(function($) {
 		});
 		// - 記事同士のリンク
 		svg.linkconvert(descjson.smwlink,{nclass:'desc',eclass:'smw'});
-		// - コミット前BOK-LINK
-		svg.xmlconvert(descjson.userxml,{nclass:'prebok',eclass:'prebok',linkName:''});
 		// - コミット済みBOK-LINK
 		svg.xmlconvert(descjson.basexml,{nclass:'bok',eclass:'bok',linkName:''});
+		// - コミット前BOK-LINK
+		svg.xmlconvert(descjson.userxml,{nclass:'prebok',eclass:'prebok',linkName:''});
 		svg.load()
 		svg.update();
 		//ハッシュタグまたはデフォルト値を強調
@@ -166,15 +166,41 @@ jQuery(function($) {
 	function textClick(d) {
 		var
 			tmp = '<dl class="content"><dt>'+$.wikibok.wfMsg('wikibok-contextmenu','itemgroup','view')+'</dt>'
-					+ '<dd class="command description-view">'+$.wikibok.wfMsg('wikibok-contextmenu','description','view')+'</dd>'
-					+ ((wgEdit || wgDelete) ? '<dt class="content">'+$.wikibok.wfMsg('wikibok-contextmenu','itemgroup','edit')+'</dt>' : '')
-					+ ((wgEdit && (d.type!='desc')) ? '<dd class="command description-add">'+$.wikibok.wfMsg('wikibok-contextmenu','bok','node-create')+'</dd>' : '')
-					+ ((wgEdit && (d.type=='desc')) ? '<dd class="command description-create">'+$.wikibok.wfMsg('wikibok-contextmenu','description','addnode')+'</dd>' : '')
-					+ ((wgEdit)   ? '<dd class="command description-rename">'+$.wikibok.wfMsg('wikibok-contextmenu','description','rename')+'</dd>' : '')
-					+ '</dl>',
+					+ '<dd class="command description-view">'+$.wikibok.wfMsg('wikibok-contextmenu','description','view')+'</dd>';
 			_open = true,
 			message = false,
 			reps = svg.links({linkName:wgReps});
+		//BOK-XMLへの修正あり/なし
+		if(wgEdit) {
+			tmp += '<dt class="content">'+$.wikibok.wfMsg('wikibok-contextmenu','itemgroup','edit')+'</dt>';
+			switch(d.type) {
+				case 'bok':
+					if($.revision.getData('edit')) {
+						tmp +='<dd class="command description-bokrename">'+$.wikibok.wfMsg('wikibok-contextmenu','description','rename')+'</dd>';
+					}
+					else {
+						tmp +='<dd class="command description-add">'+$.wikibok.wfMsg('wikibok-contextmenu','bok','node-create')+'</dd>'
+								+ '<dd class="command description-rename">'+$.wikibok.wfMsg('wikibok-contextmenu','description','rename')+'</dd>';
+					}
+					break;
+				case 'prebok':
+					if($.revision.getData('edit')) {
+						tmp +='<dd class="command description-add">'+$.wikibok.wfMsg('wikibok-contextmenu','bok','node-create')+'</dd>'
+								+ '<dd class="command description-rename">'+$.wikibok.wfMsg('wikibok-contextmenu','description','rename')+'</dd>';
+					}
+					else {
+						tmp +='<dd class="command description-bokrename">'+$.wikibok.wfMsg('wikibok-contextmenu','description','rename')+'</dd>';
+					}
+					break;
+				case 'desc':
+				default:
+					tmp = tmp
+							+ '<dd class="command description-create">'+$.wikibok.wfMsg('wikibok-contextmenu','description','addnode')+'</dd>'
+							+ '<dd class="command description-rename">'+$.wikibok.wfMsg('wikibok-contextmenu','description','rename')+'</dd>';
+					break;
+			}
+			tmp += '</dl>';
+		}
 		switch(mode) {
 			case 'addSelect':
 				//追加記事選択モード

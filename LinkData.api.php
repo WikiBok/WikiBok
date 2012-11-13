@@ -71,8 +71,11 @@ class LinkDataApi extends ApiBase {
 	 * @param $b	リンク名称
 	 */
 	private function filter_count($a,$b) {
-		$tmp = array_fill(0,count($a),$b);
-		$cnt = array_map(array(__CLASS__,'_map'),$a,$tmp);
+		$cnt = array();
+		if(count($a) > 0) {
+			$tmp = array_fill(0,count($a),$b);
+			$cnt = array_map(array(__CLASS__,'_map'),$a,$tmp);
+		}
 		return count(array_filter($cnt));
 	}
 	/**

@@ -386,7 +386,7 @@
 				: $.map(allNode(),function(d){
 					var
 						inp = a.replace(/\W/g,'\\$&'),
-						reg = new RegExp((arguments.length < 2 || b == false) ? ('^'+inp+'$') : inp);
+						reg = new RegExp((arguments.length < 2 || b == undefined || b == false) ? ('^'+inp+'$') : inp);
 					if(d.name.match(reg)) {
 						return d;
 					}

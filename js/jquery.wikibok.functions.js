@@ -700,7 +700,8 @@
 					if(fPage.length == 1 && tPage.length == 1) {
 						fpage = fPage[0];
 						tpage = tPage[0];
-						desc = (fpage==undefined || fpage.desc==undefined || fpage.desc == '') ? '~~--' : fpage.desc;
+						//空白の場合、コピー新規できないので、署名で作成
+						desc = (fpage==undefined || fpage.desc==undefined || fpage.desc == '') ? '--~~~~' : fpage.desc;
 						//コピー新規
 						edit_request(tpage.name,desc,tpage.token)
 						.done(function() {
