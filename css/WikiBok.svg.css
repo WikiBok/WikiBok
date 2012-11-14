@@ -27,32 +27,31 @@ g.edge path {
     fill : none;
     stroke-width : 1.5px;
 }
-/* 種類別の色指定(エッジ) */
+/* 種類別の点線/色指定(エッジ) */
 /* 種類別の色指定(マーカ:エッジ矢印) */
-g.smw path {
-    stroke : #C99;
-    /* 点線 */
-    stroke-dasharray: 1 2,2 1;
+g.prebok path {
+    stroke : #009911;
+    stroke-dasharray: 5;
 }
 g.bok path {
-    stroke : #CCF;
-    stroke-dasharray: 2 1,1 2;
+    stroke : #2255DD;
+    stroke-dasharray: 5;
 }
-g.prebok path {
-    stroke : #CFF;
-    stroke-dasharray: 1,3,1;
-}
-marker#smw {
-	stroke : #C99;
-	fill : #C99;
-}
-marker#bok {
-	stroke : #CCF;
-	fill : #CCF;
+g.smw path {
+    stroke : #FFAA00;
+    stroke-dasharray: 2;
 }
 marker#prebok {
-	stroke : #CFF;
-	fill : #CFF;
+	stroke : #009911;
+	fill : #009911;
+}
+marker#bok {
+	stroke : #2255DD;
+	fill : #2255DD;
+}
+marker#smw {
+	stroke : #FFAA00;
+	fill : #FFAA00;
 }
 
 
@@ -64,16 +63,16 @@ g.node.empty circle {
 	fill-opacity : 0.2;
 }
 g.bok  circle{
-    fill : #00F;
-    stroke : #00F;
-}
-g.desc circle {
-    fill : #0F0;
-    stroke : #0F0;
+    fill : #2255DD;
+    stroke : #2255DD;
 }
 g.prebok circle {
-    fill : #0FF;
-    stroke : #0FF;
+    fill : #009911;
+    stroke : #009911;
+}
+g.desc circle {
+	stroke : #FFAA00;
+	fill : #FFAA00;
 }
 
 /* ノード(記事)名称 */
@@ -89,7 +88,7 @@ text.childs {
     fill : #009911;
 }
 g.smw.edge text {
-    fill : #C99;
+    fill : #FFAA00;
 }
 
 /* 記事内容が何もない場合 */
