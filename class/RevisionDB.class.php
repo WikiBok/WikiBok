@@ -194,14 +194,17 @@ class RevisionDB {
 	 * 保存済みBOKデータを取得
 	 * @param $name	保存名称
 	 */
-	public function loadBokData($name) {
+	public function loadBokData($a,$b) {
 		$name = wfGetDB(DB_SLAVE)->tableName('wbs_saveboktree');
 		$sql  = 'SELECT * FROM '.$name.' ';
-		$sql .= ' WHERE title = ?';
-		$sql .= '   AND user_id = ?';
+		$sql .= ' WHERE user_id = ?';
+		$sql .= '   AND title = ?';
 		$sql .= ' LIMIT 1';
 		$sth = $this->db->prepare($sql);
-		if($sth->execute(array($name,$this->user)) === FALSE) {
+		//ユーザIDを取得
+		$user = User::idFromName($a);
+		$title = $b;
+		if($sth->execute(array($user,$title)) === FALSE) {
 			return (FALSE);
 		}
 		else {

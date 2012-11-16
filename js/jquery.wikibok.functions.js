@@ -50,19 +50,20 @@
 			/**
 			 * 配列内の重複を削除
 			 *	- $.uniqueとは異なり、返却する配列をソートしない
-			 * @param m 対象配列
+			 * @param -1- 対象配列
 			 */
-			function array_unique(m) {
-				var _chk = {},
+			function array_unique() {
+				var
+					args = Array.prototype.slice.call(arguments),
+					m = (args.length < 1 || args[0] == undefined) ? [] : args[0],
+					_chk = {},
 					_res = [];
-				if(arguments.length == 1) {
-					for(var i=0;i<m.length;i++) {
-						//チェック済み確認
-						var k = m[i];
-						if(!(k in _chk)) {
-							_chk[k] = true;
-							_res.push(k);
-						}
+				for(var i=0;i<m.length;i++) {
+					//チェック済み確認
+					var k = m[i];
+					if(!(k in _chk)) {
+						_chk[k] = true;
+						_res.push(k);
 					}
 				}
 				return _res;
@@ -73,14 +74,15 @@
 			 */
 			function wfMsg() {
 				//複数キー指定対応(配列ではなくした...)
-				var arg = Array.prototype.slice.call(arguments),
+				var
+					args = Array.prototype.slice.call(arguments),
 					mes = meta_message,
 					res = '';
 				//パラメータ指定がない場合、空文字を返す
-				if(arguments.length < 1) return '';
-				if($.isArray(arg)) {
-					for(var i=0;i<arg.length;i++) {
-						var _res = mes[arg[i]];
+				if(args.length < 1) return '';
+				if($.isArray(args)) {
+					for(var i=0;i<args.length;i++) {
+						var _res = mes[args[i]];
 						//配列キーを順に確認
 						if(_res == undefined) {
 							break;
@@ -97,9 +99,8 @@
 				}
 				else {
 					//たぶんこっちには来ない...
-					var _res = mes[arg];
-					if((typeof _res == 'string') ||
-						(typeof _res == 'number')) {
+					var _res = mes[args];
+					if((typeof _res == 'string') || (typeof _res == 'number')) {
 						mes = _res;
 					}
 					else {
@@ -110,24 +111,28 @@
 			}
 			/**
 			 * ページ名称の取得(省略時は表示中のページ名称を返す)
-			 * @param a [省略可]ページ名称
+			 * @param -1- [省略可]ページ名称
 			 */
-			function getPageName(a) {
-				var page = (arguments.length < 1) ? wgPageName : a;
+			function getPageName() {
+				var
+					args = Array.prototype.slice.call(arguments),
+					page = (args.length < 1 || args[0] == undefined) ? wgPageName : args[0];
 				return page.slice(page.indexOf(':')+1);
 			}
 			/**
 			 * 名前空間の取得
 			 *	 - 省略時は表示中のページの名前空間を返す
 			 *		 デフォルトはDescription用の名前空間
-			 * @param a [省略可]検査対象のページ
-			 * @param b [省略可]ページ名に名前空間を含まない場合の戻り値
+			 * @param -1- [省略可]検査対象のページ
+			 * @param -2- [省略可]ページ名に名前空間を含まない場合の戻り値
 			 */
-			function getPageNamespace(a,b) {
-				var ns = (arguments.length < 2) ? wgExtraNamespace[wgNsDesc] : b;
-					page = (arguments.length < 1) ? wgPageName : a;
-					idx =	 page.indexOf(':');
-				return (idx < 0) ? ns : a.slice(0,idx);
+			function getPageNamespace() {
+				var
+					args = Array.prototype.slice.call(arguments),
+					ns = (args.length < 2 || args[1] == undefined) ? wgExtraNamespace[wgNsDesc] : args[1],
+					page=(args.length < 1 || args[0] == undefined) ? wgPageName : args[0],
+					idx = page.indexOf(':');
+				return (idx < 0) ? ns : page.slice(0,idx);
 			}
 			/**
 			 * 種別+項目名の2つでユニークIDを作成
@@ -152,22 +157,32 @@
 			}
 			/**
 			 * 種別[+項目名]を指定してユニークIDを取得
-			 * @param a 種別指定
-			 * @param b 項目別指定(省略可)
+			 * @param -1- 種別指定
+			 * @param -2- 項目別指定(省略可)
 			 */
-			function getTypeID(a,b) {
-				var elem = $('body').get(0),
-					ids = $.data(elem,a);
-				return (arguments.length < 2)
-				? ((ids == undefined) ? [] : ids)
-				: ((ids == undefined) ? [] : ids.filter(function(d){return (d.name == b);}));
+			function getTypeID() {
+				var
+					args = Array.prototype.slice.call(arguments),
+					elem = $('body').get(0),
+					ids = (args.length < 1) ? [] : $.data(elem,args[0]);
+				return (args.length < 2) ? ids : ids.filter(function(d){return (d.name == args[1]);});
 			}
 			/**
 			 * WikiBOKで統一したダイアログボックスを作成
+			 * @param -1- タイトル
+			 * @param -2- 内容
+			 * @param -3- 追加パラメータ(jquery.ui.dialog参照)
+			 * @param -4- 同タイトルで複数作成する場合の識別文字列
 			 */
-			function exDialog(a,b,c,d) {
-				var baseId = uniqueID('dialog',a),
-					copy = (arguments.length < 4 || d == undefined) ? false : true,
+			function exDialog() {
+				var
+					args = Array.prototype.slice.call(arguments),
+					a = (args.length < 1) ? '' : args[0],
+					b = (args.length < 2) ? '' : args[1],
+					c = (args.length < 3) ? '' : args[2],
+					d = (args.length < 4) ? false : args[3],
+					baseId = uniqueID('dialog',a),
+					copy = (d != false),
 					id = (copy) ? uniqueID(baseId,d) : baseId,
 					mid = '#'+id,
 					opt = $.extend({},{
@@ -184,9 +199,9 @@
 						],
 						autoOpen : true,
 						position : 'center'
-					},c),
-					baseCreate = function(e,ui) {
-					}
+					},c);
+
+				//ダイアログ対象要素の存在確認
 				if($(mid).length == 0) {
 					var content = $('<div></div>');
 					//デフォルト設定[ID/Class]
@@ -196,29 +211,35 @@
 						.toggleClass('hide',true);
 					$('body').append(content);
 				}
-				//ダイアログ作成
-				$('body').on('dialogcreate',mid,function(){
+				//ダイアログ作成イベント
+				$('body').on('dialogcreate.wikibok',mid,function(){
 					var
 						pw = $(this).dialog('option','width'),
 						ph = $(this).dialog('option','height'),
-						cw,ch;
+						cw,
+						ch,
+						_add;
 					$(this).prev().find('.ui-dialog-titlebar-close').hide();
 					//追加コンテンツ
 					if(typeof b == 'string') {
 						content.html(b);
 					}
 					else if(typeof b == 'object'){
-						//複数の場合cloneしないと移動する...
-						var _add = (copy) ? b.clone(true) : b;
-						content.append(_add);
-						_add.show();
+						//HTML要素として使用できない場合...
+						if($.isPlainObject(b)) {
+							//何もしない...
+						}
+						else {
+							_add = (copy) ? b.clone(true) : b;
+							content.append(_add);
+							_add.show();
+						}
 					}
 					//内部要素が表示できないと困るので、サイズ比較...
 					cw = Math.max.apply({},$(content).find('*').map(function(){return $(this).width();})) + 100;
 					ch = Math.max.apply({},$(content).find('*').map(function(){return $(this).height();})) + 30;
 					if(pw < cw) {$(this).dialog('option','width',cw);}
 					if(ph < ch) {$(this).dialog('option','height',ch);}
-					
 				});
 				$(mid).dialog(opt);
 				if($(mid).dialog('isOpen')) {
@@ -233,15 +254,29 @@
 			}
 			/**
 			 * WikiBok独自のサーバ処理(CGI)を呼び出す
+			 * @param -1- 呼び出し対象関数 [※PHP側で呼び出し関数として登録必要]
+			 * @param -2- 呼び出し対象関数へ設定する引数 
+			 *            第5引数以降の最終引数にFALSEを設定しない場合、以下2つを先頭に自動補完する
+			 *              1.編集中リビジョン番号
+			 *              2.ユーザ名称
+			 * @param -3- サーバ通信成功時に実行するJs関数
+			 *            関数実行結果を元にJs関数で判定が必要な場合、ここに指定する
+			 *            Deferred関数でラップした場合、設定関数の戻り値が
+			 *            TRUEであれば、成功後続処理を
+			 *            FALSEであれば、失敗後続処理を誘発する
+			 * @param -4- サーバ通信失敗時に実行するJs関数
+			 *            関数実行結果を元にJs関数で判定が必要な場合、ここに指定する
+			 *            Deferred関数でラップした場合、必ず失敗後続処理を誘発する
+			 * @param -5- 引数の自動補完をする[TRUE]/しない[FALSE] [省略時:TRUE]
 			 */
 			function requestCGI() {
 				var me = this,
 					args = Array.prototype.slice.apply(arguments),
+					argPlus = (args.length < 5) ? true : args.pop(),
 					rs = args.shift() || 'WikiBokJs::dummy',
 					rsargs = args.shift() || [],
 					sfunc = args.shift() || function(){return true;},
-					efunc = args.shift() || function(){},
-					argPlus = (arguments.length < 5) ? true : args.shift();
+					efunc = args.shift() || function(){};
 				//最新リビジョン+ユーザIDを自動付加する
 				if(argPlus) {
 					rsargs = $.merge([$.revision.getRev(),wgUserName],rsargs);
@@ -317,22 +352,29 @@
 			}
 			/**
 			 * 記事一覧を取得する
-			 * @param next 一覧取得開始名称[省略時:先頭から]
-			 * @param one	 単一記事のみ取得する/しない[省略時:複数取得]
+			 * @param -1- 一覧取得開始名称[省略時:先頭から]
+			 * @param -2- 単一記事のみ取得する/しない[省略時:複数取得]
 			 */
-			function _description(next,one) {
+			function _description() {
 				var
 					def = this,
-					_one = (arguments.length < 2) ? false : one,
-					_pdata = $.extend({},{
+					args = Array.prototype.slice.apply(arguments),
+					next = (args.length < 1 || args[0] == undefined) ? false : args[0],
+					limit = (args.length < 2 || args[1] == undefined || args[1] == true) ? 1 : 500,
+					_pdata = (next==false) ? {
 						action : 'query',
+						prop : 'info',
 						generator : 'allpages',
 						gapnamespace : wgNsDesc,
+						gaplimit : limit
+					} : {
+						action : 'query',
 						prop : 'info',
-						gaplimit : ((_one === true) ? 1 : 500)
-					},{
-						gapfrom : ((arguments.length < 1) ? '' : next)
-					});
+						generator : 'allpages',
+						gapnamespace : wgNsDesc,
+						gaplimit : limit,
+						gapfrom : next
+					};
 				//リクエスト
 				requestAPI(
 					_pdata,
@@ -353,12 +395,13 @@
 									size : page.length,
 									id : k,
 									title : page.title,
-									ns : page.ns
+									ns : page.ns,
+									rev : page.lastrevid
 								}
 							}
 						}
 						//記事1件のみの場合、再帰する必要なし
-						if(_one) {
+						if(limit == 1) {
 							def.resolve(page);
 						}
 						else {
@@ -381,21 +424,42 @@
 			 * サーバから全件取得
 			 */
 			function loadDescriptionPages() {
-				var def = $.Deferred();
-				_description.call(def);
+				var
+					args = Array.prototype.slice.apply(arguments),
+					now = (args.length < 1) ? true : false,
+					def = $.Deferred();
+				//現時点の最新データを取得
+				if(now) {
+					_description.call(def);
+				}
+				else {
+					$.wikibok.requestCGI(
+						'WikiBokJs::getOldDeacriptionPages',
+						[],
+						function(dat,stat,xhr) {
+						},
+						function(xhr,stat,err) {
+						},
+						false
+					);
+				}
 				return def.promise();
 			}
 			/**
 			 * 記事一覧を名称で検索
-			 * @param a 記事名称
-			 * @param b 部分一致検索ON/OFF [省略時ON]
-			 * @param c 空白記事かどうかをチェックする(空白でないもののみ返す)/しない [省略時OFF]
+			 * @param -1- 記事名称
+			 * @param -2- 部分一致検索ON/OFF [省略時ON]
+			 * @param -3- 空白記事かどうかをチェックする(空白でないもののみ返す)/しない [省略時OFF]
 			 */
-			function findDescriptionPage(a,b,c) {
+			function findDescriptionPage() {
 				var
+					args = Array.prototype.slice.apply(arguments),
+					a = (args.length < 1 || args[0] == undefined) ? '' : args[0],
+					b = (args.length < 1 || args[1] == undefined) ? false : args[1],
+					c = (args.length < 1 || args[2] == undefined) ? false : args[2],
 					inp = a.replace(/\W/g,'\\$&').replace(/ /g,'_'),
-					reg = new RegExp((arguments.length < 2) ? inp : ((!b) ? ('^'+inp+'$') : inp)),
-					pagesize = (arguments.length < 3) ? 0 : ((c == true) ? 1 : 0);
+					reg = new RegExp((!b) ? ('^'+inp+'$') : inp),
+					pagesize = (c == true) ? 1 : 0;
 				return $.map(description_pages,function(d) {
 					var _name = d.name.replace(/ /g,'_');
 					if(_name.match(reg)) {
@@ -439,20 +503,65 @@
 				);
 				return def.promise();
 			}
+			function getDescriptionRevision() {
+				var
+					args = Array.prototype.slice.apply(arguments),
+					def = ['text','displaytitle','revid'],
+					page = (args.length < 1 || args[0] == undefined || args[0] = '') ? false : (getPageNamespace(args[0])+':'+getPageName(args[0])),
+					revid = (args.length < 2 || args[1] == undefined || args[1] = '') ? false : args[1],
+					prop = (args.length < 3) ? def_prop : array_unique($.merge(def,args[2])),
+					pdata;
+				return $.Deferred(function(def) {
+					if(!page) {
+						//記事名の指定がない場合、エラー...
+						def.reject('記事名指定なし');
+					}
+					else {
+						//過去データの指定がない場合、最新記事を参照
+						pdata = (!revid) ? {
+							action : 'parse',
+							prop : prop.join('|'),
+							page : page
+						} : {
+							action : 'parse',
+							prop : prop.join('|'),
+							page : page,
+							oldid: revid
+						};
+						requestAPI(
+							_pdata,
+							function(dat,stat,xhr) {
+								return (dat['parse'] != undefined && dat['parse']['text']['*'] != undefined && dat['parse']['displaytitle'] != undefined);
+							},
+							function(xhr,stat,err) {return false}
+						)
+						.done(function(dat,stat,xhr) {
+							if(dat['parse']['revid'] == 0) {
+								dat.resolve(dat);
+							}
+							else {
+								def.reject(dat['error'])
+							}
+						})
+						.fail(function(xhr,stat,err) {
+							def.reject('Other');
+						});
+					}
+				}).promise();
+			}
 			/**
 			 * 記事1件分を取得
-			 * @param a 記事名称
-			 * @param prop 取得内容(Wiki-APIに準拠)
+			 * @param -1- 記事名称
+			 * @param -2- 取得内容(Wiki-APIに準拠)
 			 */
-			function getDescriptionPage(_page,_prop) {
+			function getDescriptionPage() {
 				var
+					args = Array.prototype.slice.apply(arguments),
+					_page = (args.length < 1 || args[0] == undefined) ? '' : args[0],
+					_prop = (args.length < 2 || args[1] == undefined) ? [] : args[1],
 					def = $.Deferred(),
 					//デフォルトに追加
-					prop = (arguments.length < 2 || _prop == undefined || _prop.length < 1) ? [
-						'text',
-						'displaytitle',
-						'revid'
-					] : array_unique($.merge([
+					prop = array_unique($.merge([
 						'text',
 						'displaytitle',
 						'revid'
@@ -460,10 +569,6 @@
 					_pdata = $.extend({},{
 						action : 'parse',
 						prop : prop.join('|'),
-					//タイトル＋テキストを指定して仮登録
-					//	title : '',
-					//	text : '',
-					//もしくは、「page」に登録済みページ名を指定してデータ取得...のどちらかができる(?)
 						page : getPageNamespace(_page)+':'+getPageName(_page),
 					});
 				requestAPI(
@@ -491,46 +596,34 @@
 			}
 			/**
 			 * URLパラメータを取得
-			 * @param a パラメータ名称[省略時:全パラメータ]/[#:ネーム]
+			 * @param -1- パラメータ名称[省略時:全パラメータ]/[#:ネーム]
 			 */
-			function getUrlVars(a) {
+			function getUrlVars() {
 				var
+					args = Array.prototype.slice.apply(arguments),
+					a = (args.length < 1 || args[0] == undefined) ? false : args[0],
 					_href = window.location.href,
-					_query = _href.slice(_href.indexOf('?')+1,_href.indexOf('#')),
+					_name = _href.indexOf('#'),
+					_query = (_name < 0) ? _href.slice(_href.indexOf('?')+1) : _href.slice(_href.indexOf('?')+1,_name),
 					hashes = _query.split('&'),
-					names = (window.location.href.indexOf('#') < 0) ? false : _href.slice(_href.indexOf('#') + 1),
+					names = (_name < 0) ? false : _href.slice(_href.indexOf('#') + 1),
 					vars = [];
-				//省略時
-				if(arguments.length<1||a==undefined||a=='') {
+				//名称
+				if(a == '#') {
+					vars = names;
+				}
+				else {
 					for(var i=0;i<hashes.length;i++) {
 						var
 							hash = hashes[i].split('='),
 							dhash1 = decodeURI(hash[0]),
 							dhash2 = (hash[1] == undefined) ? true : decodeURI(hash[1]);
-						vars.push({
-							name : dhash1,
-							value: dhash2
-						});
-					}
-				}
-				else {
-					//名称
-					if(a == '#') {
-						vars = names;
-					}
-					else {
-						for(var i=0;i<hashes.length;i++) {
-							var
-								hash = hashes[i].split('='),
-								dhash1 = decodeURI(hash[0]),
-								dhash2 = (hash[1] == undefined) ? true : decodeURI(hash[1]);
-							//指定パラメータのみ
-							if(dhash1 == a) {
-								vars = {
-									name : dhash1,
-									value: dhash2
-								};
-							}
+						//指定パラメータのみ
+						if(dhash1 == a) {
+							vars = {
+								name : dhash1,
+								value: dhash2
+							};
 						}
 					}
 				}
@@ -538,16 +631,19 @@
 			}
 			/**
 			 * 記事参照ダイアログ
-			 * @param a 表示記事名称
-			 * @param b 表示記事内容
-			 * @param c パラメータ
+			 * @param -1- 表示記事名称
+			 * @param -2- 表示記事内容
+			 * @param -3- パラメータ
 			 */
-			function viewDescriptionDialog(a,b,c) {
+			function viewDescriptionDialog() {
 				var
+					args = Array.prototype.slice.apply(arguments),
+					a = (args.length < 1 || args[0] == undefined) ? '' : args[0],
+					b = (args.length < 2 || args[1] == undefined) ? '' : args[1],
+					_mode = (args.length < 3 || args[2] == undefined) ? 'view' : args[2],
 					myDef = $.Deferred(),
 					_open = true,
 					_btn = [],
-					_mode = (arguments.length < 3 || c == undefined) ? 'view' : c,
 					_title = getPageNamespace(a)+':'+getPageName(a),
 					_edit = {
 						text : wfMsg('common','button_edit','text'),
@@ -1075,6 +1171,7 @@
 				findDescriptionPage : findDescriptionPage,
 				allDescriptionPage : function(){return description_pages;},
 				getDescriptionPage : getDescriptionPage,
+				getDescriptionRevision : getDescriptionRevision,
 				getDescriptionEdit : getDescriptionEdit,
 				getUrlVars : getUrlVars,
 				viewDescriptionDialog : viewDescriptionDialog,

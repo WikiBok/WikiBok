@@ -1192,8 +1192,7 @@ class WikiBokJs {
 	public static function viewData($user,$title) {
 		//BOKデータベースへ接続
 		$db = self::getDB();
-		$db->setUser($user);
-		$data = $db->loadBokData($title);
+		$data = $db->loadBokData($user,$title);
 		if($data !== FALSE) {
 			$bok = new BokXml($data['bok_xml']);
 		}
