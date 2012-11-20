@@ -62,7 +62,7 @@ jQuery(function($) {
 							var
 								_title = tid;
 								_desc = $.wikibok.findDescriptionPage(tid,false),
-								_rev = (_desc.length < 1 || _desc[0].rev != undefined) ? _desc[0].rev : false;
+								_rev = (_desc.length > 0 && _desc[0].rev != undefined) ? _desc[0].rev : false;
 							if(editPanel()) {
 								$.wikibok.getDescriptionPage(_title)
 								.done(function(dat) {
