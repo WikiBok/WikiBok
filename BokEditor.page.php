@@ -31,6 +31,9 @@ class BokEditor extends IncludableSpecialPage {
 		switch($act) {
 			case 'load':
 				break;
+			case 'history':
+				$wgOut->addHTML($this->getRevPanel($login));
+				break;
 			default:
 				//リビジョン表示/編集機能
 				$wgOut->addHTML($this->getRevPanel($login));

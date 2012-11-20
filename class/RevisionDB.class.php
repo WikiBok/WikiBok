@@ -622,7 +622,7 @@ class RevisionDB {
 		return($sth->execute($param) === FALSE);
 	}
 	/**
-	 *
+	 * 編集中代表表現データの取得
 	 */
 	public function getWkRepresent($rev) {
 		$name = wfGetDB(DB_SLAVE)->tableName('wbs_wkrepresent');
@@ -657,6 +657,105 @@ class RevisionDB {
 		}
 		$sth = $this->db->prepare($del);
 		$sth->execute($param);
+		return true;
+	}
+	/**
+	 * データ登録
+	 */
+	public function setDisplaylog($type,$data) {
+		//IDは自動採番なので除外
+		$chk = array('id'=>true);
+		//登録方法によって除外項目を変更
+		if($type == 0) {
+			$chk['user_id']=true;
+			$chk['title']=true;
+		}
+		else {
+			$chk['rev']=true;
+		}
+		//データ項目名・設定値を再設定
+		$inData = array();
+		foreach($data as $k => $v) {
+			if(!array_key_exists($k,$chk)) {
+				//USER_IDは別途取得
+				if(strtolower($k) == 'user_id') {
+					$inData[$k] = User::idFromName($v);
+				}
+				else if((strtolower($k) == 'allreps') || (strtolower($k) == 'description_pages')) {
+					$inData[$k] = serialize($v);
+				}
+				else {
+					$inData[$k] = $v;
+				}
+			}
+		}
+		//ソート
+		ksort($inData);
+		$key = array_keys($inData);
+		$param = array_values($inData);
+		$val = array_fill(0,count($param),'?');
+		//クエリ生成
+		$tableName = wfGetDB(DB_SLAVE)->tableName('wbs_displog');
+		$sql  = 'INSERT INTO '.$tableName.' (`'.implode('`,`',$key).'`) VALUES ('.implode(',',$val).')';
+		$sth = $this->db->prepare($sql);
+		return ($sth->execute($param));
+	}
+	/**
+	 * データ取得
+	 */
+	public function getDisplaylog($param) {
+		$tableName = wfGetDB(DB_SLAVE)->tableName('wbs_displog');
+		$sql = 'SELECT `allreps`,`description_pages` FROM '.$tableName.' WHERE ';
+		$_key = array();
+		$_val = array();
+		foreach($param as $key => $val) {
+			$_key[] = "`{$key}` = ?";
+		}
+		$sql .= implode(' AND ',$_key);
+		$sql .= ' LIMIT 1';
+		$sth = $this->db->prepare($sql);
+		$sth->execute(array_values($param));
+		$data = $sth->fetch(PDO::FETCH_ASSOC);
+		$res = false;
+		if($data !== FALSE) { 
+			$res['allreps'] = unserialize($data['allreps']);
+			$res['description_pages'] = unserialize($data['description_pages']);
+		}
+		return $res;
+	}
+	/**
+	 * 拡張機能インストール時の共通更新処理(SQL実行)
+	 *  - $> cd maintenance
+	 *    $> php update.php
+	 * @param $updater DatabaseUpdater
+	 * @return bool
+	 */
+	public static function onLoadExtensionSchemaUpdates(DatabaseUpdater $updater = null) {
+		$dir = dirname( __FILE__ );
+
+		if ( $updater === null ) {
+			// <= 1.16 support
+			global $wgExtNewTables, $wgExtModifiedFields;
+			$wgExtNewTables[] = array('wikibok-systems',"$dir/sql/create_revision_tables.sql");
+			//$wgExtModifiedFields[] = array('table','field_name',dirname( __FILE__ ) . '/table.patch.field_name.sql');
+		} else {
+			// >= 1.17 support
+			$updater->addExtensionUpdate( array( 'addTable', 'wikibok_system', "$dir/sql/create_revision_tables.sql", true ) );
+			//$updater->addExtensionUpdate( array( 'addField', 'abuse_filter', 'af_global', "$dir/db_patches/patch-global_filters.sql", true ) );
+
+/*
+			//DBタイプによってSQL変更する場合,下記のように場合分け...
+			if($updater->getDB()->getType() == 'mysql') {
+			}
+			else if($updater->getDB()->getType() == 'sqlite') {
+			}
+			else if($updater->getDB()->getType() == 'sqlite') {
+			}
+			else {
+				throw new MWException("No known Schema updates.");
+			}
+*/
+		}
 		return true;
 	}
 /*******************************************************************************
@@ -724,41 +823,5 @@ class RevisionDB {
 		$sth = $this->db->prepare($sql);
 		return ($sth->execute($param));
 	}
-	/**
-	 * 拡張機能インストール時の共通更新処理(SQL実行)
-	 *  - $> cd maintenance
-	 *    $> php update.php
-	 * @param $updater DatabaseUpdater
-	 * @return bool
-	 */
-	public static function onLoadExtensionSchemaUpdates(DatabaseUpdater $updater = null) {
-		$dir = dirname( __FILE__ );
-
-		if ( $updater === null ) {
-			// <= 1.16 support
-			global $wgExtNewTables, $wgExtModifiedFields;
-			$wgExtNewTables[] = array('wikibok-systems',"$dir/sql/create_revision_tables.sql");
-			//$wgExtModifiedFields[] = array('table','field_name',dirname( __FILE__ ) . '/table.patch.field_name.sql');
-		} else {
-			// >= 1.17 support
-			$updater->addExtensionUpdate( array( 'addTable', 'wikibok_system', "$dir/sql/create_revision_tables.sql", true ) );
-			//$updater->addExtensionUpdate( array( 'addField', 'abuse_filter', 'af_global', "$dir/db_patches/patch-global_filters.sql", true ) );
-
-/*
-			//DBタイプによってSQL変更する場合,下記のように場合分け...
-			if($updater->getDB()->getType() == 'mysql') {
-			}
-			else if($updater->getDB()->getType() == 'sqlite') {
-			}
-			else if($updater->getDB()->getType() == 'sqlite') {
-			}
-			else {
-				throw new MWException("No known Schema updates.");
-			}
-*/
-		}
-		return true;
-	}
-
 }
 ?>

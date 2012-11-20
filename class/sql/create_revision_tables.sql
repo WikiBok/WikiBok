@@ -79,8 +79,8 @@ CREATE TABLE IF NOT EXISTS /*$wgDBprefix*/wbs_conflictlog (
 
 CREATE TABLE IF NOT EXISTS /*$wgDBprefix*/wbs_displog (
   `id` bigint unsigned not null auto_increment,
-  `rev` int(10) unsigned not null,
-  `user_id` int(10) not null default '',
+  `rev` int(10) unsigned not null default 0,
+  `user_id` int(10) not null default 0,
   `title` varchar(255) not null default '',
   `allreps` longtext,
   `description_pages` longtext,

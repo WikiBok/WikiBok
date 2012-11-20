@@ -2,6 +2,7 @@
 	$.extend({
 		wikibok : new function() {
 			var
+				allreps = {},
 				description_pages = {},
 				desc_xhr = false;
 			/**
@@ -165,7 +166,7 @@
 					args = Array.prototype.slice.call(arguments),
 					elem = $('body').get(0),
 					ids = (args.length < 1) ? [] : $.data(elem,args[0]);
-				return (args.length < 2) ? ids : ids.filter(function(d){return (d.name == args[1]);});
+					return (ids == undefined) ? [] : ((args.length < 2) ? ids : ids.filter(function(d){return (d.name == args[1]);}));
 			}
 			/**
 			 * WikiBOKで統一したダイアログボックスを作成
@@ -359,8 +360,8 @@
 				var
 					def = this,
 					args = Array.prototype.slice.apply(arguments),
-					next = (args.length < 1 || args[0] == undefined) ? false : args[0],
-					limit = (args.length < 2 || args[1] == undefined || args[1] == true) ? 1 : 500,
+					next  = (args.length < 1 || args[0] == undefined) ? false : args[0],
+					limit = (args.length < 2 || args[1] == undefined || args[1] == false) ? 500 : 1,
 					_pdata = (next==false) ? {
 						action : 'query',
 						prop : 'info',
@@ -421,27 +422,47 @@
 				)
 			}
 			/**
-			 * サーバから全件取得
+			 * サーバから記事情報をすべて取得
 			 */
 			function loadDescriptionPages() {
 				var
 					args = Array.prototype.slice.apply(arguments),
 					now = (args.length < 1) ? true : false,
 					def = $.Deferred();
-				//現時点の最新データを取得
 				if(now) {
+					//現時点の最新データを取得
 					_description.call(def);
 				}
 				else {
 					$.wikibok.requestCGI(
-						'WikiBokJs::getOldDeacriptionPages',
-						[],
+						'WikiBokJs::getDisplog',
+						args,
 						function(dat,stat,xhr) {
+							if(dat!==false) {
+								for(var desc in dat.description_pages) {
+									desc.ns = parseInt(desc.ns);
+									desc.rev = parseInt(desc.rev);
+									desc.size = parseInt(desc.size);
+								}
+								description_pages = dat.description_pages;
+								allreps = dat.allreps;
+								return true;
+							}
+							else {
+								return false;
+							}
 						},
 						function(xhr,stat,err) {
+							return false;
 						},
 						false
-					);
+					)
+					.done(function() {
+						def.resolve();
+					})
+					.fail(function() {
+						def.reject();
+					});
 				}
 				return def.promise();
 			}
@@ -506,48 +527,39 @@
 			function getDescriptionRevision() {
 				var
 					args = Array.prototype.slice.apply(arguments),
-					def = ['text','displaytitle','revid'],
-					page = (args.length < 1 || args[0] == undefined || args[0] = '') ? false : (getPageNamespace(args[0])+':'+getPageName(args[0])),
-					revid = (args.length < 2 || args[1] == undefined || args[1] = '') ? false : args[1],
-					prop = (args.length < 3) ? def_prop : array_unique($.merge(def,args[2])),
-					pdata;
-				return $.Deferred(function(def) {
-					if(!page) {
-						//記事名の指定がない場合、エラー...
-						def.reject('記事名指定なし');
-					}
-					else {
-						//過去データの指定がない場合、最新記事を参照
-						pdata = (!revid) ? {
-							action : 'parse',
-							prop : prop.join('|'),
-							page : page
-						} : {
-							action : 'parse',
-							prop : prop.join('|'),
-							page : page,
-							oldid: revid
-						};
-						requestAPI(
-							_pdata,
-							function(dat,stat,xhr) {
-								return (dat['parse'] != undefined && dat['parse']['text']['*'] != undefined && dat['parse']['displaytitle'] != undefined);
-							},
-							function(xhr,stat,err) {return false}
-						)
-						.done(function(dat,stat,xhr) {
+					_page = (args.length < 1 || args[0] == undefined) ? '' : args[0],
+					_rev = (args.length < 2 || args[1] == undefined) ? false : args[1],
+					def = $.Deferred(),
+					//デフォルトに追加
+					prop = ['text','displaytitle','revid'],
+					_pdata = $.extend({},{
+						action : 'parse',
+						prop : prop.join('|'),
+						page : getPageNamespace(_page)+':'+getPageName(_page),
+						oldid : _rev
+					});
+				requestAPI(
+					_pdata,
+					function(dat,stat,xhr) {
+						if(dat['parse'] != undefined && dat['parse']['text']['*'] != undefined && dat['parse']['displaytitle'] != undefined) {
+							//記事の取得に成功
 							if(dat['parse']['revid'] == 0) {
-								dat.resolve(dat);
+								//記事が存在しない場合
+								def.reject(dat);
 							}
 							else {
-								def.reject(dat['error'])
+								def.resolve(dat);
 							}
-						})
-						.fail(function(xhr,stat,err) {
-							def.reject('Other');
-						});
+						}
+						else {
+							def.reject(dat['error']);
+						}
+					},
+					function(xhr,stat,err) {
+						def.reject();
 					}
-				}).promise();
+				);
+				return def.promise();
 			}
 			/**
 			 * 記事1件分を取得
@@ -602,15 +614,18 @@
 				var
 					args = Array.prototype.slice.apply(arguments),
 					a = (args.length < 1 || args[0] == undefined) ? false : args[0],
-					_href = window.location.href,
-					_name = _href.indexOf('#'),
-					_query = (_name < 0) ? _href.slice(_href.indexOf('?')+1) : _href.slice(_href.indexOf('?')+1,_name),
-					hashes = _query.split('&'),
-					names = (_name < 0) ? false : _href.slice(_href.indexOf('#') + 1),
+					_query = window.location.search,
+					_name = window.location.hash,
+					query = _query.slice(_query.indexOf('?')+1),
+					name = _name.slice(_name.indexOf('?')+1),
+					hashes = query.split('&'),
 					vars = [];
 				//名称
-				if(a == '#') {
-					vars = names;
+				if(a == false) {
+					vars = hashes;
+				}
+				else if(a == '#') {
+					vars = name;
 				}
 				else {
 					for(var i=0;i<hashes.length;i++) {
@@ -620,10 +635,7 @@
 							dhash2 = (hash[1] == undefined) ? true : decodeURI(hash[1]);
 						//指定パラメータのみ
 						if(dhash1 == a) {
-							vars = {
-								name : dhash1,
-								value: dhash2
-							};
+							vars = {name : dhash1,value: dhash2};
 						}
 					}
 				}
@@ -641,6 +653,7 @@
 					a = (args.length < 1 || args[0] == undefined) ? '' : args[0],
 					b = (args.length < 2 || args[1] == undefined) ? '' : args[1],
 					_mode = (args.length < 3 || args[2] == undefined) ? 'view' : args[2],
+					_rev = (args.length < 4 || args[3] == undefined) ? false : args[3],
 					myDef = $.Deferred(),
 					_open = true,
 					_btn = [],
@@ -717,7 +730,7 @@
 								widget = dialog.dialog('widget'),
 								act= widget.find(_selecter(wfMsg('common','button_close','class')));
 							if(_open) {
-								dialog.find('.title').html(a);
+								dialog.find('.title').html(titlelink(wgServer+wgScript,a,_rev));
 								dialog.find('.wikibok-text').html(b);
 								_open = false;
 							}
@@ -727,6 +740,19 @@
 					a
 				);
 				return myDef.promise();
+			}
+			function titlelink() {
+				var
+					args = Array.prototype.slice.apply(arguments),
+					base = (args.length < 1 || args[0] == undefined) ? '' : args[0],
+					name = (args.length < 2 || args[1] == undefined) ? '' : args[1],
+					old = (args.length < 3 || args[2] == undefined || args[2] == false) ? '' : '?oldid='+args[2],
+					tmpl = '<a href="@base@/@title@@old@" target="_blank">@name@</a>';
+					return tmpl
+									.replace(/(@base@)/,base)
+									.replace(/(@old@)/,old)
+									.replace(/(@name@)/,getPageName(name))
+									.replace(/(@title@)/,getPageNamespace(name)+':'+getPageName(name));
 			}
 			/**
 			 * Description名称の変更
@@ -1157,6 +1183,39 @@
 					}
 				});
 			}
+			/**
+			 * SMWリンクデータの読み込み(最新)
+			 */
+			function loadReps() {
+				return requestCGI(
+					'WikiBokJs::getSMWLinkData',
+					[],
+					function(dat,stat,xhr) {
+						allreps = dat;
+						return true;
+					},
+					function(xhr,stat,err) {
+						return false;
+					},
+					false
+				);
+			}
+			/**
+			 * 代表表現リンク判定
+			 * @param a 対象ノード名称
+			 */
+			function checkReps(a) {
+				return (allreps == undefined || allreps[a] == undefined) ? false : true;
+			}
+			/**
+			 * 代表表現リンク取得
+			 */
+			function getReps() {
+				var
+					args = Array.prototype.slice.call(arguments),
+					res = (args.length < 1) ? allreps : allreps[args[0]];
+				return (res == undefined) ? false : res;
+			}
 			return {
 				array_unique : array_unique,
 				wfMsg : wfMsg,
@@ -1173,6 +1232,11 @@
 				getDescriptionPage : getDescriptionPage,
 				getDescriptionRevision : getDescriptionRevision,
 				getDescriptionEdit : getDescriptionEdit,
+
+				loadReps : loadReps,
+				checkReps : checkReps,
+				getReps : getReps,
+				
 				getUrlVars : getUrlVars,
 				viewDescriptionDialog : viewDescriptionDialog,
 				editDescriptionDialog : editDescriptionDialog,

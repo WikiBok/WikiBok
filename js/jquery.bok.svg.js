@@ -400,9 +400,13 @@
 	function actNode(a,b) {
 		var
 			_class = (arguments.length < 2 || b == undefined) ? 'active' : b;
-		openTree(a);
-		clearClassed(_class);
-		classed(a,_class);
+		return $.Deferred(function(def) {
+			openTree(a);
+			clearClassed(_class);
+			classed(a,_class);
+			def.resolve();
+		})
+		.promise();
 	}
 	/**
 	 * 対象ノードまでを展開

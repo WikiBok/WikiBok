@@ -1104,19 +1104,16 @@ class WikiBokJs {
 	 * BOK-XML登録
 	 * @param	$user	ユーザーID
 	 * @param	$rev	登録用リビジョン番号(競合解消時の最新BOKリビジョン+1)
-	 * @param	$bok	登録用BOK-XML(競合解消済みXML文字列)
 	 * @param	$eSet	編集情報(最新<=>登録用の差分/実際のEditSetとは異なる)
 	 */
-	public static function insertMergeXml($rev,$user,$bok="",$eSet="") {
+	public static function insertMergeXml($rev,$user,$eSet="",$desc="",$reps="") {
 		//BOKデータベースへ接続
 		$db = self::getDB();
 		$db->setUser($user);
 		//編集内容設定
 		$eSet = (empty($eSet)) ? array(): $eSet;
 		//指定リビジョンにデータを登録
-		if(empty($bok)) {
-			$bok = $db->getMergeTemporary();
-		}
+		$bok = $db->getMergeTemporary();
 		$res = $db->setBokData($rev,$bok,$eSet);
 		$result = array();
 		if($res === FALSE) {
@@ -1129,6 +1126,14 @@ class WikiBokJs {
 			//USER編集情報クリア
 			$db->clearEditData();
 			$result['eSet'] = $eSet;
+			//付加情報登録
+			$type = 0;
+			$db->setDisplaylog($type,array(
+				'rev'=>$rev,
+				'allreps'=>$reps,
+				'description_pages'=>$desc,
+				'type'=>$type
+			));
 		}
 		return json_encode($result);
 	}
@@ -1150,7 +1155,7 @@ class WikiBokJs {
 	 * @param $title	保存用名称
 	 * @param $comment	保存用コメント
 	 */
-	public static function saveBokSvgData($rev,$user,$title,$comment) {
+	public static function saveBokSvgData($rev,$user,$title,$comment,$desc="",$reps="") {
 		//BOKデータベースへ接続
 		$db = self::getDB();
 		$db->setUser($user);
@@ -1178,6 +1183,15 @@ class WikiBokJs {
 			return json_encode($res);
 		}
 		else {
+			//付加情報登録
+			$type = 1;
+			$db->setDisplaylog($type,array(
+				'user_id'=>$user,
+				'title'=>$title,
+				'allreps'=>$reps,
+				'description_pages'=>$desc,
+				'type'=>$type
+			));
 			//接続用パラメータを返却...
 			return json_encode(http_build_query(array(
 				'action'=>'load',
@@ -1185,6 +1199,19 @@ class WikiBokJs {
 				'user'=>$user,
 			)));
 		}
+	}
+	/**
+	 *
+	 */
+	public static function getDisplog($a,$b="") {
+		$db = self::getDB();
+		if(empty($b)) {
+			$data = $db->getDisplaylog(array('rev'=>$a));
+		}
+		else {
+			$data = $db->getDisplaylog(array('user_id'=>User::idFromName($a),'title'=>$b));
+		}
+		return json_encode($data);
 	}
 	/**
 	 * 保存済みBOK-XMLデータを取得する
