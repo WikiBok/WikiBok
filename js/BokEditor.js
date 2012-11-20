@@ -1358,9 +1358,11 @@ jQuery(function($) {
 									}
 								)
 								.done(function(dat,stat,xhr) {
+									var
+										addMes = $.wikibok.escapeHTML(wgServer+wgScript+'/'+wgPageName+'?'+dat);
 									$.wikibok.timePopup(
 										$.wikibok.wfMsg('wikibok-edittool','save_as','title'),
-										$.wikibok.wfMsg('wikibok-edittool','save_as','success')+wgServer+wgScript+'/'+wgPageName+'?'+dat,
+										$.wikibok.wfMsg('wikibok-edittool','save_as','success')+addMes,
 										-1
 									);
 								})
