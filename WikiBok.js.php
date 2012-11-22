@@ -1234,8 +1234,29 @@ class WikiBokJs {
 	 * SMWリンクの情報からノードを作成する
 	 * @param $r
 	 */
-	public static function createNodeFromLinks($r,$u,$parent,$nodes,$l) {
-		//SMWリンクデータを取得
+	public static function createNodeFromLinks($rev,$user,$node,$link="") {
+		//BOKデータベースへ接続/編集用データを取得
+		$db = self::getDB();
+		$db->setUser($user);
+		$data = $db->getEditData($rev);
+		if($data !== false) {
+			$rev = $data['rev'];
+			$bok = new BokXml($data['bok']);
+		}
+		else {
+			$rev = 0;
+			$bok = new BokXml();
+		}
+		$xml = self::createNodeFromSMWLink($bok,$node);
+		if($xml !== false) {
+			//編集済みデータをDBへ登録
+			$db->setEditData($rev,$bok->saveXML());
+			
+		}
+		
+		return json_encode($xml);
+	}
+/*		//SMWリンクデータを取得
 		if(is_array($nodes)) {
 			//複数ノードを指定した場合
 			$links = array();
@@ -1280,5 +1301,49 @@ class WikiBokJs {
 			$result = false;
 		}
 		return json_encode($result);
+	}
+/**/
+	private function createNodeFromSMWLink($bok,$node,$link="") {
+		$res = false;
+		$mesasge = 'OTHERS';
+
+		if(empty($link)) {
+			if(defined('BOK_LINKTYPE_TOPIC')) {
+				$link = BOK_LINKTYPE_TOPIC;
+			}
+			else {
+				//設定ない場合、失敗として処理中止
+				$res['message'] = 'パラメータエラー';
+				return array('res'=>$res,'message'=>$message);
+			}
+		}
+		//SMWリンク取得
+		$links = self::getSMWLink($node,$link);
+		if(count($links) < 1) {
+			$message = 'NO SMW-LINKS';
+			return array('res'=>$res,'message'=>$message);
+		}
+		else {
+			$res = true;
+			$done = array();
+			$add = 0;
+			$err = 0;
+			foreach($links as $val) {
+				$add = $val['target'];
+				if($bok->addNodeTo($add,$node)) {
+					$done['add'][$add] = $add;
+					$add++;
+				}
+				else {
+					$done['err'][$add] = $add;
+					$err++;
+				}
+			}
+			if($add < 1) {
+				$message = 'NO ADD TOPIC';
+			}
+		}
+//file_put_contents(__DIR__.'/log',print_r(array($links,$bok->saveXML()),true),FILE_APPEND);
+		return $bok;
 	}
 }

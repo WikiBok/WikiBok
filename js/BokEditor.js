@@ -123,6 +123,16 @@ jQuery(function($) {
 							pid = item;
 							mode = 'represent';
 							represent(pid.name);
+						})
+						.on('click','.bokeditor-addtopic',function(a,b) {
+							$.wikibok.requestCGI(
+								'WikiBokJs::createNodeFromLinks',
+								[tid],
+								function() {
+								},
+								function() {
+								}
+							);
 						});
 				}
 			}
@@ -303,6 +313,7 @@ jQuery(function($) {
 					+ '<dt>'+$.wikibok.wfMsg('wikibok-contextmenu','itemgroup','special')+'</dt>'
 					+ '<dd class="command bokeditor-rename">'+$.wikibok.wfMsg('wikibok-contextmenu','description','rename')+'</dd>'
 					+ ((wgRepsFlg) ? '<dd class="command bokeditor-represent">'+$.wikibok.wfMsg('wikibok-contextmenu','description','represent')+'</dd>' : '')
+					+ '<dd class="command bokeditor-addtopic">'+$.wikibok.wfMsg('wikibok-contextmenu','description','bokeditor-addtopic')+'</dd>'
 					: '')
 					+ '</dl>',
 			depth = d.depth,

@@ -135,12 +135,13 @@ function efWikiBokAjaxRequest() {
 	$wgAjaxExportList[] = "WikiBokJs::getDescriptionJson";
 	$wgAjaxExportList[] = "WikiBokJs::getSMWLinks";
 	$wgAjaxExportList[] = "WikiBokJs::viewData";
-	$wgAjaxExportList[] = "WikiBokJs::createNodeFromLinks";
 	$wgAjaxExportList[] = "WikiBokJs::representNodeRequest";
 	$wgAjaxExportList[] = "WikiBokJs::checkSMWLinkTarget";
 	$wgAjaxExportList[] = "WikiBokJs::renameNodeRequest";
 	$wgAjaxExportList[] = "WikiBokJs::getSMWLinkData";
 	$wgAjaxExportList[] = "WikiBokJs::getDisplog";
+
+	$wgAjaxExportList[] = "WikiBokJs::createNodeFromLinks";
 
 	$wgAjaxExportList[] = "WikiBokJs::debug";
 	return;
