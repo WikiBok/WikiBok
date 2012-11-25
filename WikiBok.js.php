@@ -21,20 +21,14 @@ class WikiBokJs {
 
 		# Check permissions
 		if ( !$wgUser->isAllowed( 'createaccount' ) ) {
-			//Account作成が許可されていない
-			//$this->userNotPrivilegedMessage();
 			return false;
 		} elseif ( $wgUser->isBlockedFromCreateAccount() ) {
-			//Account作成がBlockされている
-			//$this->userBlockedMessage();
 			return false;
 		}
 
 		$ip = wfGetIP();
 		if ( $wgEnableSorbs && !in_array( $ip, $wgProxyWhitelist ) && $wgUser->inSorbsBlacklist( $ip ) )
 		{
-			//リクエストIPがBlackList
-			//$this->mainLoginForm( wfMsg( 'sorbs_create_account_reason' ) . ' (' . htmlspecialchars( $ip ) . ')' );
 			return;
 		}
 
@@ -43,13 +37,11 @@ class WikiBokJs {
 		$u = User::newFromName( $name, 'creatable' );
 		//作成済み
 		if ( 0 != $u->idForName() ) {
-			//$this->mainLoginForm( wfMsg( 'userexists' ) );
 			return false;
 		}
 
 		# check for minimal password length
 		if ( !$u->isValidPassword( $pass ) ) {
-			//$this->mainLoginForm( wfMsgExt( 'passwordtooshort', array( 'parsemag' ), $wgMinimalPasswordLength ) );
 			return false;
 		}
 
@@ -115,11 +107,11 @@ class WikiBokJs {
 		//Client-PHPのパスが設定されていない場合を考慮
 		$com = realpath(PHPCOM);
 		//Mediawikiのメンテナンススクリプトを利用
-		$path = realpath($_SERVER["DOCUMENT_ROOT"] . $wgScriptPath."/maintenance/");
+		$path = realpath($_SERVER['DOCUMENT_ROOT'] . $wgScriptPath.'/maintenance/');
 		//実行するコマンドラインを整形
 		$cmd = "{$com} -f {$path}/changePassword.php -- --user=\"".$name."\" --password=\"".$pass."\"";
 		//出力内容を初期化
-		$outdata = "";
+		$outdata = '';
 		$ret = exec($cmd,$outdata,$ret);
 		if(empty($outdata)) {
 			$result = array('res' => true);
@@ -178,13 +170,13 @@ class WikiBokJs {
 		$path = realpath(SVGCONVERT_FOLDER);
 		chdir($path);
 		//一時ファイル名を作成
-		$key = md5(mt_rand(0,9).date("YmdHis"));
+		$key = md5(mt_rand(0,9).date('YmdHis'));
 		//ファイルへ出力
 		$infile = "{$key}.svg";
-		$fp = fopen($infile,"w");
+		$fp = fopen($infile,'w');
 		//外部CSSを適用...
 		fwrite($fp,'<?xml version="1.0" encoding="UTF-8" ?>');
-		fwrite($fp,'<?xml-stylesheet type="text/css" href="'.SVGCSS_FILE.'"?>');
+		fwrite($fp,'<?xml-stylesheet type="text/css" href="'.SVGCSS_FILE.'" ?>');
 		fwrite($fp,$svg);
 		fclose($fp);
 
@@ -215,7 +207,7 @@ class WikiBokJs {
 		$outdata = "";
 		$ret = exec($cmd,$outdata,$ret);
 		//SVGファイルを削除
-		unlink($infile);
+		//unlink($infile);
 		return json_encode(array("res"=>$ret,"outfile"=>$outfile));
 	}
 	/**
@@ -450,7 +442,6 @@ class WikiBokJs {
 				$link[] = array(
 					'source' => "{$row->s}",
 					'target' => "{$row->o}",
-//					'type' => "smw",
 					'linkName' => "{$row->p}"
 				);
 			}
