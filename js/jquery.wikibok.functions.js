@@ -617,7 +617,7 @@
 					_query = window.location.search,
 					_name = window.location.hash,
 					query = _query.slice(_query.indexOf('?')+1),
-					name = _name.slice(_name.indexOf('?')+1),
+					name = _name.slice(_name.indexOf('#')+1),
 					hashes = query.split('&'),
 					vars = [];
 				//名称
@@ -1376,6 +1376,7 @@
 				setRev : setRev,
 				getRev : getRev,
 				getData : getData,
+				own : function(){return me;}
 			};
 		}()),
 		/**

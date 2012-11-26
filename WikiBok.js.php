@@ -646,9 +646,26 @@ class WikiBokJs {
 			$rev = 0;
 			$xml = new BokXml();
 		}
+		//描画・通知用に変数を確保
+		$topic_add = array();
+		$topic_err = array();
 		//BOK-XMLデータの変更
 		foreach($rows as $row) {
 			//従属ノードのTOPICを自動的に追加...
+			$topic_result = self::createNodeFromSMWLink($xml,$row['child']);
+			if($topic_result['res'] !== false) {
+				$xml = $topic_result['xml'];
+				$topic_add += $topic_result['add'];
+				$topic_err += $topic_result['err'];
+			}
+			//代表ノードのTOPICを追加
+			$topic_result = self::createNodeFromSMWLink($xml,$row['parent']);
+			if($topic_result['res'] !== false) {
+				$xml = $topic_result['xml'];
+				$topic_add += $topic_result['add'];
+				$topic_err += $topic_result['err'];
+			}
+			
 			//代表表現の従属ノードのデータを、とりあえず移動
 			$xml->moveNode($row['child'],$row['parent']);
 			//設定により従属ノード配下のデータの扱いを変更する
@@ -684,6 +701,10 @@ class WikiBokJs {
 			);
 		}
 		$result['res'] = $res;
+		//追加先のノード名称は代表ノードなので不要
+		$result['add'] = array_values($topic_add);
+		//TOPIC追加失敗ノードを通知するかは不明
+		$result['err'] = array_values($topic_err);
 		return json_encode($result);
 	}
 	/**
@@ -1240,64 +1261,70 @@ class WikiBokJs {
 			$bok = new BokXml();
 		}
 		$_result = self::createNodeFromSMWLink($bok,$node);
-		if($_result['res'] !== false) {
-			$xml = $_result['xml'];
-			$edit = $_result['edit'];
+		$res = $_result['res'];
+		$xml = $_result['xml'];
+		$add = $_result['add'];
+		$err = $_result['err'];
+		$message = $_result['message'];
+		if($res !== false) {
 			//編集済みデータをDBへ登録
-			$result = array(
-				'res'=>$db->setEditData($rev,$xml->saveXML()),
-				'edit'=>$edit
-			);
+			$res = $db->setEditData($rev,$xml->saveXML());
 		}
-		else {
-			$result = array(
-				'res'=>false,
-				'message'=>$_result['message']
-			);
-		}
+		$result = array(
+			'res'=>$res,
+			'add'=>array_values($add),
+			'err'=>array_values($err),
+			'message'=>$message
+		);
 		return json_encode($result);
 	}
+	/**
+	 * 対象ノードのSMWリンクを元に子ノードを追加
+	 * @param $bok	追加対象のBOK-XMLインスタンス
+	 * @param $node	対象ノード名称
+	 * @param $link	走査対象のSMWリンク名称[省略時:TOPIC-LINK名称]
+	 */
 	private function createNodeFromSMWLink($bok,$node,$link="") {
 		$res = false;
-		$mesasge = 'OTHERS';
-
+		$add = array();
+		$err = array();
+		$message = 'OTHERS';
+		//走査リンク名称設定
 		if(empty($link)) {
 			if(defined('BOK_LINKTYPE_TOPIC')) {
 				$link = BOK_LINKTYPE_TOPIC;
 			}
 			else {
 				//設定ない場合、失敗として処理中止
-				$res['message'] = 'パラメータエラー';
-				return array('res'=>$res,'message'=>$message);
+				$message = 'PARAM_ERROR';
 			}
 		}
-		//SMWリンク取得
-		$links = self::getSMWLink($node,$link);
-		if(count($links) < 1) {
-			$message = 'NO SMW-LINKS';
-			return array('res'=>$res,'message'=>$message);
-		}
-		else {
-			$res = true;
-			$done = array();
-			$add = 0;
-			$err = 0;
-			foreach($links as $val) {
-				$add = $val['target'];
-				if($bok->addNodeTo($add,$node)) {
-					$done['add'][$add] = $add;
-					$add++;
+		if(!empty($link)) {
+			//SMWリンク取得
+			$links = self::getSMWLink($node,$link);
+			if(count($links) < 1) {
+				$message = 'NO_SMW_LINKS';
+			}
+			else {
+				//取得したSMWリンク先をノード追加
+				foreach($links as $val) {
+					$_add = $val['target'];
+					//クライアント側での描画用に追加成否によって個別にノード名称を設定
+					if($bok->addNodeTo($_add,$node)) {
+						$add[$_add] = $_add;
+					}
+					else {
+						$err[$_add] = $_add;
+					}
+				}
+				if(count($add) < 1) {
+					$message = 'NO_ADD_TOPICS';
 				}
 				else {
-					$done['err'][$add] = $add;
-					$err++;
+					$res = true;
 				}
 			}
-			if($add < 1) {
-				$message = 'NO ADD TOPIC';
-			}
 		}
-//file_put_contents(__DIR__.'/log',print_r(array($links,$bok->saveXML()),true),FILE_APPEND);
-		return array('res'=>$res,'xml'=>$bok,'edit'=>$done);
+		return array('res'=>$res,'message'=>$message,'xml'=>$bok,'add'=>$add,'err'=>$err);
 	}
 }

@@ -260,6 +260,16 @@ $messages['ja'] = array(
 				'different' => nl2br("すでに同じ名前の記事があります\n名称変更はできません"),
 			)
 		),
+		'wikibok-add-topic' => array(
+			'title' => 'TOPICノード追加',
+			'table_title' => '追加エラーノード名称',
+			'error' => array(
+				'others'=>'予期せぬエラーが発生しました',
+				'param_error'=>'SMW-LINK(TOPIC)に使用するリンク名称が設定されていません',
+				'no_smw_links'=>'対象ノードには、SMW-LINK(TOPIC)が存在しません',
+				'no_add_topics'=>nl2br("追加できるSMW-LINK(TOPIC)が存在しません\nすべて追加済みの可能性があります"),
+			),
+		),
 		//participant
 		'wikibok-represent-node' => array(
 			'title' => '代表表現選択',
@@ -317,6 +327,7 @@ $messages['ja'] = array(
 				'find-parent' => '親ノードを探す',
 				'find-childs' => '子ノードを探す',
 				'node-create' => 'このノードに子ノードを追加',
+				'add-topic' => 'TOPICリンク先ノードを追加',
 			)
 		),
 		'wikibok-search' => array(
