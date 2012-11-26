@@ -648,6 +648,7 @@ class WikiBokJs {
 		}
 		//BOK-XMLデータの変更
 		foreach($rows as $row) {
+			//従属ノードのTOPICを自動的に追加...
 			//代表表現の従属ノードのデータを、とりあえず移動
 			$xml->moveNode($row['child'],$row['parent']);
 			//設定により従属ノード配下のデータの扱いを変更する
@@ -1238,62 +1239,24 @@ class WikiBokJs {
 			$rev = 0;
 			$bok = new BokXml();
 		}
-		$xml = self::createNodeFromSMWLink($bok,$node);
-		if($xml !== false) {
+		$_result = self::createNodeFromSMWLink($bok,$node);
+		if($_result['res'] !== false) {
+			$xml = $_result['xml'];
+			$edit = $_result['edit'];
 			//編集済みデータをDBへ登録
-			$db->setEditData($rev,$bok->saveXML());
-			
-		}
-		
-		return json_encode($xml);
-	}
-/*		//SMWリンクデータを取得
-		if(is_array($nodes)) {
-			//複数ノードを指定した場合
-			$links = array();
-			foreach($nodes as $node) {
-				$links += self::getSMWLink($node,$l);
-			}
-		}
-		else {
-			$links = self::getSMWLink($nodes,$l);
-		}
-		//BOKデータベースへ接続/編集用データを取得
-		$db = self::getDB();
-		$db->setUser($user);
-		$data = $db->getEditData($r);
-		if($data !== false) {
-			$rev = $data['rev'];
-			$bok = new BokXml($data['bok']);
-		}
-		else {
-			$rev = 0;
-			$bok = new BokXml();
-		}
-		//リンク先のノードをそれぞれ追加する
-		$add = array();
-		foreach($links as $link) {
-			$t = $link['target'];
-			//個別に追加成功/失敗を設定
-			$add[$t] = $bok->addNodeTo($t,$parent);
-		}
-		//追加に成功したノードのみ抽出
-		$added = array_filter($add);
-		if(count($added) > 0) {
-			//編集済みデータをDBへ登録
-			$res = $db->setEditData($rev,$bok->saveXML());
 			$result = array(
-				'rev' => $res,
-				'added' => $added
+				'res'=>$db->setEditData($rev,$xml->saveXML()),
+				'edit'=>$edit
 			);
 		}
 		else {
-			//リンクがないもしくはすべて追加済み
-			$result = false;
+			$result = array(
+				'res'=>false,
+				'message'=>$_result['message']
+			);
 		}
 		return json_encode($result);
 	}
-/**/
 	private function createNodeFromSMWLink($bok,$node,$link="") {
 		$res = false;
 		$mesasge = 'OTHERS';
@@ -1335,6 +1298,6 @@ class WikiBokJs {
 			}
 		}
 //file_put_contents(__DIR__.'/log',print_r(array($links,$bok->saveXML()),true),FILE_APPEND);
-		return $bok;
+		return array('res'=>$res,'xml'=>$bok,'edit'=>$done);
 	}
 }
