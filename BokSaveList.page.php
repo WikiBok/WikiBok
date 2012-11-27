@@ -120,7 +120,7 @@ class BokSaveList extends IncludableSpecialPage {
 					Xml::element('td',null,$_user).
 					Xml::element('td',null,$row['time']).
 					Xml::openElement('td').
-					xml::element('a',array('href'=>$url.'/Special:BokEditor?action=load&user='.urlencode($_user).'&title='.urlencode($row['title']),'target'=>'_blank'),'○').
+					xml::element('a',array('href'=>$url.'/Special:BokEditor?action=load&user='.urlencode($_user).'&stitle='.urlencode($row['title']),'target'=>'_blank'),'○').
 					Xml::closeElement('td').
 					Xml::closeElement('tr')
 				);

@@ -461,7 +461,14 @@
 						def.resolve();
 					})
 					.fail(function() {
-						def.reject();
+						//コミット・保存時の記事情報が保存されていない
+						timePopup(
+							wfMsg('wikibok-viewer','title')+' '+wfMsg('common','caution'),
+							wfMsg('wikibok-viewer','error','nodescription'),
+							-1
+						);
+						_description.call(def);
+						def.resolve();
 					});
 				}
 				return def.promise();

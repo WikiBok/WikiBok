@@ -154,14 +154,16 @@ function efWikiBokAjaxRequest() {
  * 個別リンクに特別ページ[BokEditor/DescriptionEditor]へのリンク追加
  */
 function efWikiBokPersonalUrls(&$personal_urls,$title) {
-	global $wgScriptPath,$wgTitle;
+	global $wgScriptPath,$wgTitle,$wgRequest;
+
+	$action = $wgRequest->getVal('action','view');
 
 	$personal_urls['BokEditor'] = array(
 		'text' => wfMsg('bokeditor'),
 		'href' => $wgScriptPath.'/index.php/特別:BokEditor',
 		'class' => "wikibok-linkcaution",
 		'active' => true,
-		'selected' => ($wgTitle->mTextform == 'BokEditor')
+		'selected' => (($wgTitle->mTextform == 'BokEditor') && ($action=='view'))
 	);
 	$personal_urls['DescriptionEditor'] = array(
 		'text' => wfMsg('descriptioneditor'),

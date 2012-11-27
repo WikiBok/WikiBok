@@ -1490,6 +1490,24 @@ jQuery(function($) {
 				act = $.revision.getRev() + 1;
 			loadBokXml(act);
 		});
+	$('#wikibok-history-rev')
+		.on('click','.first',function(){
+			historyView(1,$.wikibok.getUrlVars('#'));
+		})
+		.on('click','.prev',function(){
+			var
+				rev = parseInt($('#wikibok-history-rev').find('.pagedisplay').val()) - 1;
+			rev = (rev < 1) ? 1 : rev;
+			historyView(rev,$.wikibok.getUrlVars('#'));
+		})
+		.on('click','.next',function(){
+			var
+				rev = parseInt($('#wikibok-history-rev').find('.pagedisplay').val()) + 1;
+			historyView(rev,$.wikibok.getUrlVars('#'));
+		})
+		.on('click','.last',function(){
+			historyView(0,$.wikibok.getUrlVars('#'));
+		});
 	/**
 	 * データ読み込み処理
 	 * @param a リビジョン番号
@@ -1543,11 +1561,7 @@ jQuery(function($) {
 	/**
 	 * 過去データ確認用
 	 */
-	function historyView() {
-		var
-			revs = $.wikibok.getUrlVars('rev').value,
-			name = $.wikibok.getUrlVars('#') || $.wikibok.wfMsg('defaultFocus') || '';
-		
+	function historyView(revs,name) {
 		$.wikibok.loadDescriptionPages(revs)
 		.done(function() {
 			$.wikibok.requestCGI(
@@ -1555,7 +1569,7 @@ jQuery(function($) {
 				[revs],
 				function(dat,stat,xhr) {
 					svg.load(dat.xml);
-					$.revision.setRev(dat.act);
+					$('#wikibok-history-rev').find('.pagedisplay').val(dat.act);
 					return true;
 				},
 				function(xhr,stat,err) {
@@ -1642,7 +1656,7 @@ jQuery(function($) {
 			saveView();
 			break;
 		case 'history':
-			historyView();
+			historyView($.wikibok.getUrlVars('rev').value,($.wikibok.getUrlVars('#') || $.wikibok.wfMsg('defaultFocus') || ''));
 			break;
 		default:
 			//その他(通常表示)

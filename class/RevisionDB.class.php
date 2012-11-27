@@ -705,13 +705,15 @@ class RevisionDB {
 	 */
 	public function getDisplaylog($param) {
 		$tableName = wfGetDB(DB_SLAVE)->tableName('wbs_displog');
-		$sql = 'SELECT `allreps`,`description_pages` FROM '.$tableName.' WHERE ';
+		$sql = 'SELECT `allreps`,`description_pages` FROM '.$tableName;
 		$_key = array();
 		$_val = array();
 		foreach($param as $key => $val) {
 			$_key[] = "`{$key}` = ?";
 		}
-		$sql .= implode(' AND ',$_key);
+		if(count($_key) > 0 ) {
+			$sql .= ' WHERE '.implode(' AND ',$_key);
+		}
 		$sql .= ' LIMIT 1';
 		$sth = $this->db->prepare($sql);
 		$sth->execute(array_values($param));

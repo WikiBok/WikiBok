@@ -12,6 +12,8 @@ $messages['ja'] = array(
 	'descriptioneditor' => 'DescriptionEditor',
 	'bokhistorylist' => 'BokXml更新履歴一覧',
 	'boksavelist' => '保存済みBokXml一覧',
+
+	'listviewer' => '[参照のみ]',
 	
 	'wbs-search-fieldset-title'=>'BokXml検索',
 	'wbs-search-fieldset-fromto'=>'期間',
@@ -44,6 +46,8 @@ $messages['ja'] = array(
 	'wikibok-viewname' => 'VIEW',
 	'wikibok-revisionname' => 'REV',
 	'wikibok-editcount' => '編集回数',
+	'wikibok-saveuser' => '登録者',
+	'wikibok-savetitle' => 'タイトル',
 
 	'wikibok-error-usercreate-already' => nl2br("このユーザ名は、すでに使用されています。\n別のユーザ名をご利用下さい。"),
 
@@ -413,6 +417,12 @@ $messages['ja'] = array(
 				'title' => '編集を保存',
 				'class' => 'commit'
 			)
+		),
+		'wikibok-viewer'=>array(
+			'title'=>'データ参照',
+			'error'=>array(
+				'nodescription'=>nl2br("記事情報が保存されていません。\n最新情報を参照しています。")
+			),
 		),
 		'wikibok-description' => array(
 			'empty' => '現在このページには内容がありません'

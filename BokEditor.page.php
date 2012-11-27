@@ -11,14 +11,25 @@ class BokEditor extends IncludableSpecialPage {
 	public function __construct() {
 		global $wgOut;
 		parent::__construct('BokEditor');
-		$wgOut->setPageTitle(wfMsg('bokeditor'));
+		$base = wfMsg('bokeditor');
+		$act = $this->getRequest()->getVal('action');
+		switch($act) {
+			case 'load':
+			case 'history':
+				$wgOut->setPageTitle($base.' '.wfMsg('listviewer'));
+				break;
+			default:
+				$wgOut->setPageTitle($base);
+				break;
+		}
 	}
 	/**
 	 * 出力実行
 	 */
 	public function execute( $target ) {
-		global $wgUser,$wgOut,$wgRequest;
+		global $wgUser,$wgOut;
 
+		$request = $this->getRequest();
 		//ログイン状態の確認
 		$login = $wgUser->isLoggedIn();
 		//編集権限の確認
@@ -27,12 +38,13 @@ class BokEditor extends IncludableSpecialPage {
 		//ログイン状態の確認
 		$userlogin = $wgUser->isLoggedIn();
 		//確認モード...
-		$act = $wgRequest->getVal('action');
+		$act = $request->getVal('action');
 		switch($act) {
 			case 'load':
+				$wgOut->addHTML($this->viewPanel($request->getVal('user'),$request->getVal('stitle')));
 				break;
 			case 'history':
-				$wgOut->addHTML($this->getRevPanel($login));
+				$wgOut->addHTML($this->viewPanel($request->getInt('rev')));
 				break;
 			default:
 				//リビジョン表示/編集機能
@@ -44,8 +56,9 @@ class BokEditor extends IncludableSpecialPage {
 	/**
 	 * リビジョン情報パネル作成
 	 * @param	$login	ログイン状態(TRUE:ログイン中/FALSE:ログアウト中)
+	 * @param	$rev	表示調整
 	 */
-	private function getRevPanel($login) {
+	private function getRevPanel($login,$rev="") {
 		//BOKリビジョン情報表示パネル
 		$txt = '<div id="rev">';
 		if($login) {
@@ -55,6 +68,26 @@ class BokEditor extends IncludableSpecialPage {
 		}
 		else {
 			$txt .= '<div>'.wfMsg('wikibok-viewname').'-'.wfMsg('wikibok-revisionname').'.<span class="base"/></div>';
+		}
+		$txt .= '</div>';
+		return "{$txt}\n";
+	}
+	private function viewPanel($a,$b) {
+		//BOKリビジョン情報表示パネル
+		$txt = '<div id="rev">';
+		if(empty($b)) {
+			$txt .= Xml::element('label',null,wfMsg('wikibok-viewname').'-'.wfMsg('wikibok-revisionname'))
+				.Xml::openElement('div',array('id'=>'wikibok-history-rev','class'=>'pager'))
+				.Xml::element('span',array('class'=>'icon16 first'),wfMsg('wikibok-pager-first'))
+				.Xml::element('span',array('class'=>'icon16 prev'),wfMsg('wikibok-pager-prev'))
+				.Xml::element('input',array('type'=>'text','readonly'=>'readonly','class'=>'pagedisplay','style'=>'width:2em','value'=>$a),'')
+				.Xml::element('span',array('class'=>'icon16 next'),wfMsg('wikibok-pager-next'))
+				.Xml::element('span',array('class'=>'icon16 last'),wfMsg('wikibok-pager-last'))
+				.Xml::closeElement('div');
+		}
+		else {
+			$txt .= '<div>'.wfMsg('wikibok-saveuser').':<span>'.$a.'</span></div>';
+			$txt .= '<div title="'.$b.'">'.wfMsg('wikibok-savetitle').'</div>';
 		}
 		$txt .= '</div>';
 		return "{$txt}\n";
