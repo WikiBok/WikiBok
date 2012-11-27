@@ -1,13 +1,8 @@
 <?php
-# BOK-XMLデータ格納先Databaseへのアクセス情報
-define('BOK_DATABASE_HOST','localhost');
-define('BOK_DATABASE_DB','treewiki');
-define('BOK_DATABASE_USER','root');
-define('BOK_DATABASE_PASS','ssaptoor');
 # INSTALL環境によって変更あり
 define('PHPCOM','php');
 define('SVGCONVERT_CMD','rsvg-convert');
-define('SVGCONVERT_FOLDER',realpath($_SERVER["DOCUMENT_ROOT"]."/../dot/"));
+define('SVGCONVERT_FOLDER',realpath(__DIR__."/../dot/"));
 define('SVGCSS_FILE',realpath(__DIR__.'/../css/WikiBok.svg.css'));
 # 仮決めでA4を設定(拡大印刷する場合にはPDFを拡大印刷してください)
 define('SVGCONVERT_A4W', 794); #用紙サイズ(横)
