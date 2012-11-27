@@ -1589,7 +1589,7 @@ jQuery(function($) {
 	function saveView() {
 		var
 			user = $.wikibok.getUrlVars('user').value,
-			title = $.wikibok.getUrlVars('title').value,
+			title = $.wikibok.getUrlVars('stitle').value,
 			name = $.wikibok.getUrlVars('#') || $.wikibok.wfMsg('defaultFocus') || '';
 		
 		$.wikibok.loadDescriptionPages(user,title)

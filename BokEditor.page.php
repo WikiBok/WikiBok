@@ -9,10 +9,10 @@ class BokEditor extends IncludableSpecialPage {
 	 * コンストラクタ
 	 */
 	public function __construct() {
-		global $wgOut;
+		global $wgOut,$wgRequest;
 		parent::__construct('BokEditor');
 		$base = wfMsg('bokeditor');
-		$act = $this->getRequest()->getVal('action');
+		$act = $wgRequest->getVal('action');
 		switch($act) {
 			case 'load':
 			case 'history':
@@ -27,9 +27,9 @@ class BokEditor extends IncludableSpecialPage {
 	 * 出力実行
 	 */
 	public function execute( $target ) {
-		global $wgUser,$wgOut;
+		global $wgUser,$wgOut,$wgRequest;
 
-		$request = $this->getRequest();
+		$request = $wgRequest;
 		//ログイン状態の確認
 		$login = $wgUser->isLoggedIn();
 		//編集権限の確認
@@ -72,7 +72,7 @@ class BokEditor extends IncludableSpecialPage {
 		$txt .= '</div>';
 		return "{$txt}\n";
 	}
-	private function viewPanel($a,$b) {
+	private function viewPanel($a,$b="") {
 		//BOKリビジョン情報表示パネル
 		$txt = '<div id="rev">';
 		if(empty($b)) {

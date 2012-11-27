@@ -18,9 +18,9 @@ class BokHistoryList extends IncludableSpecialPage {
 	 * 出力実行
 	 */
 	public function execute( $target ) {
-		global $wgScript;
-		$request = $this->getRequest();
-		$out = $this->getOutput();
+		global $wgOut,$wgScript,$wgRequest;
+		$request = $wgRequest;
+		$out = $wgOut;
 		
 		//GET Values
 		$action = $request->getVal('action','view');
@@ -46,19 +46,19 @@ class BokHistoryList extends IncludableSpecialPage {
 		$out->addHTML(
 			"<form action=\"$url\" method=\"post\" id=\"wbs-searchform\">" .
 			Xml::fieldset(
-				$this->msg( 'wbs-search-fieldset-title' )->text(),
+				wfMsg( 'wbs-search-fieldset-title' ),
 				false,
 				array( 'id' => 'wbs-search' )
 			) .
-			Html::hidden( 'title', $this->getTitle()->getPrefixedDBKey() ) . "\n" .
-			Html::hidden( 'action', 'list' ) . "\n" .
+			Xml::element('input',array('type'=>'hidden','id'=>'title','name'=>'title','value'=> $this->getTitle()->getPrefixedDBKey()) ) . "\n" .
+			Xml::element('input',array('type'=>'hidden','id'=>'action','name'=>'action','value'=> 'list') ) . "\n" .
 			wfMsg( 'wbs-search-fieldset-fromto' ) .'<br/>'.
 			$this->_dateMenu( $fyear, $fmonth ,'wbs-search-fieldset-fromdate','fromdate') . '&#160;'.
 			$this->_dateMenu( $tyear, $tmonth ,'wbs-search-fieldset-todate','todate') .
 			Xml::element('br').
 			Xml::label( wfMsg( 'wbs-search-fieldset-user' ), 'user_id' ) . ' '.
 			Xml::input( 'user_id', null, $user, array('id' => 'user_id') ) . ' '.
-			Xml::submitButton( $this->msg( 'wbs-search-fieldset-submit' )->text() ).
+			Xml::submitButton( wfMsg( 'wbs-search-fieldset-submit' ) ).
 			'</fieldset></form>'
 		);
 		//入力データ整形(日付補正)
@@ -103,7 +103,7 @@ class BokHistoryList extends IncludableSpecialPage {
 				Xml::element('th',null,wfMsg('wbs-list-result-link')).
 				Xml::closeElement('tr').
 				Xml::closeElement('thead').
-				Xml::closeElement('tbody')
+				Xml::openElement('tbody')
 			);
 			//データ
 			foreach($rows as $row) {
