@@ -337,3 +337,11 @@ table.add_topic {
 	text-align : left;
 	width : 250px;
 }
+
+#list_result {
+	width : 80%;
+	margin : 0px 20px;
+}
+.wbs_list_result_pager {
+	margin : 10px 20px;
+}

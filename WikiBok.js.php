@@ -1214,7 +1214,9 @@ class WikiBokJs {
 		}
 	}
 	/**
-	 *
+	 * 退避した表示用データを取得
+	 * @param $a リビジョン/ユーザ名称
+	 * @param $b [省略]    /保存名称
 	 */
 	public static function getDisplog($a,$b="") {
 		$db = self::getDB();
