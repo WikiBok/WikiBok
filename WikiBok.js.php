@@ -21,20 +21,14 @@ class WikiBokJs {
 
 		# Check permissions
 		if ( !$wgUser->isAllowed( 'createaccount' ) ) {
-			//Account作成が許可されていない
-			//$this->userNotPrivilegedMessage();
 			return false;
 		} elseif ( $wgUser->isBlockedFromCreateAccount() ) {
-			//Account作成がBlockされている
-			//$this->userBlockedMessage();
 			return false;
 		}
 
 		$ip = wfGetIP();
 		if ( $wgEnableSorbs && !in_array( $ip, $wgProxyWhitelist ) && $wgUser->inSorbsBlacklist( $ip ) )
 		{
-			//リクエストIPがBlackList
-			//$this->mainLoginForm( wfMsg( 'sorbs_create_account_reason' ) . ' (' . htmlspecialchars( $ip ) . ')' );
 			return;
 		}
 
@@ -43,13 +37,11 @@ class WikiBokJs {
 		$u = User::newFromName( $name, 'creatable' );
 		//作成済み
 		if ( 0 != $u->idForName() ) {
-			//$this->mainLoginForm( wfMsg( 'userexists' ) );
 			return false;
 		}
 
 		# check for minimal password length
 		if ( !$u->isValidPassword( $pass ) ) {
-			//$this->mainLoginForm( wfMsgExt( 'passwordtooshort', array( 'parsemag' ), $wgMinimalPasswordLength ) );
 			return false;
 		}
 
@@ -115,11 +107,11 @@ class WikiBokJs {
 		//Client-PHPのパスが設定されていない場合を考慮
 		$com = realpath(PHPCOM);
 		//Mediawikiのメンテナンススクリプトを利用
-		$path = realpath($_SERVER["DOCUMENT_ROOT"] . $wgScriptPath."/maintenance/");
+		$path = realpath($_SERVER['DOCUMENT_ROOT'] . $wgScriptPath.'/maintenance/');
 		//実行するコマンドラインを整形
 		$cmd = "{$com} -f {$path}/changePassword.php -- --user=\"".$name."\" --password=\"".$pass."\"";
 		//出力内容を初期化
-		$outdata = "";
+		$outdata = '';
 		$ret = exec($cmd,$outdata,$ret);
 		if(empty($outdata)) {
 			$result = array('res' => true);
@@ -178,13 +170,13 @@ class WikiBokJs {
 		$path = realpath(SVGCONVERT_FOLDER);
 		chdir($path);
 		//一時ファイル名を作成
-		$key = md5(mt_rand(0,9).date("YmdHis"));
+		$key = md5(mt_rand(0,9).date('YmdHis'));
 		//ファイルへ出力
 		$infile = "{$key}.svg";
-		$fp = fopen($infile,"w");
+		$fp = fopen($infile,'w');
 		//外部CSSを適用...
 		fwrite($fp,'<?xml version="1.0" encoding="UTF-8" ?>');
-		fwrite($fp,'<?xml-stylesheet type="text/css" href="'.SVGCSS_FILE.'"?>');
+		fwrite($fp,'<?xml-stylesheet type="text/css" href="'.SVGCSS_FILE.'" ?>');
 		fwrite($fp,$svg);
 		fclose($fp);
 
@@ -215,7 +207,7 @@ class WikiBokJs {
 		$outdata = "";
 		$ret = exec($cmd,$outdata,$ret);
 		//SVGファイルを削除
-		unlink($infile);
+		//unlink($infile);
 		return json_encode(array("res"=>$ret,"outfile"=>$outfile));
 	}
 	/**
@@ -450,7 +442,6 @@ class WikiBokJs {
 				$link[] = array(
 					'source' => "{$row->s}",
 					'target' => "{$row->o}",
-//					'type' => "smw",
 					'linkName' => "{$row->p}"
 				);
 			}
@@ -655,8 +646,26 @@ class WikiBokJs {
 			$rev = 0;
 			$xml = new BokXml();
 		}
+		//描画・通知用に変数を確保
+		$topic_add = array();
+		$topic_err = array();
 		//BOK-XMLデータの変更
 		foreach($rows as $row) {
+			//従属ノードのTOPICを自動的に追加...
+			$topic_result = self::createNodeFromSMWLink($xml,$row['child']);
+			if($topic_result['res'] !== false) {
+				$xml = $topic_result['xml'];
+				$topic_add += $topic_result['add'];
+				$topic_err += $topic_result['err'];
+			}
+			//代表ノードのTOPICを追加
+			$topic_result = self::createNodeFromSMWLink($xml,$row['parent']);
+			if($topic_result['res'] !== false) {
+				$xml = $topic_result['xml'];
+				$topic_add += $topic_result['add'];
+				$topic_err += $topic_result['err'];
+			}
+			
 			//代表表現の従属ノードのデータを、とりあえず移動
 			$xml->moveNode($row['child'],$row['parent']);
 			//設定により従属ノード配下のデータの扱いを変更する
@@ -692,6 +701,10 @@ class WikiBokJs {
 			);
 		}
 		$result['res'] = $res;
+		//追加先のノード名称は代表ノードなので不要
+		$result['add'] = array_values($topic_add);
+		//TOPIC追加失敗ノードを通知するかは不明
+		$result['err'] = array_values($topic_err);
 		return json_encode($result);
 	}
 	/**
@@ -1201,7 +1214,9 @@ class WikiBokJs {
 		}
 	}
 	/**
-	 *
+	 * 退避した表示用データを取得
+	 * @param $a リビジョン/ユーザ名称
+	 * @param $b [省略]    /保存名称
 	 */
 	public static function getDisplog($a,$b="") {
 		$db = self::getDB();
@@ -1234,22 +1249,11 @@ class WikiBokJs {
 	 * SMWリンクの情報からノードを作成する
 	 * @param $r
 	 */
-	public static function createNodeFromLinks($r,$u,$parent,$nodes,$l) {
-		//SMWリンクデータを取得
-		if(is_array($nodes)) {
-			//複数ノードを指定した場合
-			$links = array();
-			foreach($nodes as $node) {
-				$links += self::getSMWLink($node,$l);
-			}
-		}
-		else {
-			$links = self::getSMWLink($nodes,$l);
-		}
+	public static function createNodeFromLinks($rev,$user,$node,$link="") {
 		//BOKデータベースへ接続/編集用データを取得
 		$db = self::getDB();
 		$db->setUser($user);
-		$data = $db->getEditData($r);
+		$data = $db->getEditData($rev);
 		if($data !== false) {
 			$rev = $data['rev'];
 			$bok = new BokXml($data['bok']);
@@ -1258,27 +1262,71 @@ class WikiBokJs {
 			$rev = 0;
 			$bok = new BokXml();
 		}
-		//リンク先のノードをそれぞれ追加する
-		$add = array();
-		foreach($links as $link) {
-			$t = $link['target'];
-			//個別に追加成功/失敗を設定
-			$add[$t] = $bok->addNodeTo($t,$parent);
-		}
-		//追加に成功したノードのみ抽出
-		$added = array_filter($add);
-		if(count($added) > 0) {
+		$_result = self::createNodeFromSMWLink($bok,$node);
+		$res = $_result['res'];
+		$xml = $_result['xml'];
+		$add = $_result['add'];
+		$err = $_result['err'];
+		$message = $_result['message'];
+		if($res !== false) {
 			//編集済みデータをDBへ登録
-			$res = $db->setEditData($rev,$bok->saveXML());
-			$result = array(
-				'rev' => $res,
-				'added' => $added
-			);
+			$res = $db->setEditData($rev,$xml->saveXML());
 		}
-		else {
-			//リンクがないもしくはすべて追加済み
-			$result = false;
-		}
+		$result = array(
+			'res'=>$res,
+			'add'=>array_values($add),
+			'err'=>array_values($err),
+			'message'=>$message
+		);
 		return json_encode($result);
+	}
+	/**
+	 * 対象ノードのSMWリンクを元に子ノードを追加
+	 * @param $bok	追加対象のBOK-XMLインスタンス
+	 * @param $node	対象ノード名称
+	 * @param $link	走査対象のSMWリンク名称[省略時:TOPIC-LINK名称]
+	 */
+	private function createNodeFromSMWLink($bok,$node,$link="") {
+		$res = false;
+		$add = array();
+		$err = array();
+		$message = 'OTHERS';
+		//走査リンク名称設定
+		if(empty($link)) {
+			if(defined('BOK_LINKTYPE_TOPIC')) {
+				$link = BOK_LINKTYPE_TOPIC;
+			}
+			else {
+				//設定ない場合、失敗として処理中止
+				$message = 'PARAM_ERROR';
+			}
+		}
+		if(!empty($link)) {
+			//SMWリンク取得
+			$links = self::getSMWLink($node,$link);
+			if(count($links) < 1) {
+				$message = 'NO_SMW_LINKS';
+			}
+			else {
+				//取得したSMWリンク先をノード追加
+				foreach($links as $val) {
+					$_add = $val['target'];
+					//クライアント側での描画用に追加成否によって個別にノード名称を設定
+					if($bok->addNodeTo($_add,$node)) {
+						$add[$_add] = $_add;
+					}
+					else {
+						$err[$_add] = $_add;
+					}
+				}
+				if(count($add) < 1) {
+					$message = 'NO_ADD_TOPICS';
+				}
+				else {
+					$res = true;
+				}
+			}
+		}
+		return array('res'=>$res,'message'=>$message,'xml'=>$bok,'add'=>$add,'err'=>$err);
 	}
 }

@@ -311,24 +311,37 @@ dl.context dd {
 	height: 16px;
 }
 /* 代表表現エラー結果一覧 */
-table.linkloop {
+table.linkloop, 
+table.add_topic {
 	border : 1px solid #000;
 }
-.linkloop th {
+.linkloop th,
+.add_topic th {
 	background-color : #000;
 	color : #FFF;
 }
-.linkloop tr.odd {
+.linkloop tr.odd,
+.add_topic tr.odd {
 	background-color : #FFC;
 }
-.linkloop tr.even {
+.linkloop tr.even,
+.add_topic tr.even {
 	background-color : #CCC;
 }
 .linkloop td.mark {
 	text-align : center;
 	width : 50px;
 }
-.linkloop td.item {
+.linkloop td.item,
+.add_topic td.item {
 	text-align : left;
 	width : 250px;
+}
+
+#list_result {
+	width : 80%;
+	margin : 0px 20px;
+}
+.wbs_list_result_pager {
+	margin : 10px 20px;
 }

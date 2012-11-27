@@ -123,10 +123,88 @@ jQuery(function($) {
 							pid = item;
 							mode = 'represent';
 							represent(pid.name);
+						})
+						.on('click','.bokeditor-addtopic',function(a,b) {
+							addTopicRequest(tid);
 						});
 				}
 			}
 		);
+	}
+	function actNode() {
+		var
+			args = Array.prototype.slice.apply(arguments),
+			node = (args.length < 1 || args[0] == undefined) ? false : args[0],
+			time = (args.length < 2 || args[1] == undefined) ? 1  : args[1],
+			opt =  (args.length < 3 || args[2] == undefined) ? {offset:{top:-150,left:-150}} : args[2];
+		return $.Deferred(function(def) {
+			if($('g[data="'+node+'"]').length > 0) {
+				svg.actNode(node)
+				.done(function() {
+					$.scrollTo($('g[data="'+node+'"]'),time,opt);
+					def.resolve();
+				});
+			}
+			else {
+				def.resolve();
+			}
+		}).promise();
+	}
+	function addTopicRequest() {
+		var
+			args = Array.prototype.slice.apply(arguments),
+			node = (args.length < 1 || args[0] == undefined) ? false : args[0];
+		$.wikibok.requestCGI(
+			'WikiBokJs::createNodeFromLinks',
+			[node],
+			function(dat,stat,xhr) {
+				var
+					err = '';
+				if(dat.res !== false) {
+					//TOPIC追加ノードをキャンパスに追加
+					$.each(dat.add,function(i,n) {
+						svg.addNode(n,node);
+					});
+					$.revision.setRev(dat.res);
+					actNode(node);
+				}
+				else {
+					if(dat.err.length < 1) {
+						err = $.wikibok.wfMsg('wikibok-add-topic','error',dat.message.toLowerCase());
+					}
+					else {
+						err = '<table class="add_topic"><tr><th>'+$.wikibok.wfMsg('wikibok-add-topic','table_title')+'</th></tr>'
+								+	$.map(dat.err,function(d,i){
+										return ((i % 2) ? '<tr class="odd">':'<tr class="even">')+'<td class="item">'+$.wikibok.getPageName(d)+'</td></tr>';
+								}).join('')
+								+ '</table>'+$.wikibok.wfMsg('wikibok-add-topic','error',dat.message.toLowerCase());
+					}
+					$.wikibok.timePopup(
+						$.wikibok.wfMsg('wikibok-add-topic','title')+' '+$.wikibok.wfMsg('common','error'),
+						err,
+						-1
+					);
+					$('.add_topic')
+						.off('click','.item')
+						.on('click','.item',function(){
+							var
+								item = this;
+							actNode($(item).html())
+							.done(function() {
+								//ダイアログを画面内に移動
+								setTimeout(function(){
+									$(item).parents('.wikibok-exdialog:first')
+										.dialog('option','position','center')
+										.dialog('moveToTop');
+								},100);
+							});
+						});
+				}
+			},
+			function(xhr,stat,err) {
+			}
+		);
+			
 	}
 	/**
 	 * ノード削除処理リクエスト
@@ -265,7 +343,7 @@ jQuery(function($) {
 		.done(function(cDat) {
 			svg.addNode(a,b);
 			$.revision.setRev(cDat.res);
-			svg.actNode(a);
+			actNode(a);
 		});
 	}
 	function renameNodeRequest(a,b) {
@@ -303,6 +381,7 @@ jQuery(function($) {
 					+ '<dt>'+$.wikibok.wfMsg('wikibok-contextmenu','itemgroup','special')+'</dt>'
 					+ '<dd class="command bokeditor-rename">'+$.wikibok.wfMsg('wikibok-contextmenu','description','rename')+'</dd>'
 					+ ((wgRepsFlg) ? '<dd class="command bokeditor-represent">'+$.wikibok.wfMsg('wikibok-contextmenu','description','represent')+'</dd>' : '')
+					+ '<dd class="command bokeditor-addtopic">'+$.wikibok.wfMsg('wikibok-contextmenu','bok','add-topic')+'</dd>'
 					: '')
 					+ '</dl>',
 			depth = d.depth,
@@ -430,7 +509,12 @@ jQuery(function($) {
 										//設定により、従属ノードの配下ノードを削除するしないが異なる
 										svg.delNode(_rows[i].child,wgRepsDel);
 									}
+									//TOPIC追加ノードをキャンパスに追加
+									$.each(dat.add,function(i,n) {
+										svg.addNode(n,a);
+									});
 									$.revision.setRev(dat.res);
+									actNode(a);
 									$(me).dialog('close');
 								});
 							}
@@ -809,7 +893,7 @@ jQuery(function($) {
 							conflicttype,
 							message = true;
 						if((represent.all).length > 0) {
-							//代表表現エラー表示[マージ続行?]
+							//代表表現エラー表示[マージ続行]
 							$.wikibok.timePopup(
 								$.wikibok.wfMsg('wikibok-merge','represent','title'),
 								$.wikibok.wfMsg('wikibok-merge','represent','bodystart')+
@@ -948,15 +1032,13 @@ jQuery(function($) {
 											tName = $(item).html();
 										dialog.find('tr').removeClass('act');
 										$(item).addClass('act');
-										svg.actNode(_data);
-										//スクロール...
-										if($('g[data="'+_data+'"]').length > 0) {
-											$.scrollTo($('g[data="'+_data+'"]'));
+										actNode(_data)
+										.done(function() {
 											//ダイアログを画面内に移動
 											setTimeout(function(){
 												dialog.dialog('option','position','center').dialog('moveToTop');
-											},1);
-										}
+											},100);
+										});
 									});
 									//Sorter
 									//イベント(その他)の2重登録対策
@@ -1408,6 +1490,24 @@ jQuery(function($) {
 				act = $.revision.getRev() + 1;
 			loadBokXml(act);
 		});
+	$('#wikibok-history-rev')
+		.on('click','.first',function(){
+			historyView(1,$.wikibok.getUrlVars('#'));
+		})
+		.on('click','.prev',function(){
+			var
+				rev = parseInt($('#wikibok-history-rev').find('.pagedisplay').val()) - 1;
+			rev = (rev < 1) ? 1 : rev;
+			historyView(rev,$.wikibok.getUrlVars('#'));
+		})
+		.on('click','.next',function(){
+			var
+				rev = parseInt($('#wikibok-history-rev').find('.pagedisplay').val()) + 1;
+			historyView(rev,$.wikibok.getUrlVars('#'));
+		})
+		.on('click','.last',function(){
+			historyView(0,$.wikibok.getUrlVars('#'));
+		});
 	/**
 	 * データ読み込み処理
 	 * @param a リビジョン番号
@@ -1425,15 +1525,14 @@ jQuery(function($) {
 			[0,wgUserName],
 			function(dat,stat,xhr) {
 				svg.load(dat.xml);
-				$.revision.setRev();
+				$.revision.setRev(dat.act);
 				return true;
 			},
 			function(xhr,stat,err) {
 				return false;
 			},
 			false
-		) : 
-		$.wikibok.requestCGI(
+		) : $.wikibok.requestCGI(
 			'WikiBokJs::getBokJson',
 			[act,wgUserName],
 			function(dat,stat,xhr) {
@@ -1450,18 +1549,10 @@ jQuery(function($) {
 	function _focus() {
 		var
 			args = Array.prototype.slice.apply(arguments),
-			node = (args.length < 1 || args[0] == undefined) ? false : args[0],
-			func = (args.length < 2 || args[1] == undefined || !$.isFunction(args[1])) ? (function(){}) : args[1],
-			time = 100,
-			opt = {offset:{top:-150,left:-150}};
+			node = (args.length < 1 || args[0] == undefined) ? false : args[0];
 		//ハッシュタグまたはデフォルト値を強調
 		if(node != false) {
-			if($('g[data="'+node+'"]').length > 0) {
-				svg.actNode(node)
-				.done(function() {
-					$.scrollTo($('g[data="'+node+'"]'),time,opt);
-				});
-			}
+			actNode(node);
 		}
 		else {
 			$(window).scrollTo('50%');
@@ -1470,11 +1561,7 @@ jQuery(function($) {
 	/**
 	 * 過去データ確認用
 	 */
-	function historyView() {
-		var
-			revs = $.wikibok.getUrlVars('rev').value,
-			name = $.wikibok.getUrlVars('#') || $.wikibok.wfMsg('defaultFocus') || '';
-		
+	function historyView(revs,name) {
 		$.wikibok.loadDescriptionPages(revs)
 		.done(function() {
 			$.wikibok.requestCGI(
@@ -1482,7 +1569,7 @@ jQuery(function($) {
 				[revs],
 				function(dat,stat,xhr) {
 					svg.load(dat.xml);
-					$.revision.setRev(dat.act);
+					$('#wikibok-history-rev').find('.pagedisplay').val(dat.act);
 					return true;
 				},
 				function(xhr,stat,err) {
@@ -1569,7 +1656,7 @@ jQuery(function($) {
 			saveView();
 			break;
 		case 'history':
-			historyView();
+			historyView($.wikibok.getUrlVars('rev').value,($.wikibok.getUrlVars('#') || $.wikibok.wfMsg('defaultFocus') || ''));
 			break;
 		default:
 			//その他(通常表示)
@@ -1581,6 +1668,7 @@ jQuery(function($) {
 				function(d) {
 					var
 						h = $.wikibok.getUrlVars('#') || $.wikibok.wfMsg('defaultFocus') || '';
+					_focus(h);
 					//定期更新の予約(記事情報取得)
 					$.timer.add(function() {
 						$.wikibok.loadReps()
@@ -1594,7 +1682,6 @@ jQuery(function($) {
 							$.revision.sync();
 						});
 					});
-					_focus(h);
 				}
 			);
 			break;

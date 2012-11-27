@@ -6,17 +6,31 @@
  */
 
 $messages = array();
-$messages['en'] = array(
-	'specialpages-group-wikiboksystem' => 'WikiBok Systems',
-	'bokeditor' => 'BokEditor',
-	'descriptioneditor' => 'DescriptionEditor',
-	'wikibok-message' => serialize(array('')),
-);
-
 $messages['ja'] = array(
 	'specialpages-group-wikiboksystem' => 'WikiBokシステム',
 	'bokeditor' => 'BokEditor',
 	'descriptioneditor' => 'DescriptionEditor',
+	'bokhistorylist' => 'BokXml更新履歴一覧',
+	'boksavelist' => '保存済みBokXml一覧',
+
+	'listviewer' => '[参照のみ]',
+	
+	'wbs-search-fieldset-title'=>'BokXml検索',
+	'wbs-search-fieldset-fromto'=>'期間',
+	'wbs-search-fieldset-fromdate'=>'開始',
+	'wbs-search-fieldset-todate'=>'終了',
+	'wbs-search-fieldset-year'=>'年',
+	'wbs-search-fieldset-user'=>'利用者',
+	'wbs-search-fieldset-savetitle'=>'登録タイトル',
+	'wbs-search-fieldset-submit'=>'表示',
+
+	'wbs-list-result-rev'=>'リビジョン番号',
+	'wbs-list-result-user'=>'更新ユーザ',
+	'wbs-list-result-time'=>'更新時刻',
+	'wbs-list-result-link'=>'Bok表示',
+	'wbs-list-result-savetitle'=>'登録名称',
+	'wbs-list-result-comment'=>'コメント(一部抜粋)',
+	'wbs-list-result-nodata'=>'条件に一致するデータがありません',
 
 	'wikibok-popupLogin-user' => 'ユーザ名',
 	'wikibok-popupLogin-pass' => 'パスワード',
@@ -32,6 +46,8 @@ $messages['ja'] = array(
 	'wikibok-viewname' => 'VIEW',
 	'wikibok-revisionname' => 'REV',
 	'wikibok-editcount' => '編集回数',
+	'wikibok-saveuser' => '登録者',
+	'wikibok-savetitle' => 'タイトル',
 
 	'wikibok-error-usercreate-already' => nl2br("このユーザ名は、すでに使用されています。\n別のユーザ名をご利用下さい。"),
 
@@ -260,6 +276,16 @@ $messages['ja'] = array(
 				'different' => nl2br("すでに同じ名前の記事があります\n名称変更はできません"),
 			)
 		),
+		'wikibok-add-topic' => array(
+			'title' => 'TOPICノード追加',
+			'table_title' => '追加エラーノード名称',
+			'error' => array(
+				'others'=>'予期せぬエラーが発生しました',
+				'param_error'=>'SMW-LINK(TOPIC)に使用するリンク名称が設定されていません',
+				'no_smw_links'=>'対象ノードには、SMW-LINK(TOPIC)が存在しません',
+				'no_add_topics'=>nl2br("追加できるSMW-LINK(TOPIC)が存在しません\nすべて追加済みの可能性があります"),
+			),
+		),
 		//participant
 		'wikibok-represent-node' => array(
 			'title' => '代表表現選択',
@@ -317,6 +343,7 @@ $messages['ja'] = array(
 				'find-parent' => '親ノードを探す',
 				'find-childs' => '子ノードを探す',
 				'node-create' => 'このノードに子ノードを追加',
+				'add-topic' => 'TOPICリンク先ノードを追加',
 			)
 		),
 		'wikibok-search' => array(
@@ -391,9 +418,39 @@ $messages['ja'] = array(
 				'class' => 'commit'
 			)
 		),
+		'wikibok-viewer'=>array(
+			'title'=>'データ参照',
+			'error'=>array(
+				'nodescription'=>nl2br("記事情報が保存されていません。\n最新情報を参照しています。")
+			),
+		),
 		'wikibok-description' => array(
 			'empty' => '現在このページには内容がありません'
 		),
 		'wikibok-empty-article' => "WikiBOKシステムによって自動生成されました。\n\n編集時は、この文章を上書きしてください。"
 	)),
+);
+$messages['en'] = array(
+	'specialpages-group-wikiboksystem' => 'WikiBok Systems',
+	'bokeditor' => 'BokEditor',
+	'descriptioneditor' => 'DescriptionEditor',
+
+	'bokhistorylist' => 'BokXml更新履歴一覧',
+	'boksavelist' => '保存済みBokXml一覧',
+	'wbs-search-fieldset-title'=>'BokXml検索',
+	'wbs-search-fieldset-fromto'=>'期間',
+	'wbs-search-fieldset-fromdate'=>'開始',
+	'wbs-search-fieldset-todate'=>'終了',
+	'wbs-search-fieldset-year'=>'年',
+	'wbs-search-fieldset-user'=>'利用者',
+	'wbs-search-fieldset-savetitle'=>'登録タイトル',
+	'wbs-search-fieldset-submit'=>'表示',
+	'wbs-list-result-rev'=>'リビジョン番号',
+	'wbs-list-result-user'=>'更新ユーザ',
+	'wbs-list-result-time'=>'更新時刻',
+	'wbs-list-result-link'=>'Bok表示',
+	'wbs-list-result-savetitle'=>'登録名称',
+	'wbs-list-result-comment'=>'コメント(一部抜粋)',
+	'wbs-list-result-nodata'=>'条件に一致するデータがありません',
+	'wikibok-message' => $messages['ja']['wikibok-message'],
 );

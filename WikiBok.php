@@ -21,6 +21,8 @@ if(!$wgUseAjax) {
 }
 $wgAutoloadClasses['WikiBokJs'] = "$dir/WikiBok.js.php";
 $wgAutoloadClasses['BokEditor'] = "$dir/BokEditor.page.php";
+$wgAutoloadClasses['BokHistoryList'] = "$dir/BokHistoryList.page.php";
+$wgAutoloadClasses['BokSaveList'] = "$dir/BokSaveList.page.php";
 $wgAutoloadClasses['DescriptionEditor'] = "$dir/DescriptionEditor.page.php";
 $wgAutoloadClasses['RevisionDB'] = "$dir/class/RevisionDB.class.php";
 $wgExtensionMessagesFiles['WikiBok'] = "$dir/WikiBok.i18n.php";
@@ -32,11 +34,15 @@ $wgExtensionFunctions[] = 'efWikiBokSetup';
 $wgHooks['LoadExtensionSchemaUpdates'][] = 'RevisionDB::onLoadExtensionSchemaUpdates';
 
 //SpecialPage登録
-$wgSpecialPages['BokEditor'] = "BokEditor";
+$wgSpecialPages['BokHistoryList'] = "BokHistoryList";
+$wgSpecialPages['BokSaveList'] = "BokSaveList";
 $wgSpecialPages['DescriptionEditor'] = "DescriptionEditor";
+$wgSpecialPages['BokEditor'] = "BokEditor";
 //ページ一覧で表示される分類
 $wgSpecialPageGroups['BokEditor'] = "wikiboksystem";
 $wgSpecialPageGroups['DescriptionEditor'] = "wikiboksystem";
+$wgSpecialPageGroups['BokHistoryList'] = "wikiboksystem";
+$wgSpecialPageGroups['BokSaveList'] = "wikiboksystem";
 
 efWikiBokInitNamespace();
 
@@ -135,28 +141,29 @@ function efWikiBokAjaxRequest() {
 	$wgAjaxExportList[] = "WikiBokJs::getDescriptionJson";
 	$wgAjaxExportList[] = "WikiBokJs::getSMWLinks";
 	$wgAjaxExportList[] = "WikiBokJs::viewData";
-	$wgAjaxExportList[] = "WikiBokJs::createNodeFromLinks";
 	$wgAjaxExportList[] = "WikiBokJs::representNodeRequest";
 	$wgAjaxExportList[] = "WikiBokJs::checkSMWLinkTarget";
 	$wgAjaxExportList[] = "WikiBokJs::renameNodeRequest";
 	$wgAjaxExportList[] = "WikiBokJs::getSMWLinkData";
 	$wgAjaxExportList[] = "WikiBokJs::getDisplog";
 
-	$wgAjaxExportList[] = "WikiBokJs::debug";
+	$wgAjaxExportList[] = "WikiBokJs::createNodeFromLinks";
 	return;
 }
 /**
  * 個別リンクに特別ページ[BokEditor/DescriptionEditor]へのリンク追加
  */
 function efWikiBokPersonalUrls(&$personal_urls,$title) {
-	global $wgScriptPath,$wgTitle;
+	global $wgScriptPath,$wgTitle,$wgRequest;
+
+	$action = $wgRequest->getVal('action','view');
 
 	$personal_urls['BokEditor'] = array(
 		'text' => wfMsg('bokeditor'),
 		'href' => $wgScriptPath.'/index.php/特別:BokEditor',
 		'class' => "wikibok-linkcaution",
 		'active' => true,
-		'selected' => ($wgTitle->mTextform == 'BokEditor')
+		'selected' => (($wgTitle->mTextform == 'BokEditor') && ($action=='view'))
 	);
 	$personal_urls['DescriptionEditor'] = array(
 		'text' => wfMsg('descriptioneditor'),
@@ -223,7 +230,9 @@ function efWikiBokInsertScript(OutputPage $out) {
 	$out->addScriptFile("{$wgScriptPath}/extensions/WikiBok/js/WikiBok.js");
 	//個別ページ用Script
 	$sPage = $wgTitle->mTextform;
-	if(efCheckPageTitle($sPage)) {
+	$add = realpath(__DIR__."/js")."/{$sPage}.js";
+	if(file_exists($add)) {
+//	if(efCheckPageTitle($sPage)) {
 		$out->addScriptFile("{$wgScriptPath}/extensions/WikiBok/js/{$sPage}.js");
 	}
 	return true;

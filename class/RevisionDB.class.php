@@ -705,13 +705,15 @@ class RevisionDB {
 	 */
 	public function getDisplaylog($param) {
 		$tableName = wfGetDB(DB_SLAVE)->tableName('wbs_displog');
-		$sql = 'SELECT `allreps`,`description_pages` FROM '.$tableName.' WHERE ';
+		$sql = 'SELECT `allreps`,`description_pages` FROM '.$tableName;
 		$_key = array();
 		$_val = array();
 		foreach($param as $key => $val) {
 			$_key[] = "`{$key}` = ?";
 		}
-		$sql .= implode(' AND ',$_key);
+		if(count($_key) > 0 ) {
+			$sql .= ' WHERE '.implode(' AND ',$_key);
+		}
 		$sql .= ' LIMIT 1';
 		$sth = $this->db->prepare($sql);
 		$sth->execute(array_values($param));
@@ -722,6 +724,72 @@ class RevisionDB {
 			$res['description_pages'] = unserialize($data['description_pages']);
 		}
 		return $res;
+	}
+	/**
+	 * BokXMLデータのコミット履歴を表示
+	 * @param $from		更新日時(開始)
+	 * @param $to		更新日時(終了)
+	 * @param $user		ユーザ名称
+	 * @param $title	登録名称
+	 */
+	public function getSaveList($from="",$to="",$user="",$title=""){
+		$tableName = wfGetDB(DB_SLAVE)->tableName('wbs_saveboktree');
+		$sql = 'SELECT user_id,title,comment,time FROM '.$tableName.' ';
+		$_key = array();
+		$_val = array();
+		if(!empty($from)) {
+			$_key[] = "`time` >= ?";
+			$_val[] = $from;
+		}
+		if(!empty($to)) {
+			$_key[] = "`time` <= ?";
+			$_val[] = $to;
+		}
+		if(!empty($user) && !is_null($user)) {
+			$_key[] = "`user_id` = ?";
+			$_val[] = User::idFromName($user);
+		}
+		if(!empty($title) && !is_null($title)) {
+			$_key[] = "`title` Like '%{$title}%'";
+		}
+		if(count($_key) > 0) {
+			$sql .= ' WHERE '.implode(' AND ',$_key);
+		}
+		$sth = $this->db->prepare($sql);
+		$sth->execute($_val);
+		$data = $sth->fetchAll(PDO::FETCH_ASSOC);
+		return $data;
+	}
+	/**
+	 * BokXMLデータのコミット履歴を表示
+	 * @param $from	更新日時(開始)
+	 * @param $to	更新日時(終了)
+	 * @param $user	ユーザ名称
+	 */
+	public function getHistoryList($from="",$to="",$user=""){
+		$tableName = wfGetDB(DB_SLAVE)->tableName('wbs_boktree');
+		$sql = 'SELECT rev,user_id,time FROM '.$tableName.' ';
+		$_key = array();
+		$_val = array();
+		if(!empty($from)) {
+			$_key[] = "`time` >= ?";
+			$_val[] = $from;
+		}
+		if(!empty($to)) {
+			$_key[] = "`time` <= ?";
+			$_val[] = $to;
+		}
+		if(!empty($user) && !is_null($user)) {
+			$_key[] = "`user_id` = ?";
+			$_val[] = User::idFromName($user);
+		}
+		if(count($_key) > 0) {
+			$sql .= ' WHERE '.implode(' AND ',$_key);
+		}
+		$sth = $this->db->prepare($sql);
+		$sth->execute($_val);
+		$data = $sth->fetchAll(PDO::FETCH_ASSOC);
+		return $data;
 	}
 	/**
 	 * 拡張機能インストール時の共通更新処理(SQL実行)
