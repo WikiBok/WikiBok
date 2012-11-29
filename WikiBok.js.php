@@ -207,7 +207,7 @@ class WikiBokJs {
 		$outdata = "";
 		$ret = exec($cmd,$outdata,$ret);
 		//SVGファイルを削除
-		//unlink($infile);
+		unlink($infile);
 		return json_encode(array("res"=>$ret,"outfile"=>$outfile));
 	}
 	/**
