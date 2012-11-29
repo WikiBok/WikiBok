@@ -3,7 +3,7 @@
 define('PHPCOM','php');
 define('SVGCONVERT_CMD','rsvg-convert');
 define('SVGCONVERT_FOLDER',realpath(__DIR__."/../dot/"));
-define('SVGCSS_FILE',realpath(__DIR__.'/../css/WikiBok.svg.css'));
+define('SVGCSS_FILE',realpath(__DIR__.'/../css/WikiBok.out.svg.css'));
 # 仮決めでA4を設定(拡大印刷する場合にはPDFを拡大印刷してください)
 define('SVGCONVERT_A4W', 794); #用紙サイズ(横)
 define('SVGCONVERT_A4H',1123); #用紙サイズ(縦)

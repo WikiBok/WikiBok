@@ -1,0 +1,108 @@
+@namespace "http://www.w3.org/2000/svg";
+g.node {
+    cursor : pointer;
+    fill-opacity : 1.0
+}
+/* BOKEditor */
+/* アイコン用 */
+polygon {
+    stroke : #000;
+    stroke-width : 1px;
+}
+/* エッジ */
+path.link {
+    cursor : pointer;
+    fill : none;
+    stroke : #CCC;
+    stroke-width : 1px;
+}
+/* DescriptionEditor */
+/* アイコン用 */
+circle {
+    stroke : #000;
+    stroke-width : 1.5px;
+}
+/* エッジ */
+path.edge {
+    fill : none;
+    stroke-width : 1.5px;
+}
+/* 種類別の点線/色指定(エッジ) */
+/* 種類別の色指定(マーカ:エッジ矢印) */
+path.prebok {
+    stroke : #009911;
+    stroke-dasharray: 5;
+}
+path.bok {
+    stroke : #2255DD;
+    stroke-dasharray: 5;
+}
+path.smw {
+    stroke : #FFAA00;
+    stroke-dasharray: 2;
+}
+marker#prebok {
+	stroke : #009911;
+	fill : #009911;
+}
+marker#bok {
+	stroke : #2255DD;
+	fill : #2255DD;
+}
+marker#smw {
+	stroke : #FFAA00;
+	fill : #FFAA00;
+}
+
+
+/* 種類別の色指定(アイコン) */
+circle.node {
+	fill-opacity : 1;
+}
+circle.empty {
+	fill-opacity : 0.2;
+}
+circle.bok {
+    fill : #2255DD;
+    stroke : #2255DD;
+}
+circle.prebok {
+    fill : #009911;
+    stroke : #009911;
+}
+circle.desc {
+	stroke : #FFAA00;
+	fill : #FFAA00;
+}
+
+/* ノード(記事)名称 */
+text {
+    font : 9px sans-serif;
+    fill : #000;
+}
+text.shadow {
+    stroke: #FFF;
+    stroke-width: 3px;
+}
+text.childs {
+    fill : #009911;
+}
+text.edge {
+    fill : #FFAA00;
+}
+
+/* 記事内容が何もない場合 */
+polygon.empty {
+    fill-opacity : 0.2
+}
+/* 検索結果：強調 */
+text.active {
+	fill : #FF0000;
+}
+polygon.active {
+	fill : #FF0000;
+	stroke : #FF0000;
+}
+circle.active {
+	stroke : #FF0000;
+}

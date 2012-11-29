@@ -275,7 +275,17 @@ jQuery(function($) {
 				});
 			if(svgs != undefined) {
 				for(var i = 0;i < svgs.length; i++) {
-					var svg = jQuery(svgs[i]).html();
+					//表示要素を変更しないようcloneを使用
+					var
+						out = jQuery(svgs[i]).clone(),
+						svg='';
+					out.find('g[class]').each(function(){
+						var item = $(this);
+						item.find('path,circle,polygon,text').each(function() {
+							d3.select(this).classed(item.attr('class'),true);
+						});
+					});
+					svg = out.html();
 					$.wikibok.requestCGI(
 						'WikiBokJs::svg2pdf',
 						[svg],
