@@ -105,15 +105,15 @@ class WikiBokJs {
 	public static function changePass($name,$pass) {
 		global $wgScriptPath;
 		//Client-PHPのパスが設定されていない場合を考慮
-		$com = realpath(PHPCOM);
+		$com = PHPCOM;
 		//Mediawikiのメンテナンススクリプトを利用
 		$path = realpath($_SERVER['DOCUMENT_ROOT'] . $wgScriptPath.'/maintenance/');
 		//実行するコマンドラインを整形
-		$cmd = "{$com} -f {$path}/changePassword.php -- --user=\"".$name."\" --password=\"".$pass."\"";
+		$cmd = "{$com} {$path}/changePassword.php --user=\"".$name."\" --password=\"".$pass."\"";
 		//出力内容を初期化
 		$outdata = '';
 		$ret = exec($cmd,$outdata,$ret);
-		if(empty($outdata)) {
+		if(empty($outdata) || implode('\n',$outdata)=='Password set for '.$name){
 			$result = array('res' => true);
 		}
 		else {
