@@ -49,6 +49,8 @@ $messages['ja'] = array(
 	'wikibok-saveuser' => '登録者',
 	'wikibok-savetitle' => 'タイトル',
 
+	'wikibok-error-usercreate-bad-userid' => 'このユーザ名は使用できません',
+	'wikibok-error-usercreate-bad-userpass' => 'このパスワードは使用できません',
 	'wikibok-error-usercreate-already' => nl2br("このユーザ名は、すでに使用されています。\n別のユーザ名をご利用下さい。"),
 
 	'wikibok-search-start' => '検索開始',
