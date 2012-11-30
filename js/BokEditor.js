@@ -833,34 +833,7 @@ jQuery(function($) {
 		.on('click','.help',function(ev) {
 			$.wikibok.exDialog(
 				$.wikibok.wfMsg('wikibok-edittool','help','bok','title'),
-				'',
-				{
-					width : 350,
-					create : function() {
-						var
-							tmpl = '',
-							marks = svg.marks_point(4.5),
-							marks_count = (function(){var i = 0;for(var n in marks){i ++;}return i})();
-						function _tmpl(t,item,pos,type){
-							var
-								tmp = '<g transform="translate('+pos[0]+','+pos[1]+')"><text>'+t+'</text>',
-								add = 10;
-							$.each(item,function(k,d) {
-								tmp += (arguments < 4 || type == undefined) ? '<g transform="translate(10,'+add+')">':'<g transform="translate(10,'+add+')" class="'+type+'">';
-								tmp += '<polygon points="'+d+'"></polygon>';
-								tmp += '<text x="8" y="3">'+$.wikibok.wfMsg('wikibok-edittool','help','bok',k)+'</text>';
-								tmp += '</g>';
-								add += 15;
-							});
-							return tmp+'</g>';
-						}
-						tmpl = '<svg width="300" height="'+((marks_count+1)*15 + 100)+'">';
-						tmpl+= _tmpl($.wikibok.wfMsg('wikibok-edittool','help','normal'),marks,[10,10]);
-						tmpl+= _tmpl($.wikibok.wfMsg('wikibok-edittool','help','empty'),marks,[10,100],'empty');
-						tmpl+= '</svg>';
-						$(this).html(tmpl);
-					}
-				}
+				'<img src="'+wgScriptPath+'/extensions/WikiBok/css/images/help_image.png"/>'
 			);
 		})
 		//新規ノード追加
