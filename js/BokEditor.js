@@ -8,7 +8,7 @@ jQuery(function($) {
 		mode = 'normal',
 		mode_mes,
 		svg = $('#result').bok({
-			w : 600,
+			w : 450,
 			h : 30,
 			success : function(r) {
 			},
