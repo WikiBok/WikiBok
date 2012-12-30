@@ -159,11 +159,12 @@ class BokXml{
 		if($toNode === false) {
 			//名称のみ変更
 			$target = $this->searchNameNode($from)->parentNode;
-			//NAME要素のみ削除
+//			//NAME要素のみ削除
 			$del = $target->getElementsByTagName('name')->item(0);
-			$target->removeChild($del);
-			//新しい名前でName要素を追加
-			$target->appendChild($this->dom->createElement('name',$to));
+//			$target->removeChild($del);
+//			//新しい名前でName要素を追加
+//			$target->appendChild($this->dom->createElement('name',$to));
+			$target->replaceChild($this->dom->createElement('name',$to),$del);
 			$res = true;
 		}
 		return $res;
