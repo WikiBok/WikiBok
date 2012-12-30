@@ -75,7 +75,23 @@ jQuery(function($) {
 									$.wikibok.viewDescriptionDialog(_title,desc);
 								})
 								.fail(function() {
-									alert('記事がない...');
+									var
+										_t = $.wikibok.getPageNamespace(_title)+':'+$.wikibok.getPageName(_title);
+									//記事がないので直接編集画面を開く
+									$.wikibok.getDescriptionEdit(_t)
+									.done(function(dat) {
+										var
+											page = dat.query.pages,
+											token = $.map(page,function(d) {return d.edittoken;}).join(),
+											timestamp = $.map(page,function(d) {return d.starttimestamp;}).join();
+										//編集結果をAPIで反映してから,BOK-XMLへ反映する/しない
+										$.wikibok.editDescriptionDialog(_t,'',{
+											title : _t,
+											token : token,
+											basetimestamp : timestamp,
+											createonly : true,
+										})
+									});
 								});
 							}
 							else {
@@ -90,7 +106,23 @@ jQuery(function($) {
 									$.wikibok.viewDescriptionDialog(_title,desc,'view',page.revid);
 								})
 								.fail(function() {
-									alert('記事がない...');
+									var
+										_t = $.wikibok.getPageNamespace(_title)+':'+$.wikibok.getPageName(_title);
+									//記事がないので直接編集画面を開く
+									$.wikibok.getDescriptionEdit(_t)
+									.done(function(dat) {
+										var
+											page = dat.query.pages,
+											token = $.map(page,function(d) {return d.edittoken;}).join(),
+											timestamp = $.map(page,function(d) {return d.starttimestamp;}).join();
+										//編集結果をAPIで反映してから,BOK-XMLへ反映する/しない
+										$.wikibok.editDescriptionDialog(_t,'',{
+											title : _t,
+											token : token,
+											basetimestamp : timestamp,
+											createonly : true,
+										})
+									});
 								});
 							}
 						})
