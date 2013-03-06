@@ -1,13 +1,13 @@
-<h4>�T�v</h4>
+<h4>概要</h4>
 <div>
-�����SemanticMediaWiki�̊g���@�\��1�ł��B<br/>
-�������邱�ƂŁAWikiBOK-System�𗘗p�ł���悤�ɂȂ�܂��B<br/>
-WikiBOK-System�̐����́A<a href="#">������</a>���Q�Ƃ��Ă��������B<br/>
+これはSemanticMediaWikiの拡張機能の1つです。<br/>
+導入することで、WikiBOK-Systemを利用できるようになります。<br/>
+WikiBOK-Systemの説明は、<a href="https://github.com/WikiBok/WikiBok/blob/master/WikiBok_manual.pdf">こちら</a>を参照してください。<br/>
 </div>
-<h4>�������@</h4>
+<h4>導入方法</h4>
 <ol>
-<li>SemanticMediaWiki��[extensions]�t�H���_�z���Ɋg���@�\��W�J���܂��B</li>
-<li>[LocalSettings.php]�ցA�ݒ��ǉ����܂��B</li>
-<li>WikiBOK-System�̐ݒ�t�@�C����ҏW���܂��B</li>
+<li>SemanticMediaWikiの[extensions]フォルダ配下に拡張機能を展開します。</li>
+<li>[LocalSettings.php]へ、設定を追加します。</li>
+<li>WikiBOK-Systemの設定ファイルを編集します。</li>
 </ol>
  
